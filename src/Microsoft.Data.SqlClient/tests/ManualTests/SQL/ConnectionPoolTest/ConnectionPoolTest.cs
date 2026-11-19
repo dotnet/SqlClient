@@ -240,6 +240,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Tests if, when max pool size is reached, Open() will block until a connection becomes available
         /// </summary>
+        // Assert.Equal: expected Running, actual WaitingToRun after the worker-start wait.
+        [Trait("category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionPoolConnectionStringAndPoolVersionProvider))]
         public static async Task MaxPoolWaitForConnectionTest(string connectionString, bool usePoolV2)

@@ -203,10 +203,13 @@ namespace Microsoft.SqlServer.TDS.Login7
             uint length = TDSUtilities.ReadUInt(source);
 
             // Read TDS version
-            string tdsVersion = string.Format("{0:X}", TDSUtilities.ReadUInt(source));
+            uint rawTdsVersion = TDSUtilities.ReadUInt(source);
+            string tdsVersion = string.Format("{0:X}", rawTdsVersion);
 
             // Consturct TDS version
-            TDSVersion = new Version(int.Parse(tdsVersion.Substring(0, 1)), int.Parse(tdsVersion.Substring(1, 1)), Convert.ToInt32(tdsVersion.Substring(2, 2), 16), Convert.ToInt32(tdsVersion.Substring(4, 4), 16));
+            TDSVersion = rawTdsVersion == Microsoft.SqlServer.TDS.TDSVersion.Tds8_0WireValue
+                ? Microsoft.SqlServer.TDS.TDSVersion.Tds8_0
+                : new Version(int.Parse(tdsVersion.Substring(0, 1)), int.Parse(tdsVersion.Substring(1, 1)), Convert.ToInt32(tdsVersion.Substring(2, 2), 16), Convert.ToInt32(tdsVersion.Substring(4, 4), 16));
 
             // Read packet length
             PacketSize = TDSUtilities.ReadUInt(source);
@@ -450,7 +453,9 @@ namespace Microsoft.SqlServer.TDS.Login7
             TDSUtilities.WriteUInt(destination, totalPacketLength);
 
             // Compile TDS version
-            uint tdsVersion = Convert.ToUInt32(string.Format("{0:X}", Math.Max(TDSVersion.Major, 0)) + string.Format("{0:X}", Math.Max(TDSVersion.Minor, 0)) + string.Format("{0:X2}", Math.Max(TDSVersion.Build, 0)) + string.Format("{0:X4}", Math.Max(TDSVersion.Revision, 0)), 16);
+            uint tdsVersion = TDSVersion == Microsoft.SqlServer.TDS.TDSVersion.Tds8_0
+                ? Microsoft.SqlServer.TDS.TDSVersion.Tds8_0WireValue
+                : Convert.ToUInt32(string.Format("{0:X}", Math.Max(TDSVersion.Major, 0)) + string.Format("{0:X}", Math.Max(TDSVersion.Minor, 0)) + string.Format("{0:X2}", Math.Max(TDSVersion.Build, 0)) + string.Format("{0:X4}", Math.Max(TDSVersion.Revision, 0)), 16);
 
             // Write TDS version
             TDSUtilities.WriteUInt(destination, tdsVersion);

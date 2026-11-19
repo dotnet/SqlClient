@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Parser;
@@ -17,9 +19,6 @@ namespace Microsoft.Data.SqlClient
 
     internal static class SqlSecurityUtility
     {
-
-        static readonly ColumnMasterKeyMetadataSignatureVerificationCache ColumnMasterKeyMetadataSignatureVerificationCache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
-
         #nullable enable
 
         /// <summary>
@@ -155,7 +154,8 @@ namespace Microsoft.Data.SqlClient
             // Initialize cipherAlgo if not already done.
             if (!md.IsAlgorithmInitialized())
             {
-                DecryptSymmetricKey(md, connection, command);
+                DecryptSymmetricKey(md, connection, command, isAsync: false, CancellationToken.None)
+                    .GetAwaiter().GetResult();
             }
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Encryption Algorithm is not initialized");
@@ -192,7 +192,8 @@ namespace Microsoft.Data.SqlClient
             // Initialize cipherAlgo if not already done.
             if (!md.IsAlgorithmInitialized())
             {
-                DecryptSymmetricKey(md, connection, command);
+                DecryptSymmetricKey(md, connection, command, isAsync: false, CancellationToken.None)
+                    .GetAwaiter().GetResult();
             }
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Decryption Algorithm is not initialized");
@@ -219,14 +220,23 @@ namespace Microsoft.Data.SqlClient
         /// <para> Decrypts the symmetric key and saves it in metadata. In addition, initializes
         /// the SqlClientEncryptionAlgorithm for rapid decryption.</para>
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlCipherMetadata md, SqlConnection connection, SqlCommand command)
+        /// <remarks>
+        /// When <paramref name="isAsync"/> is false, provider calls are synchronous and the
+        /// returned value is already complete.
+        /// </remarks>
+        internal static async ValueTask DecryptSymmetricKey(
+            SqlCipherMetadata md,
+            SqlConnection connection,
+            SqlCommand command,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             Debug.Assert(md is not null, "md should not be null in DecryptSymmetricKey.");
 
-            SymmetricKey symKey = null;
-            SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
-
-            DecryptSymmetricKey(md.EncryptionInfo, out symKey, out encryptionkeyInfoChosen, connection, command);
+            (SymmetricKey symKey, SqlEncryptionKeyInfo encryptionkeyInfoChosen) =
+                await DecryptSymmetricKey(
+                    md.EncryptionInfo, connection, command, isAsync, cancellationToken)
+                    .ConfigureAwait(false);
 
             // Given the symmetric key instantiate a SqlClientEncryptionAlgorithm object and cache it in metadata
             md.CipherAlgorithm = null;
@@ -236,33 +246,61 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(cipherAlgorithm is not null);
             md.CipherAlgorithm = cipherAlgorithm;
             md.EncryptionKeyInfo = encryptionkeyInfoChosen;
-            return;
         }
 
         /// <summary>
-        /// Decrypts the symmetric key and saves it in metadata.
+        /// Decrypts the symmetric key using synchronous or asynchronous provider calls.
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, out SymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection, SqlCommand command)
+        /// <remarks>
+        /// <para>
+        /// Returns the key and selected encryption metadata as a tuple. When
+        /// <paramref name="isAsync"/> is false, the returned value is already complete.
+        /// </para>
+        /// <para>
+        /// Each candidate key is tried in turn and failures are remembered so that the
+        /// last one can be rethrown if every candidate fails. A cancellation of
+        /// <paramref name="cancellationToken"/> is never swallowed: it abandons the loop immediately instead of
+        /// causing the remaining candidates to be attempted.
+        /// </para>
+        /// </remarks>
+        internal static async ValueTask<(SymmetricKey Key, SqlEncryptionKeyInfo KeyInfoChosen)> DecryptSymmetricKey(
+            SqlTceCipherInfoEntry sqlTceCipherInfoEntry,
+            SqlConnection connection,
+            SqlCommand command,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             Debug.Assert(connection is not null, "Connection should not be null.");
             Debug.Assert(sqlTceCipherInfoEntry is not null, "sqlTceCipherInfoEntry should not be null in DecryptSymmetricKey.");
             Debug.Assert(sqlTceCipherInfoEntry.ColumnEncryptionKeyValues is not null,
                     "sqlTceCipherInfoEntry.ColumnEncryptionKeyValues should not be null in DecryptSymmetricKey.");
 
-            sqlClientSymmetricKey = null;
-            encryptionkeyInfoChosen = null;
+            SymmetricKey sqlClientSymmetricKey = null;
+            SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
             Exception lastException = null;
             SymmetricKeyCache globalCekCache = SymmetricKeyCache.Instance;
 
             foreach (SqlEncryptionKeyInfo keyInfo in sqlTceCipherInfoEntry.ColumnEncryptionKeyValues)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
                     sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
-                        GetKeyFromLocalProviders(keyInfo, connection, command) :
-                        globalCekCache.GetKey(keyInfo, connection, command);
+                        await GetKeyFromLocalProviders(
+                            keyInfo, connection, command, isAsync, cancellationToken)
+                            .ConfigureAwait(false) :
+                        await globalCekCache.GetKey(
+                            keyInfo, connection, command, isAsync, cancellationToken)
+                            .ConfigureAwait(false);
                     encryptionkeyInfoChosen = keyInfo;
                     break;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // The caller cancelled. Do not treat this as a failure of this particular key and do not
+                    // attempt the remaining keys; propagate cancellation to the caller.
+                    throw;
                 }
                 catch (Exception e)
                 {
@@ -272,15 +310,33 @@ namespace Microsoft.Data.SqlClient
 
             if (sqlClientSymmetricKey is null)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 Debug.Assert(lastException is not null, "CEK decryption failed without raising exceptions");
                 throw lastException;
             }
 
             Debug.Assert(encryptionkeyInfoChosen is not null, "encryptionkeyInfoChosen must have a value.");
+
+            return (sqlClientSymmetricKey, encryptionkeyInfoChosen);
         }
 
-        private static SymmetricKey GetKeyFromLocalProviders(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand command)
+        /// <summary>
+        /// Decrypts a key with a local provider, synchronously or asynchronously.
+        /// </summary>
+        /// <remarks>
+        /// Instance-level providers are never backed by the global CEK cache, so this method performs the
+        /// provider call directly. A cancellation of <paramref name="cancellationToken"/> is propagated
+        /// unwrapped rather than being reported as <c>SQL.KeyDecryptionFailed</c>.
+        /// </remarks>
+        private static async ValueTask<SymmetricKey> GetKeyFromLocalProviders(
+            SqlEncryptionKeyInfo keyInfo,
+            SqlConnection connection,
+            SqlCommand command,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             string serverName = connection.DataSource;
             Debug.Assert(serverName is not null, @"serverName should not be null.");
 
@@ -294,12 +350,22 @@ namespace Microsoft.Data.SqlClient
                     GetListOfProviderNamesThatWereSearched(connection, command));
             }
 
-            // Decrypt the CEK
-            // We will simply bubble up the exception from the DecryptColumnEncryptionKey function.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Wrap provider failures, but preserve cancellation requested by the caller.
             byte[] plaintextKey;
             try
             {
-                plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
+                plaintextKey = isAsync
+                    ? await provider.DecryptColumnEncryptionKeyAsync(
+                        keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey,
+                        cancellationToken).ConfigureAwait(false)
+                    : provider.DecryptColumnEncryptionKey(
+                        keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception e)
             {
@@ -327,8 +393,27 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verifies Column Master Key Signature.
         /// </summary>
-        internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, bool isEnclaveEnabled, byte[] CMKSignature, SqlConnection connection, SqlCommand command)
+        /// <remarks>
+        /// Wraps failures in <c>SQL.UnableToVerifyColumnMasterKeySignature</c> except cancellation
+        /// requested by <paramref name="cancellationToken"/>, which is propagated unwrapped so the returned task is
+        /// cancelled rather than faulted with an <see cref="InvalidOperationException"/>.
+        /// Pre-cancellation is observed before signature validation or provider lookup.
+        /// Cancellation is also observed before accepting provider or cache results.
+        /// When <paramref name="isAsync"/> is false, provider calls are synchronous and the
+        /// returned value is already complete.
+        /// </remarks>
+        internal static async ValueTask VerifyColumnMasterKeySignature(
+            string keyStoreName,
+            string keyPath,
+            bool isEnclaveEnabled,
+            byte[] CMKSignature,
+            SqlConnection connection,
+            SqlCommand command,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             bool isValidSignature = false;
 
             try
@@ -353,18 +438,35 @@ namespace Microsoft.Data.SqlClient
 
                 if (ShouldUseInstanceLevelProviderFlow(keyStoreName, connection, command))
                 {
-                    isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    isValidSignature = isAsync
+                        ? await provider.VerifyColumnMasterKeyMetadataAsync(
+                            keyPath, isEnclaveEnabled, CMKSignature, cancellationToken)
+                            .ConfigureAwait(false)
+                        : provider.VerifyColumnMasterKeyMetadata(
+                            keyPath, isEnclaveEnabled, CMKSignature);
                 }
                 else
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.Instance
                         .GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
 
                     if (cachedResult == SignatureVerificationResult.NotFound)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
+
                         // Cache miss: verify with the provider and cache the result.
-                        // Exceptions from VerifyColumnMasterKeyMetadata bubble up to the outer catch.
-                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                        // Provider failures bubble up to the outer catch.
+                        isValidSignature = isAsync
+                            ? await provider.VerifyColumnMasterKeyMetadataAsync(
+                                keyPath, isEnclaveEnabled, CMKSignature, cancellationToken)
+                                .ConfigureAwait(false)
+                            : provider.VerifyColumnMasterKeyMetadata(
+                                keyPath, isEnclaveEnabled, CMKSignature);
+                        cancellationToken.ThrowIfCancellationRequested();
                         ColumnMasterKeyMetadataSignatureVerificationCache.Instance
                             .AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
                     }
@@ -374,10 +476,17 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception e)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 throw SQL.UnableToVerifyColumnMasterKeySignature(e);
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!isValidSignature)
             {

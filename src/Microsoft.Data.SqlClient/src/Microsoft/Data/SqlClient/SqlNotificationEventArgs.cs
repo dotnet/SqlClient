@@ -29,7 +29,5 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Source/*' />
         public SqlNotificationSource Source => _source;
-
-        internal static SqlNotificationEventArgs s_notifyError = new(SqlNotificationType.Subscribe, SqlNotificationInfo.Error, SqlNotificationSource.Object);
     }
 }

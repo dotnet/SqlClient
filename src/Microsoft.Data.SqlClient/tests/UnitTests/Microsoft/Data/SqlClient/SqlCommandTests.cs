@@ -16,6 +16,9 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>Verifies command completion and batch error attribution.</summary>
 public class SqlCommandTests
 {
+    private const string CanceledExecutionConnectionString =
+        "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled";
+
     /// <summary>
     /// Closing during metadata initialization must abort execution, not drain its reader concurrently.
     /// </summary>
@@ -220,6 +223,63 @@ public class SqlCommandTests
         Assert.Same(expected, batchCommand);
     }
 
+    /// <summary>
+    /// Key store cancellation after the describe phase releases the parser state must surface as
+    /// cancellation, not as a null-lock failure, when the reader execution ends.
+    /// </summary>
+    [Fact]
+    public void EndExecuteReaderAsync_CanceledTask_ThrowsOperationCanceled()
+    {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
+        // Act
+        Exception exception = Record.Exception(() => command.EndExecuteReaderAsync(canceled));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+    }
+
+    /// <summary>
+    /// Key store cancellation after the describe phase releases the parser state must surface as
+    /// cancellation, not as a null-lock failure, when the non-query execution ends.
+    /// </summary>
+    [Fact]
+    public void EndExecuteNonQueryAsync_CanceledTask_ThrowsOperationCanceled()
+    {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
+        // Act
+        Exception exception = Record.Exception(() => command.EndExecuteNonQueryAsync(canceled));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+    }
+
+    /// <summary>
+    /// Key store cancellation after the describe phase releases the parser state must surface as
+    /// cancellation, not as a null-lock failure, when the XML reader execution ends.
+    /// </summary>
+    [Fact]
+    public void EndExecuteXmlReaderAsync_CanceledTask_ThrowsOperationCanceled()
+    {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
+        // Act
+        Exception exception = Record.Exception(() => command.EndExecuteXmlReaderAsync(canceled));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+    }
+
     /// <summary>Creates RPC entries without requiring a network connection.</summary>
     /// <param name="count">The number of entries to add.</param>
     /// <returns>A command owned by the test.</returns>
@@ -243,4 +303,16 @@ public class SqlCommandTests
         Assert.IsType<List<_SqlRPC>>(typeof(SqlCommand)
             .GetField("_RPCList", BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(command));
+
+    /// <summary>
+    /// Creates an already canceled task, as happens when a key store operation is canceled after
+    /// the parser state was released.
+    /// </summary>
+    /// <returns>A canceled task.</returns>
+    private static Task CreateCanceledTask()
+    {
+        TaskCompletionSource<object> completion = new();
+        completion.SetCanceled();
+        return completion.Task;
+    }
 }

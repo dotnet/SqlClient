@@ -39,7 +39,6 @@ namespace Microsoft.Data.SqlClient
         internal long _closeTimestamp;
         internal long _openTimestamp;
         internal long? _startExecutionTimestamp;
-        internal long _startFetchTimestamp;
         internal long _startNetworkServerTimestamp;
 
         // internal values that are exposed through properties
@@ -81,7 +80,6 @@ namespace Microsoft.Data.SqlClient
         internal void ContinueOnNewConnection()
         {
             _startExecutionTimestamp = null;
-            _startFetchTimestamp = 0;
             _waitForDoneAfterRow = false;
             _waitForReply = false;
         }

@@ -634,6 +634,24 @@ namespace Microsoft.Data.SqlClient.Connection
             get => CurrentTransaction?.HasParentTransaction == true;
         }
 
+        #nullable enable
+        /// <summary>
+        /// Gets the mutable accumulator for the in-progress physical login attempt, or
+        /// <see langword="null"/> when no login is in progress. Allocated on the first login
+        /// attempt, reset at the start of each physical attempt, written by
+        /// <see cref="TdsParser"/> during the handshake, and released once login completes.
+        /// </summary>
+        internal EncryptionInfoAccumulator? EncryptionInfoAccumulator { get; private set; }
+        #nullable restore
+
+        /// <summary>
+        /// Gets the immutable encryption snapshot for this physical connection. Remains
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/> until login succeeds, then is shared by
+        /// every <see cref="SqlConnection"/> that later uses this physical connection (including
+        /// pooled reuse and MARS sessions).
+        /// </summary>
+        internal SqlConnectionEncryptionInfo EncryptionInfo { get; private set; } = SqlConnectionEncryptionInfo.Empty;
+
         // @TODO: Make auto-property
         internal DbConnectionPoolIdentity Identity
         {
@@ -2184,29 +2202,41 @@ namespace Microsoft.Data.SqlClient.Connection
             //
             // A delegated root can remain active after EnlistedTransaction has been detached.
             // Preserve the dirty flag until both forms of transaction ownership have ended.
-            if (_isolationLevelDirty &&
-                LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
-                EnlistedTransaction is null &&
-                !IsTransactionRoot)
-            {
-                ResetSessionIsolationLevel(timeout);
-            }
-
+            //
             // When we're required to automatically enlist in transactions and there is one we
             // enlist in it. On the other hand, if there isn't a transaction, and we are
             // currently enlisted in one, then we un-enlist from it.
             // Regardless of whether we're required to automatically enlist, when there is not a
             // current transaction, we cannot leave the connection enlisted in a transaction.
-            if (transaction != null)
+            try
             {
-                if (ConnectionOptions.Enlist)
+                if (_isolationLevelDirty &&
+                    LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
+                    EnlistedTransaction is null &&
+                    !IsTransactionRoot)
                 {
-                    Enlist(transaction, ConnectionOptions.ConnectTimeout);
+                    ResetSessionIsolationLevel(timeout);
+                }
+
+                if (transaction != null)
+                {
+                    if (ConnectionOptions.Enlist)
+                    {
+                        Enlist(transaction, ConnectionOptions.ConnectTimeout);
+                    }
+                }
+                else
+                {
+                    Enlist(null, ConnectionOptions.ConnectTimeout);
                 }
             }
-            else
+            catch (SqlException ex)
             {
-                Enlist(null, ConnectionOptions.ConnectTimeout);
+                // A pooled checkout is part of Open(), so a failure of the isolation-level reset or
+                // the enlistment carries the encryption info the physical connection published when
+                // it logged in.
+                AttachPublishedEncryptionInfo(ex);
+                throw;
             }
         }
 
@@ -2344,6 +2374,10 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information
+
+            // Each physical attempt (retry, redirect, routing, failover) starts with a clean accumulator
+            // so only the terminal attempt's values are published.
+            (EncryptionInfoAccumulator ??= new()).Reset();
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
@@ -3334,7 +3368,6 @@ namespace Microsoft.Data.SqlClient.Connection
             }
 
             // @TODO: How about we define all the easy ones in one block, then have the conditional ones below that
-            login.authentication = ConnectionOptions.Authentication;
             login.timeout = timeoutInSeconds;
             login.userInstance = ConnectionOptions.UserInstance;
             login.hostName = ConnectionOptions.ObtainWorkstationId();
@@ -3468,6 +3501,44 @@ namespace Microsoft.Data.SqlClient.Connection
             // Connect or Login, either way we should call Disconnect. Disconnect can be called if
             // the connection is already closed - becomes no-op, so no issues there.
             _parser?.Disconnect();
+        }
+
+        /// <summary>
+        /// Attaches the encryption values recorded by the terminal login attempt to a
+        /// <see cref="SqlException"/> thrown while opening the connection, and releases the
+        /// accumulator. Exceptions raised before any value was recorded are left unchanged.
+        /// </summary>
+        /// <remarks>
+        /// A <see cref="SqlException"/> thrown during <c>Open</c> carries the encryption info whenever
+        /// any is available, whatever its cause. That includes automatic transaction enlistment at
+        /// the end of a non-pooled login, which runs inside the login.
+        /// </remarks>
+        /// <param name="ex">The exception thrown by the failed login.</param>
+        private void AttachEncryptionInfo(SqlException ex)
+        {
+            EncryptionInfoAccumulator accumulator = EncryptionInfoAccumulator;
+            EncryptionInfoAccumulator = null;
+
+            if (accumulator is { HasValues: true })
+            {
+                Debug.Assert(ex.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
+                ex.EncryptionInfo = accumulator.ToSnapshot();
+            }
+        }
+
+        /// <summary>
+        /// Attaches the snapshot this physical connection published at login to a
+        /// <see cref="SqlException"/> thrown while a pooled checkout resets the session isolation
+        /// level or enlists the connection in a transaction during <c>Open</c>.
+        /// </summary>
+        /// <param name="ex">The exception thrown by the reset or the enlistment.</param>
+        private void AttachPublishedEncryptionInfo(SqlException ex)
+        {
+            if (!EncryptionInfo.IsEmpty)
+            {
+                Debug.Assert(ex.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
+                ex.EncryptionInfo = EncryptionInfo;
+            }
         }
 
         /// <summary>
@@ -4240,13 +4311,23 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
+            catch (SqlException ex)
+            {
+                AttachEncryptionInfo(ex);
+                LoginFailure();
+                throw;
+            }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
+                EncryptionInfoAccumulator = null;
                 LoginFailure();
                 throw;
             }
 
             _timeoutErrorInternal.SetAllCompleteMarker();
+
+            EncryptionInfo = EncryptionInfoAccumulator?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
+            EncryptionInfoAccumulator = null;
 
             #if DEBUG
             _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();

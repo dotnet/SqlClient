@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
+        internal XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
 
@@ -504,18 +504,18 @@ namespace Microsoft.Data.SqlClient
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
-            {
-                context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
-            }
-
-            context ??= new ExecuteXmlReaderAsyncCallContext();
-            context.Set(this, source, registration, operationId);
-            context.CancellationToken = cancellationToken;
-
             Task<XmlReader> returnedTask = source.Task;
             try
             {
+                if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
+                }
+
+                context ??= new ExecuteXmlReaderAsyncCallContext();
+                context.Set(this, source, registration, operationId);
+                context.CancellationToken = cancellationToken;
+
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
@@ -553,7 +553,14 @@ namespace Microsoft.Data.SqlClient
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
-                context.Dispose();
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
             }
 

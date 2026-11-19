@@ -25,3 +25,21 @@ public sealed class SimulatedServerTestCollection
 {
     public const string Name = "SimulatedServerTests";
 }
+
+/// <summary>
+/// Isolates tests that temporarily change the process-wide column encryption key cache lifetime.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class SymmetricKeyCacheTestCollection
+{
+    public const string Name = "SymmetricKeyCacheTests";
+}
+
+/// <summary>
+/// Isolates tests that temporarily replace globally registered encryption key store providers.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class SqlSecurityUtilityTestCollection
+{
+    public const string Name = "SqlSecurityUtilityTests";
+}

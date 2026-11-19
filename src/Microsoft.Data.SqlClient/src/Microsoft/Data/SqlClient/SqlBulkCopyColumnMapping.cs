@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient
 
         // devnote: we don't want the user to detect the columnordinal after WriteToServer call.
         // _sourceColumnOrdinal(s) will be copied to _internalSourceColumnOrdinal when WriteToServer executes.
-        internal int _internalDestinationColumnOrdinal;
         internal int _internalSourceColumnOrdinal;   // -1 indicates an undetermined value
 
         // Used by SqlBulkCopy to generate the correct column name after mapping alternate names.
@@ -39,7 +38,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                _destinationColumnOrdinal = _internalDestinationColumnOrdinal = -1;
+                _destinationColumnOrdinal = -1;
                 _destinationColumnName = value;
             }
         }
@@ -56,7 +55,7 @@ namespace Microsoft.Data.SqlClient
                 if (value >= 0)
                 {
                     _destinationColumnName = null;
-                    _destinationColumnOrdinal = _internalDestinationColumnOrdinal = value;
+                    _destinationColumnOrdinal = value;
                 }
                 else
                 {

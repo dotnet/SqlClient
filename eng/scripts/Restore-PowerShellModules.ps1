@@ -8,6 +8,7 @@ Restores the exact resource versions listed in powershell-modules.json using PSR
 .DESCRIPTION
 Reuses installed versions and installs missing versions for the current user from
 PowerShell.config. Registration and installation failures stop without switching sources.
+Transient download failures use up to three total attempts with bounded backoff.
 #>
 [CmdletBinding()]
 param(
@@ -61,6 +62,39 @@ foreach ($resource in $resources) {
             -RepositoryName SqlClient
     }
     Write-Host "Restoring $($resource.Name) $($resource.Version) from $repositoryName."
-    Install-PSResource -Name $resource.Name -Version $requiredVersion -Repository $repositoryName `
-        -Scope CurrentUser -NoClobber -ErrorAction Stop
+    $maxAttempts = 3
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        try {
+            Install-PSResource -Name $resource.Name -Version $requiredVersion `
+                -Repository $repositoryName -Scope CurrentUser -NoClobber -ErrorAction Stop
+            break
+        }
+        catch {
+            # PSResourceGet can wrap transport exceptions in PSInvalidOperationException.
+            $isTransient = $false
+            for ($exception = $_.Exception; $null -ne $exception;
+                $exception = $exception.InnerException) {
+                if ($exception -is [TimeoutException] -or
+                    $exception -is [System.Threading.Tasks.TaskCanceledException]) {
+                    $isTransient = $true
+                    break
+                }
+                if ($exception -is [System.Net.Http.HttpRequestException]) {
+                    $statusCode = $exception.StatusCode
+                    $isTransient = $null -eq $statusCode -or
+                        [int] $statusCode -in 408, 429 -or
+                        ([int] $statusCode -ge 500 -and [int] $statusCode -le 599)
+                    break
+                }
+            }
+            if (-not $isTransient -or $attempt -eq $maxAttempts) {
+                throw
+            }
+            $delaySeconds = 5 * $attempt
+            Write-Warning ("Restore of $($resource.Name) $($resource.Version) from " +
+                "$repositoryName failed on attempt $attempt/${maxAttempts}: " +
+                "$($_.Exception.Message) Retrying in $delaySeconds seconds.")
+            Start-Sleep -Seconds $delaySeconds
+        }
+    }
 }
