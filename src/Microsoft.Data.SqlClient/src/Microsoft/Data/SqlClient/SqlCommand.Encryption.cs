@@ -521,18 +521,6 @@ namespace Microsoft.Data.SqlClient
             string method,
             CancellationToken cancellationToken = default)
         {
-            Debug.Assert(_activeConnection != null,
-                "_activeConnection should not be null in PrepareForTransparentEncryption.");
-            Debug.Assert(_activeConnection.Parser != null,
-                "_activeConnection.Parser should not be null in PrepareForTransparentEncryption.");
-            Debug.Assert(_activeConnection.Parser.IsColumnEncryptionSupported,
-                "_activeConnection.Parser.IsColumnEncryptionSupported should be true in PrepareForTransparentEncryption.");
-            Debug.Assert(_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
-                         || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
-                "ColumnEncryption setting should be enabled for input parameter encryption.");
-            Debug.Assert(isAsync == (completion != null),
-                "completion should be null if and only if mode is async.");
-
             returnTask = null;
             usedCache = false;
 
@@ -594,6 +582,18 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
             }
+
+            Debug.Assert(_activeConnection != null,
+                "_activeConnection should not be null in PrepareForTransparentEncryption.");
+            Debug.Assert(_activeConnection.Parser != null,
+                "_activeConnection.Parser should not be null in PrepareForTransparentEncryption.");
+            Debug.Assert(_activeConnection.Parser.IsColumnEncryptionSupported,
+                "_activeConnection.Parser.IsColumnEncryptionSupported should be true in PrepareForTransparentEncryption.");
+            Debug.Assert(_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
+                         || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
+                "ColumnEncryption setting should be enabled for input parameter encryption.");
+            Debug.Assert(isAsync == (completion != null),
+                "completion should be null if and only if mode is async.");
 
             if (isAsync && ShouldUseEnclaveBasedWorkflow)
             {
