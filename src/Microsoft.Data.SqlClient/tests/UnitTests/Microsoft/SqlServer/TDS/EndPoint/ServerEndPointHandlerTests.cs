@@ -33,7 +33,14 @@ public class ServerEndPointHandlerTests
         endpoint.Start();
 
         // Act
-        Task stopping = Task.Run(endpoint.Stop);
+        Task stopping = Task.Run(() =>
+        {
+            // Keep disposal inside the watchdog in case listener shutdown blocks.
+            using (endpoint)
+            {
+                endpoint.Stop();
+            }
+        });
         Task completed = await Task.WhenAny(stopping, Task.Delay(TimeSpan.FromSeconds(10)));
 
         // Assert
