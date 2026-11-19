@@ -676,10 +676,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
 
             // Assert
-            // The caller observes only the retry's outcome.
+            // The caller observes only the retry's outcome. The retry skips the internal End,
+            // so its task completes when the response arrives and End reports the error.
             Assert.False(completedDuringRetry);
-            SqlException error = await Assert.ThrowsAsync<SqlException>(() => (Task)result);
-            Assert.Equal(RetryQueryEngine.RetryErrorNumber, error.Number);
+            await (Task)result;
             Assert.Equal(
                 RetryQueryEngine.RetryErrorNumber,
                 Assert.Throws<SqlException>(() => command.EndExecuteXmlReader(result)).Number);
