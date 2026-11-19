@@ -319,14 +319,14 @@ public class SqlCommandTests
     }
 
     /// <summary>
-    /// A dispatched cache hit whose worker finishes before the entry checks it must still return
-    /// its task, because the reader clears the in-progress guard only through that task.
+    /// Preparation that holds the in-progress flag must return its task even when it has already
+    /// completed, because the reader clears the flag only through that task.
     /// </summary>
     [Fact]
-    public void CompletePreparation_DispatchedAlreadyCompleted_ReturnsTask()
+    public void GetPreparationTask_HoldsInProgressCompleted_ReturnsTask()
     {
         // Act
-        Task? returnTask = InvokeCompletePreparation(deferFailures: true, dispatched: true);
+        Task? returnTask = InvokeGetPreparationTask(default, holdsInProgress: true);
 
         // Assert
         Assert.NotNull(returnTask);
@@ -334,19 +334,36 @@ public class SqlCommandTests
     }
 
     /// <summary>
-    /// Completed async preparation that was not dispatched finishes inline without a task, so
-    /// the reader takes its synchronous execution branch.
+    /// Successfully completed preparation that does not hold the flag finishes inline without a
+    /// task, so the reader takes its synchronous execution branch.
     /// </summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void CompletePreparation_NotDispatchedAlreadyCompleted_ReturnsNull(bool deferFailures)
+    [Fact]
+    public void GetPreparationTask_CompletedWithoutInProgress_ReturnsNull()
     {
         // Act
-        Task? returnTask = InvokeCompletePreparation(deferFailures, dispatched: false);
+        Task? returnTask = InvokeGetPreparationTask(default, holdsInProgress: false);
 
         // Assert
         Assert.Null(returnTask);
+    }
+
+    /// <summary>
+    /// Failed preparation surfaces through the returned task, so the reader's continuation
+    /// resets async state.
+    /// </summary>
+    [Fact]
+    public void GetPreparationTask_Faulted_ReturnsFaultedTask()
+    {
+        // Arrange
+        InvalidOperationException failure = new();
+        ValueTask preparation = new(Task.FromException(failure));
+
+        // Act
+        Task? returnTask = InvokeGetPreparationTask(preparation, holdsInProgress: false);
+
+        // Assert
+        Assert.NotNull(returnTask);
+        Assert.Same(failure, returnTask.Exception!.InnerException);
     }
 
     /// <summary>
@@ -419,20 +436,23 @@ public class SqlCommandTests
         return completion.Task;
     }
 
+    /// <summary>Invokes the private adapter that selects the task execution waits for.</summary>
+    /// <param name="preparation">The shared preparation result.</param>
+    /// <param name="holdsInProgress">Whether preparation holds the in-progress flag.</param>
+    /// <returns>The task execution must wait for, or null for inline execution.</returns>
+    private static Task? InvokeGetPreparationTask(ValueTask preparation, bool holdsInProgress)
+    {
+        MethodInfo method = typeof(SqlCommand).GetMethod(
+            "GetPreparationTask", BindingFlags.Static | BindingFlags.NonPublic)!;
+        return (Task?)method.Invoke(null, new object[] { preparation, holdsInProgress });
+    }
+
     /// <summary>
     /// Invokes the private asynchronous encryption preparation entry point for a first attempt,
     /// as async execution does, without opening a connection.
     /// </summary>
     /// <param name="command">The command whose parameters may hit the query metadata cache.</param>
     /// <returns>The invocation arguments, including the returned task and used-cache flag.</returns>
-    private static Task? InvokeCompletePreparation(bool deferFailures, bool dispatched)
-    {
-        MethodInfo method = typeof(SqlCommand).GetMethod(
-            "CompletePreparation", BindingFlags.Static | BindingFlags.NonPublic)!;
-        object[] arguments = { default(ValueTask), true, deferFailures, dispatched };
-        return (Task?)method.Invoke(null, arguments);
-    }
-
     private static object?[] InvokeAsyncPrepareForTransparentEncryption(SqlCommand command)
     {
         MethodInfo prepare = typeof(SqlCommand).GetMethod(
