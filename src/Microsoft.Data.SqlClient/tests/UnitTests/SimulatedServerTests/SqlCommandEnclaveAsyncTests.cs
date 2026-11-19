@@ -514,7 +514,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SetField(command, "enclaveAttestationParameters", parameters);
             SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
             Task operation = create
-                ? Invoke(command, "CreateEnclaveSessionAsync", new byte[] { 1 }, true, cancellation.Token)
+                ? command.CreateEnclaveSession(new byte[] { 1 }, isRetry: true, isAsync: true, cancellation.Token).AsTask()
                 : Invoke(command, "InvalidateEnclaveSessionAsync", cancellation.Token);
 
             Assert.False(operation.IsCompleted);
@@ -751,10 +751,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 cancellation.Cancel();
                 await Assert.ThrowsAnyAsync<OperationCanceledException>(() => global.Task);
-                var failure = Assert.Throws<TargetInvocationException>(() =>
-                    typeof(SqlCommand).GetMethod("EndExecuteReaderAsync", BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Invoke(command, new object[] { global.Task }));
-                Assert.IsType<TaskCanceledException>(failure.InnerException);
+                Assert.Throws<TaskCanceledException>(() => command.EndExecuteReaderAsync(global.Task));
             }
             else
             {
@@ -783,7 +780,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.SessionOperation = stage == 2;
                 fixture.Provider.Attestation = stage == 1;
                 Task preparation = stage == 2
-                    ? Invoke(command, "CreateEnclaveSessionAsync", new byte[] { 1 }, true, cancellation.Token)
+                    ? command.CreateEnclaveSession(new byte[] { 1 }, isRetry: true, isAsync: true, cancellation.Token).AsTask()
                     : Invoke(command, "PrepareForTransparentEncryptionAsync", 30, true, true, cancellation.Token);
                 retryEntered.SetResult(null);
                 await preparation;

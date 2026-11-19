@@ -635,7 +635,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader CompleteAsyncExecuteReader(bool isInternal, bool forDescribeParameterEncryption)
+        private SqlDataReader CompleteAsyncExecutionSynchronously(bool isInternal, bool forDescribeParameterEncryption)
         {
             SqlDataReader reader = CachedAsyncState.CachedAsyncReader;
             // TODO(GH-3604): Fix this failing assertion.
@@ -674,7 +674,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
+        internal SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
 
@@ -1066,8 +1066,14 @@ namespace Microsoft.Data.SqlClient
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
 
-                registration.Dispose();
-                context?.Dispose();
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
             }
 
@@ -1109,7 +1115,7 @@ namespace Microsoft.Data.SqlClient
 
             CheckThrowSNIException();
 
-            SqlDataReader reader = CompleteAsyncExecuteReader(isInternal, forDescribeParameterEncryption: false);
+            SqlDataReader reader = CompleteAsyncExecutionSynchronously(isInternal, forDescribeParameterEncryption: false);
             Debug.Assert(_stateObj is null, "non-null state object in InternalEndExecuteReader");
             return reader;
             // @TODO: CER Exception Handling was removed here (see GH#3581)
