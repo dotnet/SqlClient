@@ -1929,9 +1929,9 @@ namespace Microsoft.Data.SqlClient
         /// </para>
         /// <para>
         /// The caller sets <c>_enclaveAttestationInProgress</c> before starting this method, and
-        /// this method clears it once execution has reserved the connection or preparation has
-        /// failed. This blocks connection changes and overlapping executions while key store calls
-        /// are pending.
+        /// this method clears it once the command write has completed, or preparation or the write
+        /// has failed. The read stage marks the command as pending only after the write, so this
+        /// blocks connection changes and overlapping executions until then.
         /// </para>
         /// </remarks>
         private async Task ContinueRunExecuteReaderTdsAsync(
@@ -1952,7 +1952,6 @@ namespace Microsoft.Data.SqlClient
             string preparedDatabase,
             string method)
         {
-            Task subTask;
             try
             {
                 try
@@ -1986,20 +1985,22 @@ namespace Microsoft.Data.SqlClient
                     returnStream,
                     isAsync,
                     TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
-                    out subTask,
+                    out Task subTask,
                     asyncWrite,
                     isRetry,
                     ds);
+
+                // The read stage marks the command as pending only after the write completes, so
+                // keep the flag set until then.
+                if (subTask is not null)
+                {
+                    await subTask.ConfigureAwait(false);
+                }
             }
             finally
             {
-                // Execution has reserved the connection, or preparation failed.
+                // The write has completed, or preparation or the write failed.
                 _enclaveAttestationInProgress = false;
-            }
-
-            if (subTask is not null)
-            {
-                await subTask.ConfigureAwait(false);
             }
         }
 
