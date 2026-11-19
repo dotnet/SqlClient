@@ -931,6 +931,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             /// <summary>Signaled when the retried query reaches the server.</summary>
             internal ManualResetEventSlim RetryEntered { get; } = new ManualResetEventSlim(false);
 
+            /// <summary>
+            /// Answers sp_describe_parameter_encryption with no result sets, so the command needs no enclave computations.
+            /// </summary>
+            /// <param name="session">The connected test session.</param>
+            /// <param name="request">The RPC request.</param>
+            /// <returns>An empty response.</returns>
+            public override TDSMessageCollection ExecuteRPC(ITDSServerSession session, TDSMessage request)
+            {
+                TDSMessage response = new TDSMessage(TDSMessageType.Response);
+                response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
+                return new TDSMessageCollection { response };
+            }
+
             /// <summary>Returns an invalid enclave session error, then a gated distinct error.</summary>
             /// <param name="session">The connected test session.</param>
             /// <param name="batchRequest">The batch to execute.</param>
