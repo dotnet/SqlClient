@@ -319,6 +319,37 @@ public class SqlCommandTests
     }
 
     /// <summary>
+    /// A dispatched cache hit whose worker finishes before the entry checks it must still return
+    /// its task, because the reader clears the in-progress guard only through that task.
+    /// </summary>
+    [Fact]
+    public void CompletePreparation_DispatchedAlreadyCompleted_ReturnsTask()
+    {
+        // Act
+        Task? returnTask = InvokeCompletePreparation(deferFailures: true, dispatched: true);
+
+        // Assert
+        Assert.NotNull(returnTask);
+        Assert.Equal(TaskStatus.RanToCompletion, returnTask.Status);
+    }
+
+    /// <summary>
+    /// Completed async preparation that was not dispatched finishes inline without a task, so
+    /// the reader takes its synchronous execution branch.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CompletePreparation_NotDispatchedAlreadyCompleted_ReturnsNull(bool deferFailures)
+    {
+        // Act
+        Task? returnTask = InvokeCompletePreparation(deferFailures, dispatched: false);
+
+        // Assert
+        Assert.Null(returnTask);
+    }
+
+    /// <summary>
     /// An async cache hit with plaintext parameters but cached enclave keys still completes on a
     /// worker, because execution would otherwise build the enclave package on the caller's thread.
     /// </summary>
@@ -394,6 +425,14 @@ public class SqlCommandTests
     /// </summary>
     /// <param name="command">The command whose parameters may hit the query metadata cache.</param>
     /// <returns>The invocation arguments, including the returned task and used-cache flag.</returns>
+    private static Task? InvokeCompletePreparation(bool deferFailures, bool dispatched)
+    {
+        MethodInfo method = typeof(SqlCommand).GetMethod(
+            "CompletePreparation", BindingFlags.Static | BindingFlags.NonPublic)!;
+        object[] arguments = { default(ValueTask), true, deferFailures, dispatched };
+        return (Task?)method.Invoke(null, arguments);
+    }
+
     private static object?[] InvokeAsyncPrepareForTransparentEncryption(SqlCommand command)
     {
         MethodInfo prepare = typeof(SqlCommand).GetMethod(

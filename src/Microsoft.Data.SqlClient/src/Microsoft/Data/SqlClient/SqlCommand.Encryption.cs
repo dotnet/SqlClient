@@ -526,29 +526,37 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(isAsync == (completion != null),
                 "completion should be null if and only if mode is async.");
 
-            returnTask = null;
             EncryptionPreparationState state = new EncryptionPreparationState();
             ValueTask preparation = PrepareParameterEncryption(
                 timeout, asyncWrite, isRetry, method, state, isAsync, cancellationToken);
             usedCache = state.UsedCache;
+            returnTask = CompletePreparation(
+                preparation, isAsync, state.DeferFailures, state.Dispatched);
+        }
 
-            if (!isAsync)
+        /// <summary>
+        /// Adapts shared preparation to the caller's mode. A dispatched cache hit always returns
+        /// its task, even when its worker has already finished, because the reader clears the
+        /// in-progress guard it holds only through that task. Other completed preparation finishes
+        /// inline, and only deferred failures surface through a completed task.
+        /// </summary>
+        private static Task CompletePreparation(
+            ValueTask preparation,
+            bool isAsync,
+            bool deferFailures,
+            bool dispatched)
+        {
+            if (isAsync
+                && (dispatched
+                    || !preparation.IsCompleted
+                    || (deferFailures && !preparation.IsCompletedSuccessfully)))
             {
-                preparation.GetAwaiter().GetResult();
+                return preparation.AsTask();
             }
-            else if (!preparation.IsCompleted)
-            {
-                returnTask = preparation.AsTask();
-            }
-            else if (state.DeferFailures && !preparation.IsCompletedSuccessfully)
-            {
-                returnTask = preparation.AsTask();
-            }
-            else
-            {
-                // Completed preparation must not queue otherwise unreserved TDS setup.
-                preparation.GetAwaiter().GetResult();
-            }
+
+            // Completed preparation must not queue otherwise unreserved TDS setup.
+            preparation.GetAwaiter().GetResult();
+            return null;
         }
 
         /// <summary>
@@ -663,6 +671,7 @@ namespace Microsoft.Data.SqlClient
                     // Key loads may need key store network I/O, so even synchronously completed
                     // loads and the blocking stale-cache describe fallback must not run on the
                     // caller's thread.
+                    state.Dispatched = true;
                     await new ThreadPoolHop();
 
                     bool cacheHit = await SqlQueryMetadataCache.GetInstance()
@@ -722,6 +731,9 @@ namespace Microsoft.Data.SqlClient
 
             /// <summary>Whether failures surface via the returned task.</summary>
             public bool DeferFailures;
+
+            /// <summary>Whether a cache hit moved to a worker and holds the guard.</summary>
+            public bool Dispatched;
         }
 
         /// <summary>
