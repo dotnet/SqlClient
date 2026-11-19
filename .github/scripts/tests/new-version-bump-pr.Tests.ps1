@@ -51,6 +51,9 @@ Describe 'Compare-SqlClientVersion' {
     It 'Orders <Left> before <Right>' -TestCases @(
         @{ Left = '8.1.0-preview1'; Right = '8.1.0-preview2' }
         @{ Left = '8.1.0-preview2'; Right = '8.1.0-preview10' }
+        @{ Left = '8.1.0-preview2.25300.1'; Right = '8.1.0-preview10' }
+        @{ Left = '8.1.0-preview2'; Right = '8.1.0-preview2.25300.1' }
+        @{ Left = '8.1.0-preview2.9'; Right = '8.1.0-preview2.10' }
         @{ Left = '8.1.0-preview3'; Right = '8.1.0' }
         @{ Left = '8.1.0'; Right = '8.1.1' }
         @{ Left = '7.9.9'; Right = '8.0.0' }
@@ -120,6 +123,16 @@ Describe 'Get-NextSqlClientVersion' {
 
         # Assert
         $result | Should -Be '8.1.0-preview2'
+    }
+
+    It 'Picks a later numeric preview milestone after a build-stamped preview' {
+        # Act
+        $result = Get-NextSqlClientVersion -TargetBranch 'main' `
+            -PublishedVersion '8.1.0-preview9.25300.1' `
+            -MilestoneTitles @('8.1.0-preview10', '8.1.0')
+
+        # Assert
+        $result | Should -Be '8.1.0-preview10'
     }
 
     It 'Throws for an invalid published version' {

@@ -90,9 +90,9 @@ function ConvertTo-SqlClientVersion {
     }
 }
 
-# Compares two prerelease identifiers. Labels such as preview2 and preview10 compare by their
-# numeric suffix, so preview10 is greater than preview2.
-function Compare-PrereleaseLabel {
+# Compares one dot-separated prerelease identifier. Labels such as preview2 and preview10
+# compare by their numeric suffix, so preview10 is greater than preview2.
+function Compare-PrereleaseIdentifier {
     param([string]$Left, [string]$Right)
 
     $leftMatch = [regex]::Match($Left, '^([A-Za-z]*)(\d+)$')
@@ -104,10 +104,29 @@ function Compare-PrereleaseLabel {
             return [Math]::Sign($prefix)
         }
 
-        return ([long]$leftMatch.Groups[2].Value).CompareTo([long]$rightMatch.Groups[2].Value)
+        return ([decimal]$leftMatch.Groups[2].Value).CompareTo([decimal]$rightMatch.Groups[2].Value)
     }
 
     return [Math]::Sign([string]::CompareOrdinal($Left, $Right))
+}
+
+# Compares two prerelease labels identifier by identifier, so build-stamped labels such as
+# preview2.25300.1 still order by their preview number. A shorter label sorts first on a tie.
+function Compare-PrereleaseLabel {
+    param([string]$Left, [string]$Right)
+
+    $leftParts = $Left.Split('.')
+    $rightParts = $Right.Split('.')
+    $count = [Math]::Min($leftParts.Length, $rightParts.Length)
+
+    for ($i = 0; $i -lt $count; $i++) {
+        $result = Compare-PrereleaseIdentifier -Left $leftParts[$i] -Right $rightParts[$i]
+        if ($result -ne 0) {
+            return $result
+        }
+    }
+
+    return $leftParts.Length.CompareTo($rightParts.Length)
 }
 
 # Returns -1, 0, or 1. A GA version is greater than any prerelease of the same number.
