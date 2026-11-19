@@ -1195,16 +1195,50 @@ namespace Microsoft.Data.SqlClient
             {
                 // @TODO: Make this a separate method
 
-                PrepareForTransparentEncryption(
-                    isAsync,
-                    timeout,
-                    completion,
-                    out Task prepareEncryptionTask,
-                    asyncWrite: asyncWrite && isAsync,
-                    out usedCache,
-                    isRetry,
-                    method,
-                    cancellationToken);
+                usedCache = TryGetCachedQueryMetadata(
+                    isRetry, out SqlQueryMetadataCache.CachedQueryMetadata cachedMetadata);
+
+                // Asynchronous preparation can yield before execution reserves the connection.
+                // Hold the in-progress flag over that window so the connection, transaction and
+                // command cannot be changed or reused. Execution releases it once started.
+                bool ownsInProgress = isAsync && !_enclaveAttestationInProgress;
+                _enclaveAttestationInProgress |= ownsInProgress;
+
+                Task prepareEncryptionTask = null;
+                try
+                {
+                    ValueTask preparation = PrepareForTransparentEncryption(
+                        usedCache ? cachedMetadata : null,
+                        timeout,
+                        asyncWrite: asyncWrite && isAsync,
+                        isRetry,
+                        method,
+                        isAsync,
+                        cancellationToken);
+
+                    // Completed preparation starts execution inline, so the reader reserves the
+                    // connection before this call returns. Pending enclave package keys still
+                    // need the asynchronous continuation, so they never load on this thread.
+                    if (isAsync
+                        && (!preparation.IsCompletedSuccessfully
+                            || keysToBeSentToEnclave is { IsEmpty: false }))
+                    {
+                        prepareEncryptionTask = preparation.AsTask();
+                    }
+                    else
+                    {
+                        preparation.GetAwaiter().GetResult();
+                    }
+                }
+                catch
+                {
+                    if (ownsInProgress)
+                    {
+                        _enclaveAttestationInProgress = false;
+                    }
+
+                    throw;
+                }
 
                 long firstAttemptStart = ADP.TimerCurrent();
                 try
@@ -1221,7 +1255,8 @@ namespace Microsoft.Data.SqlClient
                         method,
                         isAsync ? cancellationToken : CancellationToken.None,
                         ds: null,
-                        describeParameterEncryptionTask: prepareEncryptionTask);
+                        describeParameterEncryptionTask: prepareEncryptionTask,
+                        releaseInProgress: ownsInProgress);
                 }
                 catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                 {
@@ -1846,9 +1881,12 @@ namespace Microsoft.Data.SqlClient
             string method,
             CancellationToken cancellationToken,
             SqlDataReader ds = null,
-            Task describeParameterEncryptionTask = null) // @TODO: This task should likely come from this method otherwise this is just setting up a continuation
+            Task describeParameterEncryptionTask = null, // @TODO: This task should likely come from this method otherwise this is just setting up a continuation
+            bool releaseInProgress = false)
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
+            Debug.Assert(!releaseInProgress || _enclaveAttestationInProgress,
+                "The in-progress flag should be set when execution owns its release.");
 
             if (ds is null && returnStream)
             {
@@ -1860,19 +1898,14 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: I guess this means async execution? Using tasks as the primary means of determining async vs sync is clunky. It would be better to have separate async vs sync pathways.
                 long parameterEncryptionStart = ADP.TimerCurrent();
 
-                // The remainder of the execution issues blocking TDS writes, so it must never run inline on
-                // the caller's thread (nor on a network callback thread). Task.Run reproduces the thread pool
-                // hand-off that the previous ContinueWith-based continuation provided.
+                // The remainder of the execution issues blocking TDS writes, so it must never run
+                // inline on the caller's thread (nor on a network callback thread). Task.Run
+                // reproduces the thread pool hand-off that the previous ContinueWith-based
+                // continuation provided.
                 SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                 SqlConnection preparedConnection = _activeConnection;
                 int preparedCloseCount = preparedConnection.CloseCount;
                 string preparedDatabase = preparedConnection.Database;
-
-                // Block command and connection changes until execution has reserved the connection.
-                // The continuation below is the only place that clears the flag for async
-                // preparation.
-                _enclaveAttestationInProgress = true;
-
                 task = Task.Run(() => ContinueRunExecuteReaderTdsAsync(
                     describeParameterEncryptionTask,
                     cmdBehavior,
@@ -1889,26 +1922,37 @@ namespace Microsoft.Data.SqlClient
                     preparedConnection,
                     preparedCloseCount,
                     preparedDatabase,
-                    method));
+                    method,
+                    releaseInProgress));
 
                 return ds;
             }
             else
             {
-                // Synchronous execution
-                GenerateEnclavePackage(isAsync: false, CancellationToken.None)
-                    .GetAwaiter()
-                    .GetResult();
-                return RunExecuteReaderTds(
-                    cmdBehavior,
-                    runBehavior,
-                    returnStream,
-                    isAsync,
-                    timeout,
-                    out task,
-                    asyncWrite,
-                    isRetry,
-                    ds);
+                // Synchronous execution, or asynchronous preparation that completed inline
+                try
+                {
+                    GenerateEnclavePackage(isAsync: false, CancellationToken.None)
+                        .GetAwaiter()
+                        .GetResult();
+                    return RunExecuteReaderTds(
+                        cmdBehavior,
+                        runBehavior,
+                        returnStream,
+                        isAsync,
+                        timeout,
+                        out task,
+                        asyncWrite,
+                        isRetry,
+                        ds);
+                }
+                finally
+                {
+                    if (releaseInProgress)
+                    {
+                        _enclaveAttestationInProgress = false;
+                    }
+                }
             }
         }
 
@@ -1928,10 +1972,12 @@ namespace Microsoft.Data.SqlClient
         /// after that point is surfaced without resetting it.
         /// </para>
         /// <para>
-        /// The caller sets <c>_enclaveAttestationInProgress</c> before starting this method, and
-        /// this method clears it once the command write has completed, or preparation or the write
-        /// has failed. The read stage marks the command as pending only after the write, so this
-        /// blocks connection changes and overlapping executions until then.
+        /// When <paramref name="releaseInProgress"/> is true, this method clears
+        /// <c>_enclaveAttestationInProgress</c> once the command write has completed, or
+        /// preparation or the write has failed. The read stage marks the command as pending only
+        /// after the write, so this blocks command changes and overlapping executions until then.
+        /// The flag does not block connection close, reopen or new transactions, so the
+        /// connection is revalidated after each await.
         /// </para>
         /// </remarks>
         private async Task ContinueRunExecuteReaderTdsAsync(
@@ -1950,7 +1996,8 @@ namespace Microsoft.Data.SqlClient
             SqlConnection preparedConnection,
             int preparedCloseCount,
             string preparedDatabase,
-            string method)
+            string method,
+            bool releaseInProgress)
         {
             try
             {
@@ -2000,7 +2047,10 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 // The write has completed, or preparation or the write failed.
-                _enclaveAttestationInProgress = false;
+                if (releaseInProgress)
+                {
+                    _enclaveAttestationInProgress = false;
+                }
             }
         }
 

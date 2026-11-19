@@ -228,20 +228,19 @@ public class SqlCommandTests
         using SqlConnection connection = command.Connection;
 
         // Act
-        object?[] arguments;
+        ValueTask preparation;
         try
         {
-            arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+            preparation = InvokeAsyncPrepareForTransparentEncryption(command);
         }
         finally
         {
             invokingPrepare = false;
         }
-        Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
-        await completion;
+        Assert.NotEqual(default, preparation);
+        await preparation;
 
         // Assert
-        Assert.Equal(true, arguments[5]);
         Assert.False(providerRanInline);
         Assert.Equal(1, provider.DecryptAsyncCallCount);
         Assert.Equal(0, provider.DecryptCallCount);
@@ -272,21 +271,20 @@ public class SqlCommandTests
         using SqlConnection connection = command.Connection;
 
         // Act
-        object?[] arguments;
+        ValueTask preparation;
         try
         {
-            arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+            preparation = InvokeAsyncPrepareForTransparentEncryption(command);
         }
         finally
         {
             invokingPrepare = false;
         }
-        Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
 
         // Assert
         // The closed connection stops the describe fallback before any network I/O.
-        await Assert.ThrowsAsync<InvalidOperationException>(() => completion);
-        Assert.Equal(true, arguments[5]);
+        Assert.NotEqual(default, preparation);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => preparation.AsTask());
         Assert.False(providerRanInline);
         Assert.Equal(1, provider.DecryptAsyncCallCount);
         Assert.Null(command.Parameters[0].CipherMetadata);
@@ -527,11 +525,11 @@ public class SqlCommandTests
             command, ignoreQueriesWithReturnValueParams: true);
 
         // Act
-        object?[] arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+        ValueTask preparation = InvokeAsyncPrepareForTransparentEncryption(command);
 
         // Assert
-        Assert.Null(arguments[3]);
-        Assert.Equal(true, arguments[5]);
+        Assert.Equal(default, preparation);
+        Assert.True(preparation.IsCompletedSuccessfully);
         Assert.Equal(0, provider.DecryptAsyncCallCount);
         Assert.Equal(0, provider.DecryptCallCount);
         Assert.Null(command.Parameters[0].CipherMetadata);
@@ -559,12 +557,11 @@ public class SqlCommandTests
         command.keysToBeSentToEnclave = null;
 
         // Act
-        object?[] arguments = InvokeAsyncPrepareForTransparentEncryption(command);
-        Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
-        await completion;
+        ValueTask preparation = InvokeAsyncPrepareForTransparentEncryption(command);
+        Assert.NotEqual(default, preparation);
+        await preparation;
 
         // Assert
-        Assert.Equal(true, arguments[5]);
         Assert.Equal(0, provider.DecryptAsyncCallCount);
         Assert.Equal(0, provider.DecryptCallCount);
         Assert.NotNull(command.keysToBeSentToEnclave);
@@ -608,22 +605,29 @@ public class SqlCommandTests
     }
 
     /// <summary>
-    /// Invokes the private asynchronous encryption preparation entry point for a first attempt,
-    /// as async execution does, without opening a connection.
+    /// Probes the query metadata cache and invokes the private asynchronous encryption
+    /// preparation for a first attempt, as async execution does, without opening a connection.
     /// </summary>
-    /// <param name="command">The command whose parameters may hit the query metadata cache.</param>
-    /// <returns>The invocation arguments, including the returned task and used-cache flag.</returns>
-    private static object?[] InvokeAsyncPrepareForTransparentEncryption(SqlCommand command)
+    /// <param name="command">The command whose parameters hit the query metadata cache.</param>
+    /// <returns>
+    /// The preparation result. It is <see langword="default"/> when preparation completed inline.
+    /// </returns>
+    private static ValueTask InvokeAsyncPrepareForTransparentEncryption(SqlCommand command)
     {
+        MethodInfo probe = typeof(SqlCommand).GetMethod(
+            "TryGetCachedQueryMetadata", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Cache probe method not found.");
+        object?[] probeArguments = { false, null };
+        Assert.True((bool)probe.Invoke(command, probeArguments)!);
+
         MethodInfo prepare = typeof(SqlCommand).GetMethod(
             "PrepareForTransparentEncryption", BindingFlags.Instance | BindingFlags.NonPublic)
             ?? throw new InvalidOperationException("Encryption preparation method not found.");
-        object?[] arguments =
-        {
-            true, 30, new TaskCompletionSource<object>(), null, true, false, false, "ExecuteReader",
-            CancellationToken.None,
-        };
-        prepare.Invoke(command, arguments);
-        return arguments;
+        return (ValueTask)prepare.Invoke(
+            command,
+            new object?[]
+            {
+                probeArguments[1], 30, true, false, "ExecuteReader", true, CancellationToken.None,
+            })!;
     }
 }
