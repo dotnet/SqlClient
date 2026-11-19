@@ -721,7 +721,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retry =
                 (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) =>
                 {
+                    // Like a real retry, take a reservation for End.
                     retries++;
+                    inner.IncrementAsyncCount();
                     return Task.FromResult<object>(null);
                 };
             typeof(SqlCommand).GetMethod("CreateLocalCompletionTask", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -740,6 +742,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.CompleteSessionOperation();
                 await global.Task;
                 Assert.Equal(1, retries);
+                // Only the retry's reservation remains for End.
+                Assert.Equal(1, GetAsyncCount(inner));
                 inner.DecrementAsyncCount();
             }
             else if (outcome == 1)
