@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", null, preparation.Task
+                true, false, "ExecuteReader", null, preparation.Task, false
             };
             using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
                 .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -144,15 +144,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             command.AddBatchCommand(new SqlBatchCommand("SELECT 2",
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
             command.SetBatchRPCModeReadyToExecute();
-            object[] arguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
-                "ExecuteReader", CancellationToken.None
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, arguments);
-            Assert.Null(arguments[3]);
-            Assert.Equal(false, arguments[5]);
+            ValueTask preparation = InvokePrepare(command, false, CancellationToken.None);
+            Assert.True(preparation.IsCompletedSuccessfully);
             Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
             Assert.Equal(1, fixture.Provider.AsyncCalls);
             Assert.Equal(0, fixture.Provider.SyncCalls);
@@ -184,15 +177,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .SetValue(fixture.Connection.ConnectionOptions, null);
             typeof(SqlConnectionOptions).GetField("_attestationProtocol", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(fixture.Connection.ConnectionOptions, SqlConnectionAttestationProtocol.NotSpecified);
-            object[] preparationArguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
-                "ExecuteReader", CancellationToken.None
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, preparationArguments);
-            Assert.Null(preparationArguments[3]);
-            Assert.Equal(false, preparationArguments[5]);
+            ValueTask preparation = InvokePrepare(command, false, CancellationToken.None);
+            Assert.True(preparation.IsCompletedSuccessfully);
             Task<SqlDataReader> operation;
             try
             {
@@ -794,17 +780,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>Starts uncached asynchronous encryption preparation, as execution does.
         /// </summary>
         private static Task PrepareAsync(
-            SqlCommand command, bool isRetry, CancellationToken token)
-        {
-            object[] arguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, isRetry,
-                nameof(SqlCommand.ExecuteReader), token
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, arguments);
-            return (Task)arguments[3] ?? Task.CompletedTask;
-        }
+            SqlCommand command, bool isRetry, CancellationToken token) =>
+            InvokePrepare(command, isRetry, token).AsTask();
+
+        /// <summary>Invokes uncached asynchronous encryption preparation once.</summary>
+        private static ValueTask InvokePrepare(
+            SqlCommand command, bool isRetry, CancellationToken token) =>
+            (ValueTask)typeof(SqlCommand)
+                .GetMethod(
+                    "PrepareForTransparentEncryption",
+                    BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    null, 30, true, isRetry, nameof(SqlCommand.ExecuteReader), true, token
+                });
 
         /// <summary>Cold preparation serializes awaited parameters and preserves provider custom data.</summary>
         [Fact]
