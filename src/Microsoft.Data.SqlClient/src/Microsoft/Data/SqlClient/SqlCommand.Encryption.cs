@@ -613,15 +613,19 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Debug.Assert(_activeConnection != null,
-                "_activeConnection should not be null in PrepareForTransparentEncryption.");
-            Debug.Assert(_activeConnection.Parser != null,
-                "_activeConnection.Parser should not be null in PrepareForTransparentEncryption.");
-            Debug.Assert(_activeConnection.Parser.IsColumnEncryptionSupported,
-                "_activeConnection.Parser.IsColumnEncryptionSupported should be true in PrepareForTransparentEncryption.");
-            Debug.Assert(_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
-                         || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
-                "ColumnEncryption setting should be enabled for input parameter encryption.");
+            // Cache hits only need connection state once their keys have loaded.
+            if (cachedMetadata is null)
+            {
+                Debug.Assert(_activeConnection != null,
+                    "_activeConnection should not be null in PrepareForTransparentEncryption.");
+                Debug.Assert(_activeConnection.Parser != null,
+                    "_activeConnection.Parser should not be null in PrepareForTransparentEncryption.");
+                Debug.Assert(_activeConnection.Parser.IsColumnEncryptionSupported,
+                    "_activeConnection.Parser.IsColumnEncryptionSupported should be true in PrepareForTransparentEncryption.");
+                Debug.Assert(_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
+                             || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
+                    "ColumnEncryption setting should be enabled for input parameter encryption.");
+            }
 
             // The asynchronous workflow serves cache hits that need key loads and enclave
             // execution. Other execution runs the describe round trip directly, as before.
@@ -716,7 +720,7 @@ namespace Microsoft.Data.SqlClient
             /// <summary>Whether cached query metadata is used for this execution.</summary>
             public bool UsedCache;
 
-            /// <summary>Whether failures surface through the returned task, not synchronously.</summary>
+            /// <summary>Whether failures surface via the returned task.</summary>
             public bool DeferFailures;
         }
 
