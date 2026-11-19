@@ -129,28 +129,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private AsyncState _cachedAsyncState = null;
 
-        /// <summary>
-        /// Cancellation token supplied by the caller of the asynchronous execution that is currently in
-        /// flight, or <see cref="CancellationToken.None"/> when the command is executing synchronously.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// The asynchronous execution entry points reach the Always Encrypted machinery through several
-        /// layers of synchronous, callback-driven code that carry no cancellation token. Rather than
-        /// threading a token through every one of those signatures — including the synchronous paths that
-        /// would only ever pass <see cref="CancellationToken.None"/> — the token is recorded here for the
-        /// duration of the operation. It is currently consumed only by the asynchronous Always Encrypted
-        /// key store calls, which are the sole cancellable I/O in that machinery.
-        /// </para>
-        /// <para>
-        /// Read this field only on the thread that started the execution, and pass the captured value on as
-        /// an explicit parameter. The Always Encrypted work is handed to the thread pool and can still be
-        /// running when the execution's cleanup continuation resets this field, so a read taken after that
-        /// hand-off may silently observe <see cref="CancellationToken.None"/>.
-        /// </para>
-        /// </remarks>
-        private CancellationToken _asyncExecutionCancellationToken;
-
         private int _currentlyExecutingBatch;
 
         /// <summary>
@@ -244,6 +222,8 @@ namespace Microsoft.Data.SqlClient
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
         // Provider awaits can precede both parser-state acquisition and a cached async result.
+        // Set during enclave attestation and during async key loading for cached query metadata;
+        // the cached path keeps it set until execution has been handed off.
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;
@@ -2499,8 +2479,11 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        // Kick off the retry
-                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // Kick off the retry. A faulted write released its reservation, so only a
+                        // read-stage failure has one to transfer to the retry.
+                        SqlConnectionInternal retryConnection = task.IsFaulted
+                            ? null
+                            : _activeConnection.InnerConnection as SqlConnectionInternal;
                         Task<object> retryTask = null;
                         try
                         {

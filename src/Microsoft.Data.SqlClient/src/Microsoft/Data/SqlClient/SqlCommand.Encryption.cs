@@ -254,6 +254,12 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             CancellationToken cancellationToken)
         {
+            // The async state is reset below, so keep the command marked busy for the whole method.
+            // This blocks connection changes and overlapping executions while key store calls are pending.
+            // The reader continuation awaiting this task clears the flag after execution reserves the
+            // connection or preparation fails. Restoring it here could clear the flag that continuation
+            // set, before enclave package keys load.
+            _enclaveAttestationInProgress = true;
             bool processFinallyBlock = true;
             try
             {
@@ -266,16 +272,17 @@ namespace Microsoft.Data.SqlClient
 
                 // Keep the connection reserved until the worker registers the reader.
                 // Legacy TDS completion is synchronous; provider I/O is awaited separately below.
-                describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecuteReader(
+                describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecutionSynchronously(
                     isInternal: false,
                     forDescribeParameterEncryption: true)).ConfigureAwait(false);
                 ReleaseDescribeParameterEncryptionConnection();
                 Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
 
-                await ReadDescribeEncryptionParameterResultsAsync(
+                await ReadDescribeEncryptionParameterResults(
                     describeParameterEncryptionDataReader,
                     describeParameterEncryptionRpcOriginalRpcMap,
                     isRetry,
+                    isAsync: true,
                     cancellationToken).ConfigureAwait(false);
 
                 #if DEBUG
@@ -506,6 +513,7 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             out bool usedCache,
             bool isRetry,
+            string method,
             CancellationToken cancellationToken = default)
         {
             returnTask = null;
@@ -520,7 +528,14 @@ namespace Microsoft.Data.SqlClient
 
                 if (!isAsync)
                 {
-                    if (cache.GetQueryMetadataIfExists(this))
+                    if (cache.TryGetCachedQueryMetadata(
+                            this,
+                            out SqlQueryMetadataCache.CachedQueryMetadata syncMetadata)
+                        && cache.CompleteCachedQueryMetadata(
+                            this,
+                            syncMetadata,
+                            isAsync: false,
+                            CancellationToken.None).GetAwaiter().GetResult())
                     {
                         usedCache = true;
                         return;
@@ -528,17 +543,37 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (cache.TryGetCachedQueryMetadata(this, out SqlQueryMetadataCache.CachedQueryMetadata metadata))
                 {
-                    // The cached metadata matched, but the column encryption keys still have to be
-                    // loaded, which may require key store network I/O. Hand the rest of the work to a
-                    // worker so even synchronously completed key loads cannot run the blocking
-                    // stale-cache describe fallback on the caller's thread.
                     usedCache = true;
+
+                    // With only plaintext parameters and no cached enclave keys there is no key
+                    // store work, so finish inline.
+                    if (cache.TryCompleteCachedQueryMetadataInline(this, metadata))
+                    {
+                        return;
+                    }
+
+                    // The column encryption keys still have to be loaded, which may require key
+                    // store network I/O. Hand the rest of the work to a worker so even
+                    // synchronously completed key loads cannot run the blocking stale-cache
+                    // describe fallback on the caller's thread.
+                    SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+                    SqlConnection connection = _activeConnection;
+                    int closeCount = connection.CloseCount;
+                    string database = connection.Database;
+
+                    // Block command and connection changes until execution has been handed off.
+                    _enclaveAttestationInProgress = true;
                     returnTask = Task.Run(() => CompleteCachedQueryMetadataAsync(
                         metadata,
+                        retryConnection,
+                        connection,
+                        closeCount,
+                        database,
                         timeout,
                         completion,
                         asyncWrite,
                         isRetry,
+                        method,
                         cancellationToken));
                     return;
                 }
@@ -568,35 +603,105 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         private async Task CompleteCachedQueryMetadataAsync(
             SqlQueryMetadataCache.CachedQueryMetadata metadata,
+            SqlConnectionInternal retryConnection,
+            SqlConnection connection,
+            int closeCount,
+            string database,
             int timeout,
             TaskCompletionSource<object> completion,
             bool asyncWrite,
             bool isRetry,
+            string method,
             CancellationToken cancellationToken)
         {
-            bool cacheHit = await SqlQueryMetadataCache.GetInstance()
-                .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (cacheHit)
+            // On success, execution clears the in-progress flag after it reserves the connection.
+            bool handedOff = false;
+            try
             {
-                return;
+                bool cacheHit = await SqlQueryMetadataCache.GetInstance()
+                    .CompleteCachedQueryMetadata(this, metadata, isAsync: true, cancellationToken)
+                    .ConfigureAwait(false);
+
+                ValidateConnectionLifetime(connection, closeCount, database, method);
+
+                if (!cacheHit)
+                {
+                    // The cached key information was stale, so run the full describe parameter
+                    // encryption round trip. It issues blocking TDS writes, but we are already off
+                    // the caller's thread.
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ValidateConnectionForEnclaveExecution(retryConnection);
+                    PrepareForTransparentEncryptionCore(
+                        isAsync: true,
+                        timeout,
+                        completion,
+                        out Task describeTask,
+                        asyncWrite,
+                        isRetry,
+                        cancellationToken);
+
+                    if (describeTask is not null)
+                    {
+                        await describeTask.ConfigureAwait(false);
+                    }
+                }
+
+                handedOff = true;
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                throw;
+            }
+            finally
+            {
+                if (!handedOff)
+                {
+                    _enclaveAttestationInProgress = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Rejects execution when the command's connection was replaced, closed and reopened, or
+        /// switched to another database while encryption preparation was pending. The query
+        /// metadata cache key includes the database, so metadata loaded for one database must not
+        /// be used to execute against another. Also repeats the transaction binding checks of
+        /// <see cref="ValidateCommand"/>, because a transaction may have begun meanwhile.
+        /// </summary>
+        private void ValidateConnectionLifetime(
+            SqlConnection connection,
+            int closeCount,
+            string database,
+            string method)
+        {
+            if (!ReferenceEquals(_activeConnection, connection) || connection.CloseCount != closeCount)
+            {
+                throw ADP.ClosedConnectionError();
             }
 
-            // The cached key information was stale, so run the full describe parameter encryption
-            // round trip. It issues blocking TDS writes, but we are already off the caller's thread.
-            PrepareForTransparentEncryptionCore(
-                isAsync: true,
-                timeout,
-                completion,
-                out Task describeTask,
-                asyncWrite,
-                isRetry,
-                cancellationToken);
-
-            if (describeTask is not null)
+            if (!string.Equals(connection.Database, database, StringComparison.Ordinal))
             {
-                await describeTask.ConfigureAwait(false);
+                throw SQL.CannotModifyPropertyAsyncOperationInProgress(nameof(SqlConnection.Database));
+            }
+
+            if (_transaction is not null && _transaction.Connection is null)
+            {
+                _transaction = null;
+            }
+
+            // A closed connection has no transaction; a real close already failed the count check.
+            if (connection.State == ConnectionState.Open
+                && connection.HasLocalTransactionFromAPI
+                && _transaction is null)
+            {
+                throw ADP.TransactionRequired(method);
+            }
+
+            if (_transaction is not null && connection != _transaction.Connection)
+            {
+                throw ADP.TransactionConnectionMismatch();
             }
         }
 
@@ -630,6 +735,7 @@ namespace Microsoft.Data.SqlClient
                 "completion should be null if and only if mode is async.");
 
             returnTask = null;
+            bool inProgressFlagWasSet = _enclaveAttestationInProgress;
 
             if (isAsync && ShouldUseEnclaveBasedWorkflow)
             {
@@ -642,10 +748,18 @@ namespace Microsoft.Data.SqlClient
                     serializedAttestationParameters: null, cancellationToken);
             }
 
-            // Completed preparation must not queue otherwise unreserved TDS setup.
-            if (returnTask?.Status == TaskStatus.RanToCompletion)
+            // Completed preparation must not queue otherwise unreserved TDS setup. Keep the task
+            // when enclave keys are pending, so the reader continuation loads them asynchronously.
+            if (returnTask?.Status == TaskStatus.RanToCompletion
+                && (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty))
             {
                 returnTask = null;
+
+                // No reader continuation will run, so release a flag that preparation handed off.
+                if (!inProgressFlagWasSet)
+                {
+                    _enclaveAttestationInProgress = false;
+                }
             }
         }
 
@@ -732,7 +846,9 @@ namespace Microsoft.Data.SqlClient
                         ReadDescribeEncryptionParameterResults(
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
-                            isRetry);
+                            isRetry,
+                            isAsync: false,
+                            CancellationToken.None).GetAwaiter().GetResult();
 
                         #if DEBUG
                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -783,6 +899,11 @@ namespace Microsoft.Data.SqlClient
             CancellationToken cancellationToken)
         {
             SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+            // A stale cached-metadata fallback already holds the flag until execution hand-off.
+            // Otherwise, on success, the reader continuation clears it after reserving the
+            // connection.
+            bool ownsInProgressFlag = !_enclaveAttestationInProgress;
+            bool handedOff = false;
             _enclaveAttestationInProgress = true;
             try
             {
@@ -797,6 +918,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     await task.ConfigureAwait(false);
                 }
+
+                handedOff = true;
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
@@ -806,7 +929,10 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _enclaveAttestationInProgress = false;
+                if (ownsInProgressFlag && !handedOff)
+                {
+                    _enclaveAttestationInProgress = false;
+                }
             }
         }
 
@@ -882,152 +1008,50 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Read the output of sp_describe_parameter_encryption
-        /// </summary>
-        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
-        /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
-        private void ReadDescribeEncryptionParameterResults(
-            SqlDataReader ds,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            bool isRetry)
+        internal async ValueTask CreateEnclaveSession(
+            byte[] attestationInfo,
+            bool isRetry,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
-            PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
-            foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, pending))
+            if (isAsync)
+            {
+                await EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
+                    _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
+                    GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
+                    customData, customDataLength, isRetry, cancellationToken).ConfigureAwait(false);
+            }
+            else
             {
                 EnclaveDelegate.Instance.CreateEnclaveSession(
                     _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
                     GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
                     customData, customDataLength, isRetry);
-                enclaveAttestationParameters = null;
             }
 
-            IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
-            for (int i = 0; i < verifications.Count; i++)
-            {
-                ColumnMasterKeySignatureVerification verification = verifications[i];
-                SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                    verification.KeyStoreName,
-                    verification.KeyPath,
-                    verification.IsEnclaveEnabled,
-                    verification.Signature,
-                    _activeConnection,
-                    this,
-                    isAsync: false,
-                    CancellationToken.None).GetAwaiter().GetResult();
-            }
-
-            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
-            for (int i = 0; i < keyDecryptions.Count; i++)
-            {
-                SqlSecurityUtility.DecryptSymmetricKey(
-                    keyDecryptions[i], _activeConnection, this,
-                    isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
-            }
-
-            CacheQueryMetadataIfNeeded();
-        }
-
-        /// <summary>
-        /// Asynchronously reads the output of sp_describe_parameter_encryption.
-        /// </summary>
-        /// <remarks>
-        /// Async counterpart of <see cref="ReadDescribeEncryptionParameterResults"/>. Result set parsing is
-        /// shared with the synchronous path; enclave session creation, column master key signature
-        /// verification, and column encryption key decryption use their asynchronous provider APIs.
-        /// </remarks>
-        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
-        /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
-        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
-        private async Task ReadDescribeEncryptionParameterResultsAsync(
-            SqlDataReader ds,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            bool isRetry,
-            CancellationToken cancellationToken)
-        {
-            PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
-            foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, pending))
-            {
-                await CreateEnclaveSessionAsync(attestationInfo, isRetry, cancellationToken).ConfigureAwait(false);
-            }
-
-            IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
-            for (int i = 0; i < verifications.Count; i++)
-            {
-                ColumnMasterKeySignatureVerification verification = verifications[i];
-                await SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                        verification.KeyStoreName,
-                        verification.KeyPath,
-                        verification.IsEnclaveEnabled,
-                        verification.Signature,
-                        _activeConnection,
-                        this,
-                        isAsync: true,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            // Metadata entries frequently share a key. Resolve them sequentially so the first result
-            // populates the cache without creating additional waiters for the same key.
-            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
-            for (int i = 0; i < keyDecryptions.Count; i++)
-            {
-                await SqlSecurityUtility.DecryptSymmetricKey(
-                    keyDecryptions[i], _activeConnection, this, isAsync: true, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            CacheQueryMetadataIfNeeded();
-        }
-
-        private async Task CreateEnclaveSessionAsync(byte[] attestationInfo, bool isRetry, CancellationToken cancellationToken)
-        {
-            await EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
-                GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
-                customData, customDataLength, isRetry, cancellationToken).ConfigureAwait(false);
             enclaveAttestationParameters = null;
         }
 
         /// <summary>
-        /// Adds the encryption metadata for the current query to the query metadata cache when applicable.
-        /// </summary>
-        private void CacheQueryMetadataIfNeeded()
-        {
-            // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && _parameters?.Count > 0)
-            {
-                SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
-            }
-        }
-
-        /// <summary>
-        /// Parses the result sets returned by sp_describe_parameter_encryption.
+        /// Reads the output of sp_describe_parameter_encryption, verifying column master key signatures,
+        /// creating enclave sessions, and decrypting column encryption keys as each result is read.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// Column master key signature verification and column encryption key decryption are not performed
-        /// here; they are recorded in <paramref name="pending"/> so that the caller can execute them either
-        /// synchronously or asynchronously. Deferring them also means no key store network call is made while
-        /// the describe-parameter-encryption reader is still positioned mid-stream.
-        /// </para>
-        /// <para>
-        /// Deferring these operations changes which exception surfaces when a query hits more than one
-        /// problem. Previously verification and decryption were interleaved with parsing, so a bad signature
-        /// on the first key was raised before the parameter metadata result set was parsed at all. Now parsing
-        /// always completes first, so a malformed result set is reported in preference to a key store failure.
-        /// The set of exceptions that can be thrown, and the state left behind on failure, are unchanged.
-        /// </para>
+        /// Sync and async callers share this method. Key store and attestation calls use the async APIs
+        /// when <paramref name="isAsync"/> is true. Keys are decrypted one at a time, because metadata
+        /// entries frequently share a key and the first result populates the key cache.
         /// </remarks>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="pending">Collects the key store operations that the caller must complete</param>
-        private IEnumerable<byte[]> ReadDescribeEncryptionParameterResultsCore(
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
+        /// <param name="isAsync">Whether to use the asynchronous key store and attestation APIs.</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        private async ValueTask ReadDescribeEncryptionParameterResults(
             SqlDataReader ds, // @TODO: Rename something more obvious
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            PendingColumnEncryptionKeyOperations pending)
+            bool isRetry,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             // @TODO: This should be SqlTceCipherInfoTable
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable = new Dictionary<int, SqlTceCipherInfoEntry>();
@@ -1059,7 +1083,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // 1) Read the first result set that contains the column encryption key list
-                bool enclaveMetadataExists = ReadDescribeEncryptionParameterResultsKeys(ds, columnEncryptionKeyTable, pending);
+                bool enclaveMetadataExists = await ReadDescribeEncryptionParameterResultsKeys(
+                        ds, columnEncryptionKeyTable, isAsync, cancellationToken)
+                    .ConfigureAwait(false);
                 if (!enclaveMetadataExists && !ds.NextResult())
                 {
                     throw SQL.UnexpectedDescribeParamFormatParameterMetadata();
@@ -1093,7 +1119,9 @@ namespace Microsoft.Data.SqlClient
                 int receivedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
-                    receivedMetadataCount = ReadDescribeEncryptionParameterResultsMetadata(ds, rpc, columnEncryptionKeyTable, pending);
+                    receivedMetadataCount = await ReadDescribeEncryptionParameterResultsMetadata(
+                            ds, rpc, columnEncryptionKeyTable, isAsync, cancellationToken)
+                        .ConfigureAwait(false);
                 }
 
                 // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
@@ -1123,10 +1151,8 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.UnexpectedDescribeParamFormatAttestationInfo(_activeConnection.Parser.EnclaveType);
                     }
 
-                    foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsAttestation(ds))
-                    {
-                        yield return attestationInfo;
-                    }
+                    await ReadDescribeEncryptionParameterResultsAttestation(ds, isRetry, isAsync, cancellationToken)
+                        .ConfigureAwait(false);
                 }
 
                 // The server has responded with encryption related information for this rpc request. So clear the needsFetchParameterEncryptionMetadata flag.
@@ -1144,67 +1170,19 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
 
-        /// <summary>
-        /// Key store operations discovered while parsing sp_describe_parameter_encryption results, deferred so
-        /// that they can be executed either synchronously or asynchronously.
-        /// </summary>
-        private sealed class PendingColumnEncryptionKeyOperations
-        {
-            private List<ColumnMasterKeySignatureVerification> _signatureVerifications;
-            private List<SqlCipherMetadata> _keyDecryptions;
-
-            /// <summary>Column master key signatures that must be verified.</summary>
-            internal IReadOnlyList<ColumnMasterKeySignatureVerification> SignatureVerifications =>
-                (IReadOnlyList<ColumnMasterKeySignatureVerification>)_signatureVerifications ??
-                Array.Empty<ColumnMasterKeySignatureVerification>();
-
-            /// <summary>Column encryption keys that must be decrypted.</summary>
-            internal IReadOnlyList<SqlCipherMetadata> KeyDecryptions =>
-                (IReadOnlyList<SqlCipherMetadata>)_keyDecryptions ?? Array.Empty<SqlCipherMetadata>();
-
-            /// <summary>
-            /// Records a column master key signature that must be verified before the query runs.
-            /// </summary>
-            internal void AddSignatureVerification(string keyStoreName, string keyPath, bool isEnclaveEnabled, byte[] signature) =>
-                (_signatureVerifications ??= new List<ColumnMasterKeySignatureVerification>())
-                    .Add(new ColumnMasterKeySignatureVerification(keyStoreName, keyPath, isEnclaveEnabled, signature));
-
-            /// <summary>
-            /// Records a column encryption key that must be decrypted before the query runs.
-            /// </summary>
-            internal void AddKeyDecryption(SqlCipherMetadata cipherMetadata) =>
-                (_keyDecryptions ??= new List<SqlCipherMetadata>()).Add(cipherMetadata);
-        }
-
-        /// <summary>
-        /// Describes a pending column master key signature verification.
-        /// </summary>
-        private readonly struct ColumnMasterKeySignatureVerification
-        {
-            internal ColumnMasterKeySignatureVerification(string keyStoreName, string keyPath, bool isEnclaveEnabled, byte[] signature)
+            // If we are not in Batch RPC mode, update the query cache with the encryption MD.
+            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && _parameters?.Count > 0)
             {
-                KeyStoreName = keyStoreName;
-                KeyPath = keyPath;
-                IsEnclaveEnabled = isEnclaveEnabled;
-                Signature = signature;
+                SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
-
-            internal string KeyStoreName { get; }
-
-            internal string KeyPath { get; }
-
-            /// <summary>
-            /// Whether the server reported that this key is required by the enclave. Carried explicitly
-            /// rather than assumed, because it selects which signature the key store validates.
-            /// </summary>
-            internal bool IsEnclaveEnabled { get; }
-
-            internal byte[] Signature { get; }
         }
 
-        private IEnumerable<byte[]> ReadDescribeEncryptionParameterResultsAttestation(SqlDataReader ds)
+        private async ValueTask ReadDescribeEncryptionParameterResultsAttestation(
+            SqlDataReader ds,
+            bool isRetry,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             bool attestationInfoRead = false;
             while (ds.Read())
@@ -1228,7 +1206,7 @@ namespace Microsoft.Data.SqlClient
                     bufferIndex: 0,
                     length: attestationInfoLength);
 
-                yield return attestationInfo;
+                await CreateEnclaveSession(attestationInfo, isRetry, isAsync, cancellationToken).ConfigureAwait(false);
                 attestationInfoRead = true;
             }
 
@@ -1240,10 +1218,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool ReadDescribeEncryptionParameterResultsKeys(
+        private async ValueTask<bool> ReadDescribeEncryptionParameterResultsKeys(
             SqlDataReader ds,
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable,
-            PendingColumnEncryptionKeyOperations pending)
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             bool enclaveMetadataExists = true;
             while (ds.Read())
@@ -1343,9 +1322,16 @@ namespace Microsoft.Data.SqlClient
                             length: keySignatureLength);
                     }
 
-                    // Defer signature verification: it may reach a key store over the network and must not
-                    // run while this reader is still positioned mid-result-set.
-                    pending.AddSignatureVerification(providerName, keyPath, isRequestedByEnclave, keySignature);
+                    await SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                            providerName,
+                            keyPath,
+                            isEnclaveEnabled: isRequestedByEnclave,
+                            keySignature,
+                            _activeConnection,
+                            this,
+                            isAsync,
+                            cancellationToken)
+                        .ConfigureAwait(false);
 
                     // Lookup the key, failing which throw an exception
                     // @TODO: Seriously, we *just* did this, why are we looking it up again??
@@ -1377,11 +1363,12 @@ namespace Microsoft.Data.SqlClient
             return enclaveMetadataExists;
         }
 
-        private int ReadDescribeEncryptionParameterResultsMetadata(
+        private async ValueTask<int> ReadDescribeEncryptionParameterResultsMetadata(
             SqlDataReader ds,
             _SqlRPC rpc,
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable,
-            PendingColumnEncryptionKeyOperations pending)
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             Debug.Assert(rpc is not null, "Describe Parameter Encryption requested for non-TCE spec proc");
 
@@ -1436,10 +1423,10 @@ namespace Microsoft.Data.SqlClient
                                 encryptionType: columnEncryptionType,
                                 normalizationRuleVersion: columnNormalizationRuleVersion);
 
-                            // Defer decryption of the symmetric key: it may reach a key store over the network
-                            // and must not run while this reader is still positioned mid-result-set. Decryption
-                            // also validates the metadata and will throw if it is invalid.
-                            pending.AddKeyDecryption(sqlParameter.CipherMetadata);
+                            // Decrypt the symmetric key. This will also validate and throw if needed.
+                            await SqlSecurityUtility.DecryptSymmetricKey(
+                                    sqlParameter.CipherMetadata, _activeConnection, this, isAsync, cancellationToken)
+                                .ConfigureAwait(false);
 
                             // This is effective only for _batchRPCMode even though we set it for
                             // non-_batchRPCMode also, since for non-_batchRPCMode, param options

@@ -12,178 +12,466 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
-    /// Verifies that the asynchronous command execution paths dispatch column encryption key
-    /// operations through the <b>asynchronous</b> key store provider APIs, while the synchronous
-    /// paths continue to use the synchronous APIs.
+    /// Verifies that asynchronous command execution decrypts column encryption keys found during
+    /// parameter discovery through the <b>asynchronous</b> key store provider API, forwarding the
+    /// caller's cancellation token, while synchronous execution keeps using the synchronous API.
     /// </summary>
     [Trait("Set", "AE")]
-    public sealed class AsyncKeyStoreProviderTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public sealed class AsyncKeyStoreProviderTests
+        : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private readonly SQLSetupStrategy _fixture;
 
+        /// <summary>Captures the fixture that owns the encrypted test table.</summary>
+        /// <param name="fixture">Always Encrypted setup shared by the tests in this class.</param>
         public AsyncKeyStoreProviderTests(SQLSetupStrategyCertStoreProvider fixture)
         {
             _fixture = fixture;
         }
 
-        /// <summary>
-        /// Synchronous reader execution must use only the synchronous key-store provider API.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public void SyncExecutionUsesSyncKeyStoreProviderApi(string connectionString)
+        /// <summary>Configured Always Encrypted connection strings.</summary>
+        public static TheoryData<string> AEConnectionStrings
         {
-            RecordingKeyStoreProvider provider = new();
+            get
+            {
+                TheoryData<string> data = new();
+                foreach (string connectionString in DataTestUtility.AEConnStrings)
+                {
+                    data.Add(connectionString);
+                }
+                return data;
+            }
+        }
 
+        /// <summary>
+        /// Synchronous reader execution must keep using only the synchronous provider API, so sync
+        /// callers see no behavior change from asynchronous key loading.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public void ExecuteReader_EncryptedParameter_UsesSyncProviderApi(string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
             using SqlConnection connection = new(connectionString);
             connection.Open();
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
-
             using SqlCommand command = CreateEncryptedParameterCommand(connection);
+
+            // Act
             Assert.Throws<SqlException>(() => command.ExecuteReader());
 
-            Assert.True(provider.SyncCalls > 0, "Expected the synchronous provider API to be used by ExecuteReader.");
+            // Assert
+            Assert.True(provider.SyncCalls > 0, "Expected the synchronous provider API.");
+            Assert.Equal(0, provider.AsyncCalls);
+        }
+
+        /// <summary>
+        /// Synchronous non-query execution shares parameter discovery with the async path, but must
+        /// keep using only the synchronous provider API.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public void ExecuteNonQuery_EncryptedParameter_UsesSyncProviderApi(string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
+            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+
+            // Act
+            Assert.Throws<SqlException>(() => command.ExecuteNonQuery());
+
+            // Assert
+            Assert.True(provider.SyncCalls > 0, "Expected the synchronous provider API.");
+            Assert.Equal(0, provider.AsyncCalls);
+        }
+
+        /// <summary>
+        /// Synchronous XML execution shares parameter discovery with the async path, but must keep
+        /// using only the synchronous provider API.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public void ExecuteXmlReader_EncryptedParameter_UsesSyncProviderApi(string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
+            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml: true);
+
+            // Act
+            Assert.Throws<SqlException>(() => command.ExecuteXmlReader());
+
+            // Assert
+            Assert.True(provider.SyncCalls > 0, "Expected the synchronous provider API.");
             Assert.Equal(0, provider.AsyncCalls);
         }
 
         /// <summary>
         /// Asynchronous reader execution must decrypt keys through the asynchronous provider API.
         /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task ExecuteReaderAsyncUsesAsyncKeyStoreProviderApi(string connectionString)
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteReaderAsync_EncryptedParameter_UsesAsyncProviderApi(
+            string connectionString)
         {
-            await AssertAsyncApiUsed(connectionString, command => command.ExecuteReaderAsync());
-        }
-
-        /// <summary>
-        /// Asynchronous non-query execution must decrypt keys through the asynchronous provider API.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task ExecuteNonQueryAsyncUsesAsyncKeyStoreProviderApi(string connectionString)
-        {
-            await AssertAsyncApiUsed(connectionString, command => command.ExecuteNonQueryAsync());
-        }
-
-        /// <summary>
-        /// XML execution must use the asynchronous provider API just like reader and non-query execution.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task ExecuteXmlReaderAsyncUsesAsyncKeyStoreProviderApi(string connectionString)
-        {
-            await AssertAsyncApiUsed(connectionString, command => command.ExecuteXmlReaderAsync(), forXml: true);
-        }
-
-        /// <summary>
-        /// Reader execution must forward the caller's token through parameter encryption to the provider.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task AsyncExecutionHonoursCancellationToken(string connectionString)
-        {
-            await AssertCancellationTokenForwarded(connectionString, (command, token) => command.ExecuteReaderAsync(token));
-        }
-
-        /// <summary>
-        /// Non-query execution must preserve provider cancellation after releasing describe-phase state.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task ExecuteNonQueryAsyncHonoursCancellationToken(string connectionString)
-        {
-            await AssertCancellationTokenForwarded(connectionString, (command, token) => command.ExecuteNonQueryAsync(token));
-        }
-
-        /// <summary>
-        /// XML execution has separate token capture and must forward the exact caller token to the provider.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public async Task ExecuteXmlReaderAsyncHonoursCancellationToken(string connectionString)
-        {
-            await AssertCancellationTokenForwarded(
-                connectionString, (command, token) => command.ExecuteXmlReaderAsync(token), forXml: true);
-        }
-
-        /// <summary>
-        /// Cancels from inside the provider to check both token identity and cancellation propagation.
-        /// </summary>
-        /// <param name="connectionString">Configured Always Encrypted test connection.</param>
-        /// <param name="execute">Command API whose token forwarding is being tested.</param>
-        /// <param name="forXml">Whether the query needs an XML-compatible projection.</param>
-        /// <returns>A task completing after cancellation and command reuse have been checked.</returns>
-        private async Task AssertCancellationTokenForwarded(
-            string connectionString, Func<SqlCommand, CancellationToken, Task> execute, bool forXml = false)
-        {
+            // Arrange
             RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection);
 
-            using SqlConnection connection = new(connectionString);
+            // Act
+            await Assert.ThrowsAsync<SqlException>(() => command.ExecuteReaderAsync());
+
+            // Assert
+            AssertOnlyAsyncApiUsed(provider);
+        }
+
+        /// <summary>
+        /// Asynchronous non-query execution must decrypt keys through the asynchronous provider
+        /// API.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteNonQueryAsync_EncryptedParameter_UsesAsyncProviderApi(
+            string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+
+            // Act
+            await Assert.ThrowsAsync<SqlException>(() => command.ExecuteNonQueryAsync());
+
+            // Assert
+            AssertOnlyAsyncApiUsed(provider);
+        }
+
+        /// <summary>
+        /// XML execution must use the asynchronous provider API just like reader and non-query
+        /// execution.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteXmlReaderAsync_EncryptedParameter_UsesAsyncProviderApi(
+            string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml: true);
+
+            // Act
+            await Assert.ThrowsAsync<SqlException>(() => command.ExecuteXmlReaderAsync());
+
+            // Assert
+            AssertOnlyAsyncApiUsed(provider);
+        }
+
+        /// <summary>
+        /// Reader execution must forward the caller's token through parameter encryption to the
+        /// provider, and the command must stay reusable after the cancellation.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteReaderAsync_ProviderCancels_ForwardsCallerToken(
+            string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+            using CancellationTokenSource cts = CancelFromProvider(provider);
+
+            // Act
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => command.ExecuteReaderAsync(cts.Token));
+
+            // Assert
+            await AssertTokenForwardedAsync(provider, cts.Token, command);
+        }
+
+        /// <summary>
+        /// Non-query execution must preserve provider cancellation after releasing describe-phase
+        /// state, and the command must stay reusable after the cancellation.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteNonQueryAsync_ProviderCancels_ForwardsCallerToken(
+            string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+            using CancellationTokenSource cts = CancelFromProvider(provider);
+
+            // Act
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => command.ExecuteNonQueryAsync(cts.Token));
+
+            // Assert
+            await AssertTokenForwardedAsync(provider, cts.Token, command);
+        }
+
+        /// <summary>
+        /// XML execution has separate token capture and must forward the exact caller token to the
+        /// provider, and the command must stay reusable after the cancellation.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteXmlReaderAsync_ProviderCancels_ForwardsCallerToken(
+            string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml: true);
+            using CancellationTokenSource cts = CancelFromProvider(provider);
+
+            // Act
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => command.ExecuteXmlReaderAsync(cts.Token));
+
+            // Assert
+            await AssertTokenForwardedAsync(provider, cts.Token, command);
+        }
+
+        /// <summary>
+        /// Reader execution must stay pending while the provider's asynchronous key decryption is
+        /// pending, then complete with the query result once the provider returns a valid key.
+        /// This proves the decrypted key reaches the parameter metadata used for execution.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteReaderAsync_PendingProvider_CompletesAfterRelease(
+            string connectionString)
+        {
+            // Arrange
+            GatedKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateGatedCountCommand(connection);
+
+            // Act
+            // Start execution and wait until the provider is inside its pending decrypt call.
+            Task<SqlDataReader> execution = command.ExecuteReaderAsync();
+            await WaitForProviderEntryAsync(provider);
+            bool pendingBeforeRelease = !execution.IsCompleted;
+
+            // Let the provider return the key and finish the execution.
+            provider.Release();
+            using SqlDataReader reader = await execution;
+
+            // Assert
+            Assert.True(pendingBeforeRelease, "Execution completed before the key was loaded.");
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(0, reader.GetInt32(0));
+        }
+
+        /// <summary>
+        /// Cancelling the caller's token while the provider's asynchronous key decryption is
+        /// pending must fail execution with cancellation and leave the command reusable.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteReaderAsync_CanceledWhileProviderPending_ThrowsAndStaysReusable(
+            string connectionString)
+        {
+            // Arrange
+            GatedKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlCommand command = CreateGatedCountCommand(connection);
+            using CancellationTokenSource cts = new();
+
+            // Act
+            // Start execution, then cancel once the provider is inside its pending decrypt call.
+            Task<SqlDataReader> execution = command.ExecuteReaderAsync(cts.Token);
+            await WaitForProviderEntryAsync(provider);
+            cts.Cancel();
+
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => execution);
+            await AssertCommandReusableAsync(command);
+        }
+
+        /// <summary>
+        /// Changing the command's connection while the provider's asynchronous key decryption is
+        /// pending must be rejected, and execution must still complete on the original connection.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteReaderAsync_ConnectionChangedWhileProviderPending_Throws(
+            string connectionString)
+        {
+            // Arrange
+            GatedKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlConnection otherConnection = new(connectionString);
+            using SqlCommand command = CreateGatedCountCommand(connection);
+
+            // Act
+            // Start execution and wait until the provider is inside its pending decrypt call.
+            Task<SqlDataReader> execution = command.ExecuteReaderAsync();
+            await WaitForProviderEntryAsync(provider);
+            Exception reassignError = Record.Exception(() => command.Connection = otherConnection);
+
+            // Let the provider return the key and finish the execution.
+            provider.Release();
+            using SqlDataReader reader = await execution;
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(reassignError);
+            Assert.Same(connection, command.Connection);
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(0, reader.GetInt32(0));
+        }
+
+        /// <summary>Opens a connection with the given provider registered on it.</summary>
+        /// <param name="connectionString">Configured Always Encrypted test connection.</param>
+        /// <param name="provider">Provider whose decrypt calls the test observes.</param>
+        /// <returns>An open connection owned by the caller.</returns>
+        private static async Task<SqlConnection> OpenWithProviderAsync(
+            string connectionString, SqlColumnEncryptionKeyStoreProvider provider)
+        {
+            SqlConnection connection = new(connectionString);
             await connection.OpenAsync();
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
+            return connection;
+        }
 
-            using CancellationTokenSource cts = new();
-            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml);
-
-            // The provider cancels the token from inside the async decrypt call, which proves the
-            // caller's token was threaded all the way down into the key store operation.
+        /// <summary>
+        /// Makes the provider cancel the returned source from inside its async decrypt call, which
+        /// proves the caller's token was threaded all the way down into the key store operation.
+        /// </summary>
+        /// <param name="provider">Provider that triggers the cancellation.</param>
+        /// <returns>A token source owned by the caller.</returns>
+        private static CancellationTokenSource CancelFromProvider(
+            RecordingKeyStoreProvider provider)
+        {
+            CancellationTokenSource cts = new();
             provider.OnAsyncCall = () => cts.Cancel();
+            return cts;
+        }
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => execute(command, cts.Token));
-
-            Assert.True(provider.AsyncCalls > 0, "Expected the asynchronous provider API to be used.");
+        /// <summary>Checks that only the asynchronous provider API was used.</summary>
+        /// <param name="provider">Provider whose counters are checked.</param>
+        private static void AssertOnlyAsyncApiUsed(RecordingKeyStoreProvider provider)
+        {
+            Assert.True(provider.AsyncCalls > 0, "Expected the asynchronous provider API.");
             Assert.Equal(0, provider.SyncCalls);
-            Assert.Equal(cts.Token, provider.LastCancellationToken);
+        }
 
+        /// <summary>
+        /// Checks that the provider received the caller's token and that the command can run again,
+        /// which guards against cancellation leaving released describe-phase state locked.
+        /// </summary>
+        /// <param name="provider">Provider whose counters and token are checked.</param>
+        /// <param name="expectedToken">The token passed to the execution.</param>
+        /// <param name="command">The command reused for a plain query after cancellation.</param>
+        /// <returns>A task completing after the checks.</returns>
+        private static async Task AssertTokenForwardedAsync(
+            RecordingKeyStoreProvider provider, CancellationToken expectedToken, SqlCommand command)
+        {
+            AssertOnlyAsyncApiUsed(provider);
+            Assert.Equal(expectedToken, provider.LastCancellationToken);
+            await AssertCommandReusableAsync(command);
+        }
+
+        /// <summary>
+        /// Checks that the command can run a plain query, which guards against cancellation
+        /// leaving released describe-phase state locked.
+        /// </summary>
+        /// <param name="command">The command reused for a plain query.</param>
+        /// <returns>A task completing after the check.</returns>
+        private static async Task AssertCommandReusableAsync(SqlCommand command)
+        {
             command.Parameters.Clear();
             command.CommandText = "SELECT 1";
             Assert.Equal(1, await command.ExecuteScalarAsync());
         }
 
         /// <summary>
-        /// Checks provider dispatch without depending on plaintext key material.
+        /// Waits until the gated provider is inside its asynchronous decrypt call, failing instead
+        /// of hanging if execution never reaches the provider.
         /// </summary>
-        /// <param name="connectionString">Configured Always Encrypted test connection.</param>
-        /// <param name="execute">Command API whose provider dispatch is being tested.</param>
-        /// <param name="forXml">Whether the query needs an XML-compatible projection.</param>
-        /// <returns>A task completing after the provider counters have been checked.</returns>
-        private async Task AssertAsyncApiUsed(string connectionString, Func<SqlCommand, Task> execute, bool forXml = false)
+        /// <param name="provider">Provider expected to be entered.</param>
+        /// <returns>A task completing once the provider has been entered.</returns>
+        private static async Task WaitForProviderEntryAsync(GatedKeyStoreProvider provider)
         {
-            RecordingKeyStoreProvider provider = new();
-
-            using SqlConnection connection = new(connectionString);
-            await connection.OpenAsync();
-            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
-
-            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml);
-            await Assert.ThrowsAsync<SqlException>(() => execute(command));
-
-            Assert.True(provider.AsyncCalls > 0, "Expected the asynchronous provider API to be used.");
-            Assert.Equal(0, provider.SyncCalls);
+            Task completed = await Task.WhenAny(
+                provider.Entered, Task.Delay(TimeSpan.FromSeconds(60)));
+            Assert.True(
+                completed == provider.Entered, "The asynchronous provider API was not called.");
         }
 
-        /// <summary>Maps the fixture's dummy provider name to the recording instance.</summary>
+        /// <summary>Maps the fixture's dummy provider name to the given provider.</summary>
         /// <param name="provider">Provider whose decrypt calls the test observes.</param>
         /// <returns>A provider map for registration on a single connection.</returns>
         private static Dictionary<string, SqlColumnEncryptionKeyStoreProvider> Wrap(
-            RecordingKeyStoreProvider provider) =>
+            SqlColumnEncryptionKeyStoreProvider provider) =>
             new() { { DummyKeyStoreProvider.Name, provider } };
+
+        /// <summary>
+        /// Builds an unencrypted count over an encrypted predicate. The fixture never inserts rows
+        /// into this table, so the count is 0. A unique comment keeps the query out of the query
+        /// metadata cache, so every run takes the parameter discovery path.
+        /// </summary>
+        /// <param name="connection">Open connection with the gated provider registered.</param>
+        /// <returns>A disposable command with a deterministic encrypted predicate.</returns>
+        private SqlCommand CreateGatedCountCommand(SqlConnection connection)
+        {
+            SqlCommand command = new(
+                $"SELECT COUNT(*) FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] "
+                    + $"WHERE CustomerID = @id /* {Guid.NewGuid()} */",
+                connection,
+                transaction: null,
+                SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("id", 9);
+            return command;
+        }
 
         /// <summary>
         /// Builds an encrypted predicate; XML queries project only a constant because SQL Server
         /// does not support FOR XML over encrypted result columns.
         /// </summary>
         /// <param name="connection">Open connection with the recording provider registered.</param>
-        /// <param name="forXml">Whether to request XML instead of the fixture's encrypted columns.</param>
-        /// <returns>A disposable command with a deterministic encrypted equality predicate.</returns>
-        private SqlCommand CreateEncryptedParameterCommand(SqlConnection connection, bool forXml = false)
+        /// <param name="forXml">Whether to request XML instead of the encrypted columns.</param>
+        /// <returns>A disposable command with a deterministic encrypted predicate.</returns>
+        private SqlCommand CreateEncryptedParameterCommand(
+            SqlConnection connection, bool forXml = false)
         {
             string projection = forXml ? "1 AS Value" : "*";
             string xmlClause = forXml ? " FOR XML PATH('row')" : string.Empty;
             SqlCommand command = new(
-                $"SELECT {projection} FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id{xmlClause}",
+                $"SELECT {projection} FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] "
+                    + $"WHERE CustomerID = @id{xmlClause}",
                 connection,
                 transaction: null,
                 SqlCommandColumnEncryptionSetting.Enabled);
@@ -193,8 +481,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         /// <summary>
         /// Records which key store provider overload the driver invoked. Both overloads throw so
-        /// that the test never depends on real key material; the assertions are made on the counters.
-        /// The deterministic equality predicate does not request enclave computations or CMK verification.
+        /// the tests never depend on real key material; assertions use the counters. The
+        /// deterministic equality predicate requests neither enclave computations nor CMK
+        /// signature verification.
         /// </summary>
         private sealed class RecordingKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
         {
@@ -229,6 +518,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 OnAsyncCall?.Invoke();
                 cancellationToken.ThrowIfCancellationRequested();
                 throw new NotImplementedException();
+            }
+
+            public override byte[] EncryptColumnEncryptionKey(
+                string masterKeyPath,
+                string encryptionAlgorithm,
+                byte[] columnEncryptionKey) =>
+                throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Holds asynchronous key decryption pending until released, then returns the real key.
+        /// The fixture encrypts the dummy provider's key with the certificate store provider, so
+        /// decryption delegates to it.
+        /// </summary>
+        private sealed class GatedKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
+        {
+            private readonly SqlColumnEncryptionCertificateStoreProvider _certStoreProvider = new();
+            private readonly TaskCompletionSource<bool> _entered =
+                new(TaskCreationOptions.RunContinuationsAsynchronously);
+            private readonly TaskCompletionSource<bool> _release =
+                new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            public Task Entered => _entered.Task;
+
+            public void Release() => _release.TrySetResult(true);
+
+            public override byte[] DecryptColumnEncryptionKey(
+                string masterKeyPath,
+                string encryptionAlgorithm,
+                byte[] encryptedColumnEncryptionKey) =>
+                _certStoreProvider.DecryptColumnEncryptionKey(
+                    masterKeyPath, encryptionAlgorithm, encryptedColumnEncryptionKey);
+
+            public override async Task<byte[]> DecryptColumnEncryptionKeyAsync(
+                string masterKeyPath,
+                string encryptionAlgorithm,
+                byte[] encryptedColumnEncryptionKey,
+                CancellationToken cancellationToken = default)
+            {
+                _entered.TrySetResult(true);
+                await Task.WhenAny(
+                    _release.Task, Task.Delay(Timeout.Infinite, cancellationToken));
+                cancellationToken.ThrowIfCancellationRequested();
+                return DecryptColumnEncryptionKey(
+                    masterKeyPath, encryptionAlgorithm, encryptedColumnEncryptionKey);
             }
 
             public override byte[] EncryptColumnEncryptionKey(
