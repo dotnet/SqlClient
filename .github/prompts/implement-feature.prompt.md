@@ -93,3 +93,5 @@ Before writing code, produce a brief implementation plan covering:
   - [ ] Compiles on all driver implementation target frameworks (`net462`, `net10.0`)
   - [ ] No breaking changes to existing APIs
   - [ ] Follows coding style (`policy/coding-style.md`)
+- Before requesting review and after each fix round, follow
+  [Addressing Review Feedback](../../AGENTS.md#addressing-review-feedback).

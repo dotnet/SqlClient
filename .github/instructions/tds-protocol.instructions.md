@@ -143,6 +143,8 @@ public const byte FATAL_ERROR_CLASS = 20;
 3. **Handle Token Order Variations**: Servers may vary token ordering
 4. **Consider MARS**: Multiple Active Result Sets changes state management
 5. **Maintain Backward Compatibility**: Older servers must still work
+6. **No Magic Numbers**: Define protocol constants (tokens, lengths, versions, flags) in
+   `TdsEnums.cs` and reference them by name instead of using literal values
 
 ### Performance Considerations
 

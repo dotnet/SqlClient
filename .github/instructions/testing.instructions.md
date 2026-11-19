@@ -235,6 +235,21 @@ different conventions.
    setup or mocks, and duplicates that add no distinct behavioral protection. Confirm the selected
    tests actually ran: a successful command with zero matches or only skipped tests is not evidence
    of coverage. Report any tests that could not run and why.
+10. **Per-property tests:** For types with independently settable properties, write one test per
+    property that sets it, asserts the stored value, and asserts every other property is
+    unchanged. Do not generate combinatorial property subsets.
+11. **Positive assertions:** Assert the expected value or state after an operation, not only that
+    no exception was thrown.
+12. **Enum coverage:** When behavior is defined for every value of an enum, supply the values from
+    `Enum.GetValues` through `[MemberData]` so new values are covered automatically.
+13. **Setting matrices:** When behavior varies by a setting or mode (for example `Encrypt`
+    Optional/Mandatory/Strict, or TDS 7.4/8.0), list the matrix in the PR and test each cell or
+    explain why it is not covered. Do not let results depend silently on server configuration.
+14. **Simulated servers:** Reuse `TdsServer` (`tests/tools/TDS/TDS.Servers/`) and the existing
+    simulated-server fixtures, extending or subclassing them as needed, instead of writing a new
+    TCP or TLS listener.
+15. **Names reflect behavior:** Test names, summaries, and comments describe current behavior,
+    not the history of how the design changed during review.
 
 ### Test Documentation Requirements
 

@@ -216,6 +216,14 @@ public override void Open() { }
 - `<exception>`: Possible exceptions
 - `<remarks>`: Additional details (optional)
 
+### Contract Wording
+- Documentation must state exactly what the implementation guarantees. Do not imply causation
+  (for example, that data attached to an exception caused it) or add qualifiers the code does not
+  strictly enforce.
+- Prefer simple contracts, such as "contains X whenever it is available".
+- Keep `null` ("unknown") distinct from an explicit `None` value ("known to be absent"). Report
+  `None` only when absence is certain.
+
 ## Event Design
 
 ### Event Patterns
