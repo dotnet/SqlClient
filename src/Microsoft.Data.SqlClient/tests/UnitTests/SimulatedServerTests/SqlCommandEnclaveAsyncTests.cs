@@ -791,8 +791,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         private static Task Invoke(SqlCommand command, string method, params object[] args) =>
             (Task)typeof(SqlCommand).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(command, args);
 
-        /// <summary>Starts uncached asynchronous encryption preparation, as execution does.</summary>
-        private static Task PrepareAsync(SqlCommand command, bool isRetry, CancellationToken token) =>
+        /// <summary>Starts uncached asynchronous encryption preparation, as execution does.
+        /// </summary>
+        private static Task PrepareAsync(
+            SqlCommand command, bool isRetry, CancellationToken token) =>
             Invoke(command, "PrepareForTransparentEncryptionAsync",
                 30, true, isRetry, GetField(command, "_enclaveRetryConnection"),
                 null, null, 0, null, nameof(SqlCommand.ExecuteReader), token);

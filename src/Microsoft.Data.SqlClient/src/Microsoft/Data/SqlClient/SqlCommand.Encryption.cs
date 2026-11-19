@@ -761,10 +761,11 @@ namespace Microsoft.Data.SqlClient
         /// <remarks>
         /// For cached metadata the caller sets the in-progress flag before dispatch, and execution
         /// clears it after it reserves the connection; this method clears it only on failure. The
-        /// command reports <c>usedCache = true</c> even when a stale cache entry falls back, because
-        /// the caller has already returned. Over-reporting a cache hit can only cause one additional
-        /// retry of an already failing execution, whereas under-reporting it would suppress the
-        /// <see cref="TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY"/> retry that a cache hit needs.
+        /// command reports <c>usedCache = true</c> even when a stale cache entry falls back,
+        /// because the caller has already returned. Over-reporting a cache hit can only cause one
+        /// additional retry of an already failing execution, whereas under-reporting it would
+        /// suppress the <see cref="TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY"/> retry that a
+        /// cache hit needs.
         /// </remarks>
         private async Task PrepareForTransparentEncryptionAsync(
             int timeout,
@@ -787,7 +788,8 @@ namespace Microsoft.Data.SqlClient
                 if (cachedMetadata is SqlQueryMetadataCache.CachedQueryMetadata metadata)
                 {
                     bool cacheHit = await SqlQueryMetadataCache.GetInstance()
-                        .CompleteCachedQueryMetadata(this, metadata, isAsync: true, cancellationToken)
+                        .CompleteCachedQueryMetadata(
+                            this, metadata, isAsync: true, cancellationToken)
                         .ConfigureAwait(false);
 
                     ValidateConnectionLifetime(connection, closeCount, database, method);
@@ -846,14 +848,16 @@ namespace Microsoft.Data.SqlClient
             string database,
             string method)
         {
-            if (!ReferenceEquals(_activeConnection, connection) || connection.CloseCount != closeCount)
+            if (!ReferenceEquals(_activeConnection, connection)
+                || connection.CloseCount != closeCount)
             {
                 throw ADP.ClosedConnectionError();
             }
 
             if (!string.Equals(connection.Database, database, StringComparison.Ordinal))
             {
-                throw SQL.CannotModifyPropertyAsyncOperationInProgress(nameof(SqlConnection.Database));
+                throw SQL.CannotModifyPropertyAsyncOperationInProgress(
+                    nameof(SqlConnection.Database));
             }
 
             if (_transaction is not null && _transaction.Connection is null)
