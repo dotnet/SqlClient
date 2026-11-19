@@ -2,16 +2,24 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
-/// <summary>Verifies batch command lookup for SQL errors and info messages.</summary>
+/// <summary>
+/// Verifies batch command lookup for SQL errors and info messages, and cancellation handling when
+/// asynchronous execution ends.
+/// </summary>
 public class SqlCommandTests
 {
+    private const string CanceledExecutionConnectionString =
+        "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled";
+
     /// <summary>Errors after the final DONEPROC have no remaining command to attribute.</summary>
     [Theory]
     [InlineData(1)]
@@ -133,6 +141,63 @@ public class SqlCommandTests
         Assert.Same(expected, batchCommand);
     }
 
+    /// <summary>
+    /// Key store cancellation after the describe phase releases the parser state must surface as
+    /// cancellation, not as a null-lock failure, when the reader execution ends.
+    /// </summary>
+    [Fact]
+    public void EndExecuteReaderAsync_CanceledTask_ThrowsOperationCanceled()
+    {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
+        // Act
+        Exception exception = Record.Exception(() => command.EndExecuteReaderAsync(canceled));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+    }
+
+    /// <summary>
+    /// Key store cancellation after the describe phase releases the parser state must surface as
+    /// cancellation, not as a null-lock failure, when the non-query execution ends.
+    /// </summary>
+    [Fact]
+    public void EndExecuteNonQueryAsync_CanceledTask_ThrowsOperationCanceled()
+    {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
+        // Act
+        Exception exception = Record.Exception(() => command.EndExecuteNonQueryAsync(canceled));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+    }
+
+    /// <summary>
+    /// Key store cancellation after the describe phase releases the parser state must surface as
+    /// cancellation, not as a null-lock failure, when the XML reader execution ends.
+    /// </summary>
+    [Fact]
+    public void EndExecuteXmlReaderAsync_CanceledTask_ThrowsOperationCanceled()
+    {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
+        // Act
+        Exception exception = Record.Exception(() => command.EndExecuteXmlReaderAsync(canceled));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+    }
+
     /// <summary>Creates RPC entries without requiring a network connection.</summary>
     /// <param name="count">The number of entries to add.</param>
     /// <returns>A command owned by the test.</returns>
@@ -156,4 +221,16 @@ public class SqlCommandTests
         Assert.IsType<List<_SqlRPC>>(typeof(SqlCommand)
             .GetField("_RPCList", BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(command));
+
+    /// <summary>
+    /// Creates an already canceled task, as happens when a key store operation is canceled after
+    /// the parser state was released.
+    /// </summary>
+    /// <returns>A canceled task.</returns>
+    private static Task CreateCanceledTask()
+    {
+        TaskCompletionSource<object> completion = new();
+        completion.SetCanceled();
+        return completion.Task;
+    }
 }
