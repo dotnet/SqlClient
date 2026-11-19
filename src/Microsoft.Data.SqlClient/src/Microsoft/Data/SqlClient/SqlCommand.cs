@@ -2480,7 +2480,7 @@ namespace Microsoft.Data.SqlClient
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
                         // Kick off the retry. A faulted write released its reservation, so only a
-                        // read-stage failure has one to transfer to the retry.
+                        // read-stage failure still holds the original one.
                         SqlConnectionInternal retryConnection = task.IsFaulted
                             ? null
                             : _activeConnection.InnerConnection as SqlConnectionInternal;
@@ -2507,6 +2507,9 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
+                            // The retry holds its own reservation for End, so release the original
+                            // one. retryConnection is null when a faulted write already released it.
+                            retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
