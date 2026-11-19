@@ -4,6 +4,7 @@ The latest stable release is [Microsoft.Data.SqlClient 7.1](7.1).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient 8.1.0-preview1](8.1/8.1.0-preview1.md)
 - [Microsoft.Data.SqlClient 7.1.2](7.1/7.1.2.md)
 - [Microsoft.Data.SqlClient 7.0.4](7.0/7.0.4.md)
 - [Microsoft.Data.SqlClient 8.0 (preview)](8.0)
@@ -30,6 +31,7 @@ The latest stable release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 8.1.0-preview1](add-ons/AzureKeyVaultProvider/8.1/8.1.0-preview1.md)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1.2](add-ons/AzureKeyVaultProvider/7.1/7.1.2.md)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.4](add-ons/AzureKeyVaultProvider/7.0/7.0.4.md)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 8.0 (preview)](add-ons/AzureKeyVaultProvider/8.0)
@@ -51,6 +53,7 @@ The latest stable release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 8.1.0-preview1](Extensions/Abstractions/8.1/8.1.0-preview1.md)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 7.1.2](Extensions/Abstractions/7.1/7.1.2.md)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 7.0.4](Extensions/Abstractions/7.0/7.0.4.md)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 8.0 (preview)](Extensions/Abstractions/8.0)
@@ -65,6 +68,7 @@ The latest stable release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Azure 8.1.0-preview1](Extensions/Azure/8.1/8.1.0-preview1.md)
 - [Microsoft.Data.SqlClient.Extensions.Azure 7.1.2](Extensions/Azure/7.1/7.1.2.md)
 - [Microsoft.Data.SqlClient.Extensions.Azure 7.0.4](Extensions/Azure/7.0/7.0.4.md)
 - [Microsoft.Data.SqlClient.Extensions.Azure 8.0 (preview)](Extensions/Azure/8.0)
@@ -80,6 +84,7 @@ The latest stable release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Internal.Logging 8.1.0-preview1](Internal/Logging/8.1/8.1.0-preview1.md)
 - [Microsoft.Data.SqlClient.Internal.Logging 7.1.2](Internal/Logging/7.1/7.1.2.md)
 - [Microsoft.Data.SqlClient.Internal.Logging 7.0.4](Internal/Logging/7.0/7.0.4.md)
 - [Microsoft.Data.SqlClient.Internal.Logging 8.0 (preview)](Internal/Logging/8.0)

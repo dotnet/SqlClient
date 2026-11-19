@@ -6,6 +6,207 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 8.1.0-preview1]
+
+Changes since [8.0.0-preview1](release-notes/8.0/8.0.0-preview1.md).
+The driver and four companion packages align at `8.1.0-preview1`, with `AssemblyVersion 8.0.0.0`.
+See the [core release notes](release-notes/8.1/8.1.0-preview1.md) for platform and dependency details.
+
+### Added
+
+#### Negotiated connection encryption information
+
+*What Changed:*
+
+- Added `SqlConnection.EncryptionInfo`, `SqlException.EncryptionInfo`,
+  `SqlConnectionEncryptionInfo`, `SqlConnectionEncryptionMode`, and
+  `SqlServerCertificateValidationErrors`. Snapshots now report the negotiated encryption
+  mode and the TLS protocol when available.
+  ([#2353](https://github.com/dotnet/SqlClient/issues/2353),
+  [#4830](https://github.com/dotnet/SqlClient/pull/4830),
+  [#5043](https://github.com/dotnet/SqlClient/pull/5043),
+  [#4831](https://github.com/dotnet/SqlClient/pull/4831))
+
+*Who Benefits:*
+
+- Tools such as SQL Server Management Studio can display observed encryption details for
+  open connections and diagnose failed opens without parsing localized exception messages.
+
+*Impact:*
+
+- `NegotiatedEncryptionMode` distinguishes `None`, `LoginOnly`, `Full`, and `Strict`;
+  `NegotiatedEncryptionProtocol` reports the TLS version when the transport supplies it.
+  An open connection exposes its physical connection's immutable snapshot, including pooled
+  reuse and MARS. Before a successful open and after close/disposal, the snapshot is empty.
+- A `SqlException` raised during opening carries values observed for the final physical
+  attempt, or the published snapshot if pooled-checkout reset/enlistment fails. Retry, redirect,
+  and failover attempts do not leak earlier values. The selected mode can be available even
+  when the TLS handshake fails; a protocol not observed before failure remains `null`.
+  Exceptions from later commands and deserialized exceptions retain empty snapshots.
+- **Partial implementation:** neither cipher-suite property is populated yet.
+  `ValidationErrors`, `ChainStatus`, and `GetServerCertificate()` also remain `null`.
+  Unavailable values do not establish security or success. These diagnostics do not replace
+  the driver's certificate validation or authorize bypassing it.
+- `NegotiatedCipherSuiteId` is available on both runtime targets; the strongly typed
+  `NegotiatedCipherSuite` property is net10.0 only. TLS validation policy is unchanged.
+
+### Changed
+
+#### Breaking default change: pool waits share the connection timeout budget
+
+*What Changed:*
+
+- `Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait` now defaults to `true`.
+  `SqlConnection.Open` and `OpenAsync` carry the remaining `Connect Timeout` budget through pool
+  acquisition and login with either pool implementation.
+  ([#4642](https://github.com/dotnet/SqlClient/issues/4642),
+  [#5030](https://github.com/dotnet/SqlClient/pull/5030))
+
+*Who Benefits:*
+
+- Applications under pool contention no longer grant login a fresh full timeout after waiting.
+
+*Impact:*
+
+- Opens may time out sooner. Set the switch to `false` before using SqlClient to restore the
+  prior separate budgets; the switch is cached on first use. `Connect Timeout=0` stays infinite.
+  This does not claim that every remaining in-open round trip has been converted.
+  See [networking migration guidance](doc/networking-defaults.md).
+
+#### Lower destination-metadata cost for name-mapped bulk copies
+
+*What Changed:*
+
+- `SqlBulkCopy` restores fast `SET FMTONLY ON; SELECT *` discovery for destination-name
+  mappings, with one catalog fallback if a name is missing. Destination-ordinal mappings,
+  implicit/default mappings, and SQL Graph aliases use catalog discovery directly.
+  ([#4985](https://github.com/dotnet/SqlClient/issues/4985),
+  [#4988](https://github.com/dotnet/SqlClient/pull/4988))
+
+*Who Benefits:*
+
+- Repeated name-mapped bulk loads avoid unnecessary catalog-query work on the server.
+
+*Impact:*
+
+- Automatic mode preserves hidden-column positions and graph-alias support. Fallback happens
+  before rows are sent; it does not retry the write. Ordinal/default mappings retain catalog
+  discovery cost, including for ordinary tables.
+- `Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery=true` always uses catalog
+  discovery and avoids fallback for hidden-name workloads. Explicit `false` never uses catalogs
+  and uses visible-column positions, without hidden-column or graph-alias discovery.
+  Leaving the switch unset selects automatic mode.
+
+#### Asynchronous command execution awaits enclave attestation
+
+*What Changed:*
+
+- Asynchronous commands await enclave session lookup, attestation parameters, session creation,
+  and retry invalidation across reader, nonquery, scalar, XML, APM, and batch paths.
+  Caller cancellation reaches enclave-provider operations.
+  ([#3672](https://github.com/dotnet/SqlClient/issues/3672),
+  [#4887](https://github.com/dotnet/SqlClient/pull/4887))
+
+*Who Benefits:*
+
+- Always Encrypted applications avoid blocking on attestation-service I/O in async execution.
+
+*Impact:*
+
+- Preparation failure or cancellation stops the user query from being sent and releases setup
+  state. Synchronous execution retains synchronous provider dispatch.
+- Query-metadata cache key loading, result-set key loading, bulk-copy key loading,
+  enclave-package generation, cryptography, and serialization can still run synchronously.
+  This is not end-to-end asynchronous Always Encrypted support.
+  See [asynchronous enclave attestation](doc/always-encrypted-async.md).
+
+#### Asynchronous key-store calls during parameter discovery
+
+*What Changed:*
+
+- Always Encrypted parameter discovery now awaits the provider's existing
+  `DecryptColumnEncryptionKeyAsync` and `VerifyColumnMasterKeyMetadataAsync` methods
+  during asynchronous command execution, passing the caller's cancellation token.
+  This applies to `ExecuteReaderAsync`, `ExecuteNonQueryAsync`, `ExecuteXmlReaderAsync`,
+  and the shared reader path used by `ExecuteScalarAsync`. Synchronous commands continue
+  to call synchronous provider methods.
+  ([#3672](https://github.com/dotnet/SqlClient/issues/3672),
+  [#5077](https://github.com/dotnet/SqlClient/pull/5077),
+  [#5079](https://github.com/dotnet/SqlClient/pull/5079),
+  [#5080](https://github.com/dotnet/SqlClient/pull/5080))
+- The global column-encryption-key cache now shares a per-key load gate between synchronous
+  and asynchronous callers. Concurrent misses for the same key reuse a successful cached
+  decryption; different keys can load independently. A zero cache TTL bypasses the load gate.
+
+*Who Benefits:*
+
+- Applications using asynchronous key-store providers, including Azure Key Vault, can await
+  key-service I/O during parameter discovery instead of blocking on synchronous provider calls.
+- Workloads loading different encryption keys no longer serialize all global-cache misses.
+
+*Impact:*
+
+- **Provider compatibility:** custom `SqlColumnEncryptionKeyStoreProvider` implementations
+  must be thread-safe. Removing the global cache lock allows `DecryptColumnEncryptionKey`
+  calls for different keys, and uncached loads, to run concurrently even for synchronous commands.
+- Providers that do not override the async methods retain the base class's synchronous fallback;
+  an async command alone does not make those provider calls nonblocking.
+- Parameter discovery still loads keys sequentially within a command. Key-store cancellation
+  propagates without being wrapped as a key-decryption or signature-verification failure.
+  The command remains busy while provider I/O is pending. Other key-loading paths listed
+  above remain synchronous; no new public API or end-to-end async guarantee is introduced.
+
+#### Dependency and authentication-diagnostic updates
+
+- Updated Azure.Core to `1.65.0`, MSAL and its broker to `4.92.0`, and the applicable .NET 10
+  dependency floors to `10.0.15`. The exact per-framework direct dependencies are listed below.
+  SNI, IdentityModel, Key Vault Keys, and legacy polyfill versions are unchanged from preview1.
+  ([#5031](https://github.com/dotnet/SqlClient/pull/5031))
+- Authentication configuration/registration diagnostics now use resources owned by Abstractions.
+  Existing translated messages move with their satellite assemblies; messages without a
+  translation fall back to English. Exception types and authentication contracts are unchanged,
+  but exact message text can change. See the Abstractions companion notes.
+  ([#4852](https://github.com/dotnet/SqlClient/pull/4852))
+
+### Fixed
+
+- Removed a socket-poll wait from pooled TCP connection health checks, avoiding an approximately
+  15 ms delay when reopening healthy idle connections on Windows with managed networking.
+  Peer-close detection is retained. The nonblocking check also runs on Unix, where the old
+  timeout already rounded down to zero. Native SNI and .NET Framework are unaffected.
+  (net10.0, managed SNI only)
+  ([#5070](https://github.com/dotnet/SqlClient/issues/5070),
+  [#5071](https://github.com/dotnet/SqlClient/pull/5071))
+- Fixed managed SNI TLS handshakes ignoring the remaining login timeout, which could block
+  `Open`/`OpenAsync` and pool users for minutes when a server or network stalls after PRELOGIN.
+  This bounds the handshake, not every separate pool-wait behavior. (net10.0, managed SNI only)
+  ([#4834](https://github.com/dotnet/SqlClient/issues/4834),
+  [#5045](https://github.com/dotnet/SqlClient/issues/5045),
+  [#5051](https://github.com/dotnet/SqlClient/pull/5051))
+- Fixed managed TCP sends after connection disposal reporting an unexpected
+  `NullReferenceException` instead of the existing connection-error path.
+  (net10.0, managed SNI only)
+  ([#5067](https://github.com/dotnet/SqlClient/pull/5067))
+- Fixed `SqlTransaction.Dispose()` throwing `NullReferenceException` or `InvalidOperationException`
+  when it races the background close of a connection broken by a network failure or an
+  unacknowledged command timeout, obscuring the original error.
+  ([#4971](https://github.com/dotnet/SqlClient/issues/4971),
+  [#4972](https://github.com/dotnet/SqlClient/pull/4972))
+- Fixed late `SqlBatch` cancellation errors being hidden by `ArgumentOutOfRangeException` when
+  the last command has already completed. Valid command attribution is preserved.
+  ([#5042](https://github.com/dotnet/SqlClient/issues/5042),
+  [#5058](https://github.com/dotnet/SqlClient/pull/5058))
+
+### Companion packages
+
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 8.1.0-preview1](release-notes/Extensions/Abstractions/8.1/8.1.0-preview1.md)
+  includes localized authentication diagnostics and dependency updates.
+- [Microsoft.Data.SqlClient.Extensions.Azure 8.1.0-preview1](release-notes/Extensions/Azure/8.1/8.1.0-preview1.md)
+  and [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 8.1.0-preview1](release-notes/add-ons/AzureKeyVaultProvider/8.1/8.1.0-preview1.md)
+  include compatible dependency updates.
+- [Microsoft.Data.SqlClient.Internal.Logging 8.1.0-preview1](release-notes/Internal/Logging/8.1/8.1.0-preview1.md)
+  is version-alignment-only. Microsoft.SqlServer.Server has no separate release in this milestone.
+
 ## [Stable Release 7.1.2] - 2026-11-12
 
 This servicing release includes the following changes since 7.1.1.
