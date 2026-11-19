@@ -889,7 +889,8 @@ namespace Microsoft.Data.SqlClient
         /// switched to another database while encryption preparation was pending. The query
         /// metadata cache key includes the database, so metadata loaded for one database must not
         /// be used to execute against another. Also repeats the transaction binding checks of
-        /// <see cref="ValidateCommand"/>, because a transaction may have begun meanwhile.
+        /// <see cref="ValidateCommand"/>, because a transaction may have begun or completed
+        /// meanwhile.
         /// </summary>
         private void ValidateConnectionLifetime(
             SqlConnection connection,
@@ -909,9 +910,12 @@ namespace Microsoft.Data.SqlClient
                     nameof(SqlConnection.Database));
             }
 
+            // ValidateCommand cleared any completed transaction before preparation, so this one
+            // completed while preparation was pending. Running without it would leave the
+            // command outside the transaction it was bound to.
             if (_transaction is not null && _transaction.Connection is null)
             {
-                _transaction = null;
+                throw ADP.TransactionZombied(_transaction);
             }
 
             // A closed connection has no transaction; a real close already failed the count check.

@@ -195,6 +195,36 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// A bound transaction that completes while cached keys load must stop execution, so the
+        /// command does not run outside the transaction it was bound to.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_TransactionCompletedDuringKeyLoad_Throws()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+            SqlTransaction transaction = fixture.BeginTransaction();
+            command.Transaction = transaction;
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+            await fixture.KeyLoadEntered;
+
+            // Complete the transaction as a commit acknowledged by the server would.
+            transaction.InternalTransaction.Completed(TransactionState.Committed);
+            Assert.Null(transaction.Connection);
+
+            // Act
+            fixture.CompleteKeyLoad();
+
+            // Assert
+            InvalidOperationException error =
+                await Assert.ThrowsAsync<InvalidOperationException>(() => Bounded(operation));
+            Assert.Equal(ADP.TransactionZombied(transaction).Message, error.Message);
+            Assert.False(IsInProgress(command));
+            Assert.Equal(0, fixture.AsyncCount);
+        }
+
+        /// <summary>
         /// A stale key found after the connection switched databases must evict the entry that was
         /// probed, not the valid entry cached for the new database.
         /// </summary>
