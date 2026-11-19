@@ -245,6 +245,32 @@ public class SqlCommandTests
     }
 
     /// <summary>
+    /// A dispatched async cache hit that finishes before execution checks it must still be
+    /// distinguishable from inline completion, so execution receives the task and does not run
+    /// enclave package generation on the caller's thread or skip connection revalidation.
+    /// </summary>
+    [Fact]
+    public async Task PrepareForTransparentEncryption_CompletedAsyncCacheHit_ReturnsTask()
+    {
+        // Arrange
+        TestKeyStoreProvider provider = new()
+        {
+            DecryptAsyncCallback = _ =>
+                Task.FromResult(QueryMetadataCacheTestCommands.NewPlaintextKey(seed: 59)),
+        };
+        using SqlCommand command = QueryMetadataCacheTestCommands.NewCachedCommand(provider);
+        using SqlConnection connection = command.Connection;
+
+        // Act
+        ValueTask preparation = InvokeAsyncPrepareForTransparentEncryption(command);
+        await preparation.AsTask();
+
+        // Assert
+        Assert.NotEqual(default, preparation);
+        Assert.Equal(1, provider.DecryptAsyncCallCount);
+    }
+
+    /// <summary>
     /// An async cache hit with a stale key must run the blocking describe fallback on a worker,
     /// not inline on the caller's thread, after evicting the stale entry.
     /// </summary>

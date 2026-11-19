@@ -1196,9 +1196,11 @@ namespace Microsoft.Data.SqlClient
                         isAsync,
                         cancellationToken);
 
-                    // Completed preparation starts execution inline, so the reader reserves the
-                    // connection before this call returns.
-                    if (isAsync && !preparation.IsCompletedSuccessfully)
+                    // Preparation returns default only when it completed inline, and execution
+                    // then starts inline too. Any other task is handed to execution even if it
+                    // has already completed, so execution revalidates the connection and stays
+                    // off the caller's thread.
+                    if (isAsync && preparation != default)
                     {
                         prepareEncryptionTask = preparation.AsTask();
                     }
