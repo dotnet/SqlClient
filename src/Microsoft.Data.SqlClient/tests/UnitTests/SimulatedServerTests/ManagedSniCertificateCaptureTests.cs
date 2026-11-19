@@ -53,15 +53,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     /// Managed SNI is forced on Windows via the <c>UseManagedNetworkingOnWindows</c> switch.
     /// </summary>
     [Collection(SimulatedServerTestCollection.Name)]
-    public class ManagedSniCertificateCaptureTests : IClassFixture<ManagedSniCaptureCertificateFixture>
+    public class ManagedSniCertificateCaptureTests : IClassFixture<ManagedSniCaptureCertificateFixture>, IDisposable
     {
         private readonly ManagedSniCaptureCertificateFixture _fixture;
+        private readonly LocalAppContextSwitchesHelper? _switches;
 
-        /// <summary>Receives the shared server certificates.</summary>
+        /// <summary>Receives the shared server certificates and enables Managed SNI for this test.</summary>
         public ManagedSniCertificateCaptureTests(ManagedSniCaptureCertificateFixture fixture)
         {
             _fixture = fixture;
+            _switches = ForceManagedSni();
         }
+
+        /// <inheritdoc/>
+        public void Dispose() => _switches?.Dispose();
+
         #region Successful opens
 
         /// <summary>
@@ -73,7 +79,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_TrustServerCertificate_PublishesCertificateWithoutVerdict()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using SqlConnection connection = new(
                 BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
@@ -94,7 +99,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_TrustServerCertificate_PublishesCertificateWithoutVerdict()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using SqlConnection connection = new(
                 BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
@@ -115,7 +119,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_MatchingServerCertificate_PublishesCertificateAndNoErrors()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using TempCertFile pin = new(_fixture.Localhost);
             using SqlConnection connection = new(
@@ -137,7 +140,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_MatchingServerCertificate_PublishesCertificateAndNoErrors()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using TempCertFile pin = new(_fixture.Localhost);
             using SqlConnection connection = new(
@@ -163,7 +165,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_UntrustedCertificate_ExceptionCarriesChainErrorAndCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
 
@@ -191,7 +192,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_UntrustedCertificate_ExceptionCarriesChainErrorAndCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
 
@@ -218,7 +218,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_HostNameMismatch_ExceptionCarriesHostNameMismatch()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
 
@@ -237,7 +236,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_HostNameMismatch_ExceptionCarriesHostNameMismatch()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
 
@@ -256,7 +254,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_HostNameInCertificateOverride_ReportsEffectiveVerdict()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
             using SqlConnection connection = new(BuildConnectionString(
                 server.EndPoint.Port, hostNameInCertificate: "other.contoso.com"));
@@ -276,7 +273,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_HostNameInCertificateOverride_ReportsEffectiveVerdict()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
             using SqlConnection connection = new(BuildConnectionString(
                 server.EndPoint.Port, hostNameInCertificate: "other.contoso.com"));
@@ -296,7 +292,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_ServerCertificateMismatch_ExceptionCarriesPinnedMismatch()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using TempCertFile pin = new(_fixture.OtherHost);
             using SqlConnection connection = new(
@@ -318,7 +313,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_ServerCertificateMismatch_ExceptionCarriesPinnedMismatch()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using TempCertFile pin = new(_fixture.OtherHost);
             using SqlConnection connection = new(
@@ -345,7 +339,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_Routed_PublishesOnlyTerminalAttemptCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
             using SqlConnection connection = new(
@@ -367,7 +360,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_Routed_PublishesOnlyTerminalAttemptCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
             using SqlConnection connection = new(
@@ -389,7 +381,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_RoutedTerminalAttemptFails_ExceptionCarriesOnlyTerminalAttempt()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
             // The pin matches the routing server's certificate only.
@@ -413,7 +404,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_RoutedTerminalAttemptFails_ExceptionCarriesOnlyTerminalAttempt()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
             // The pin matches the routing server's certificate only.
@@ -437,7 +427,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_RoutedTerminalAttemptFailsBeforeTls_ExceptionCarriesNoCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartUnencryptedServer();
             using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
             using SqlConnection connection = new(
@@ -459,7 +448,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_RoutedTerminalAttemptFailsBeforeTls_ExceptionCarriesNoCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartUnencryptedServer();
             using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
             using SqlConnection connection = new(
@@ -481,7 +469,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_FailureThenSuccessOnNewConnection_DoesNotCarryPreviousCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer otherServer = StartServer(_fixture.OtherHost,
                 expectTlsHandshakeFailure: true);
             using TdsServer server = StartServer(_fixture.Localhost);
@@ -508,7 +495,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_FailureThenSuccessOnNewConnection_DoesNotCarryPreviousCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer otherServer = StartServer(_fixture.OtherHost,
                 expectTlsHandshakeFailure: true);
             using TdsServer server = StartServer(_fixture.Localhost);
@@ -538,7 +524,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_StrictMatchingServerCertificate_PublishesCertificateAndNoErrors()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, tlsFirst: true);
             using TempCertFile pin = new(_fixture.Localhost);
             using SqlConnection connection = new(BuildConnectionString(
@@ -559,7 +544,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_StrictMatchingServerCertificate_PublishesCertificateAndNoErrors()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, tlsFirst: true);
             using TempCertFile pin = new(_fixture.Localhost);
             using SqlConnection connection = new(BuildConnectionString(
@@ -581,7 +565,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public void Open_StrictUntrustedCertificate_ExceptionCarriesChainErrorAndCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true, tlsFirst: true);
             using SqlConnection connection = new(BuildConnectionString(
                 server.EndPoint.Port, encrypt: SqlConnectionEncryptOption.Strict));
@@ -602,7 +585,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task OpenAsync_StrictUntrustedCertificate_ExceptionCarriesChainErrorAndCertificate()
         {
             // Arrange
-            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true, tlsFirst: true);
             using SqlConnection connection = new(BuildConnectionString(
                 server.EndPoint.Port, encrypt: SqlConnectionEncryptOption.Strict));
