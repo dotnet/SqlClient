@@ -15,9 +15,11 @@ each side/repetition and summarized in `benchmark-async-health.md`. There is no 
 or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
 
 The compact async-health report pairs baseline/current worst-observed burst metrics across
-phases and repetitions. Its leading dispatch-change indicator uses the same configured
-`regressionThreshold`, but is an observed relative change, not best-of-N confirmation or an
-absolute health verdict. Coverage qualifications and raw cohort provenance remain separate.
+phases and repetitions. Its leading indicator is **healthy (green)** below **1ms**,
+**warning (yellow)** from **1ms through 10ms inclusive**, and **unhealthy (red)** above **10ms**,
+using the current maximum dispatch p99. Missing current values are unknown.
+Relative deltas and their ordering are unchanged; ordinary performance
+statuses still use `regressionThreshold`. Coverage qualifications and raw provenance remain separate.
 
 All runner configs support explicit `ProcessIsolation` (`PerRunner` by default, or `PerCase`)
 and optional `AdditionalRttMilliseconds` (zero by default). These are independent of diagnoser
@@ -47,7 +49,7 @@ the Windows entrypoint rejects the Linux-only 100ms profile before setup.
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
-| `scripts/benchmark_health_report.py` | Pairs worst-observed burst metrics, relative status, and separate coverage/provenance evidence. |
+| `scripts/benchmark_health_report.py` | Pairs worst-observed burst metrics, current dispatch health bands at 1ms/10ms, and separate coverage/provenance evidence. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 

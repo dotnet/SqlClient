@@ -217,16 +217,19 @@ baseline. Missing values and every zero baseline, including zero-to-zero, produc
 percentages. Rows sort by descending unrounded dispatch-p99 percentage delta, undefined last,
 with deterministic ties.
 
-The leading status uses the regular comparison's indicators and the pipeline's actual
-`regressionThreshold` (default 10%). Dispatch increases strictly above the threshold are red,
-decreases strictly below its negative are green, and boundary equality is neutral/white.
-Current-only, baseline-only and undefined comparisons retain the new/removed/unknown indicators.
-This is an **observed relative change**, not the normal timing report's best-of-N majority
-confirmation and not an absolute scheduler-health verdict. It adds no regression failure gate.
+The leading status uses the unrounded **current maximum dispatch p99**:
+less than **1ms** is **healthy (green)**; **1ms through 10ms inclusive** is **warning (yellow)**;
+greater than **10ms** is **unhealthy (red)**.
+Missing current values, including baseline-only rows, are **unknown**. A current-only row can
+still report health without a baseline, but its relative deltas remain unavailable.
+This indicator is independent of baseline latency and the pipeline's `regressionThreshold`.
+The existing `--threshold` argument is accepted for caller compatibility; it does not change
+the 1ms/10ms health bands. Ordinary performance comparison thresholds, confirmation and failure
+gates are unchanged. This observed health indicator adds no new failure gate.
 
 Pool/SNI/async selections, runtime, OS, CPU/worker counts, process-cold position and recorded
 workload settings must match. Incompatible configurations remain unpaired, with explicit
-new/removed rows rather than misleading deltas. This also applies to intentional switch
+unmatched rows rather than misleading deltas. This also applies to intentional switch
 experiments whose settings differ. Process IDs and driver identities may differ across sides;
 mixing multiple driver identities within one side/configuration is rejected.
 
@@ -234,7 +237,9 @@ Coverage warnings remain outside the compact table. Expanded provenance retains 
 health classifications, phase completeness, sample/missing-probe counts, operation problems,
 driver identity, repetition, process ID, raw artifact aliases and the cohort(s) supplying every
 maximum. Identical aliases are counted once; conflicting data/origins fail explicitly. A green
-relative indicator never hides insufficient, censored, incomplete or failed evidence.
+or yellow health indicator never hides insufficient, censored, incomplete or failed evidence.
+Raw per-window scheduler classifications keep their recorded policy (including the existing
+100ms investigative budget); the new table indicator does not rewrite those measurements.
 
 To regenerate a historical preview without replacing the original report:
 

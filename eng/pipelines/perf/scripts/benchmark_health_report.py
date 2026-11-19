@@ -14,6 +14,14 @@ import re
 import compare_perf
 
 
+DISPATCH_WARNING_THRESHOLD_MS = 1.0
+DISPATCH_UNHEALTHY_THRESHOLD_MS = 10.0
+STATUS_LABELS = {
+    "healthy": "\U0001f7e2 healthy",
+    "warning": "\U0001f7e1 warning",
+    "unhealthy": "\U0001f534 unhealthy",
+    "unknown": "\u2754 unknown",
+}
 METRICS = {
     "DispatchP99Ms": "Dispatch p99 (ms)",
     "FirstWorkerQueueP99Ms": "First worker queue p99 (ms)",
@@ -166,6 +174,7 @@ def _reduce(records):
 
 def build_comparison(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT):
     """Pair only compatible settings; percentages compare maxima, never pooled sample percentiles."""
+    # Keep validating the legacy percentage argument for existing pipeline callers.
     if not math.isfinite(threshold) or threshold < 0:
         raise ValueError("The comparison threshold must be finite and nonnegative.")
     groups = defaultdict(lambda: defaultdict(list))
@@ -186,9 +195,15 @@ def build_comparison(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT):
                 baseline=before, current=after,
                 delta=after - before if before is not None and after is not None else None,
                 deltaPct=compare_perf._pct(before, after) if before not in (None, 0) else None)
-        delta = metrics["DispatchP99Ms"]["deltaPct"]
-        status = (compare_perf.classify_change(delta, threshold) if baseline and current else
-                  "current-only" if current else "baseline-only")
+        dispatch = metrics["DispatchP99Ms"]["current"]
+        if dispatch is None:
+            status = "unknown"
+        elif dispatch > DISPATCH_UNHEALTHY_THRESHOLD_MS:
+            status = "unhealthy"
+        elif dispatch >= DISPATCH_WARNING_THRESHOLD_MS:
+            status = "warning"
+        else:
+            status = "healthy"
         entries.append(dict(benchmark=benchmark, parameters=parameters,
                             configuration=json.loads(signature), baseline=baseline, current=current,
                             metrics=metrics, status=status, key=(benchmark, parameters, signature)))
@@ -269,17 +284,19 @@ def _provenance(entry, index):
 
 
 def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None):
-    """Render observed relative status separately from absolute health/coverage qualifications."""
+    """Render current dispatch health separately from relative deltas and coverage qualifications."""
     entries = build_comparison(root, threshold)
     lines = ["# OpenAsyncBurst async-health comparison", ""]
     if source_label:
         lines.extend(["Source: " + _text(source_label), ""])
     lines.extend([
-        f"Observed relative dispatch-p99 status; threshold **{threshold:g}%**. "
-        "Increases strictly above the threshold are regressions, decreases strictly below its "
-        "negative are improvements, and equality is unchanged.",
-        "These indicators are not best-of-N-confirmed regressions and not an absolute "
-        "scheduler-health verdict.",
+        f"Current dispatch-p99 health: below **{DISPATCH_WARNING_THRESHOLD_MS:g}ms** is "
+        f"healthy (green); from **{DISPATCH_WARNING_THRESHOLD_MS:g}ms** through "
+        f"**{DISPATCH_UNHEALTHY_THRESHOLD_MS:g}ms** inclusive is warning (yellow); above "
+        f"**{DISPATCH_UNHEALTHY_THRESHOLD_MS:g}ms** is unhealthy (red). "
+        "Missing current values are unknown.",
+        "These indicators use observed current latency, not best-of-N confirmation or "
+        "percentage change. Coverage qualifications remain separate.",
         "Each metric cell is **current maximum (signed percentage delta; signed raw difference)** "
         "to the baseline maximum. Startup, ExtraIteration and available repetitions are reduced "
         "independently per metric. Existing cohort p99 values are not pooled or recomputed.",
@@ -293,7 +310,7 @@ def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None
         parameters = entry["parameters"]
         if identities[(entry["benchmark"], parameters)] > 1:
             parameters += f" (configuration {index})"
-        values = [compare_perf.STATUS_LABELS[entry["status"]],
+        values = [STATUS_LABELS[entry["status"]],
                   entry["benchmark"].rsplit(".", 1)[-1], parameters]
         values.extend(_cell(entry["metrics"][metric], metric) for metric in METRICS)
         lines.append("| " + " | ".join(_text(value) for value in values) + " |")
@@ -306,9 +323,11 @@ def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None
         f"Unique records: {sum(len(group['records']) for group in groups)}; "
         f"scheduler classifications: {_counts(health)}; "
         f"cases with missing phases: {missing_phases}; failed records: {failures}.",
-        "**Coverage warning:** relative improvement or neutrality is not proof of absolute "
-        "scheduler health. Short/censored cohorts remain insufficient; missing phases, missing "
-        "outcomes and failures are not waived when both sides are unhealthy.",
+        "**Coverage warning:** a green or yellow indicator is not proof of complete or sufficient "
+        "evidence. Short/censored cohorts remain insufficient; missing phases, missing outcomes and failures "
+        "are not waived by a low observed p99.",
+        "Raw per-window scheduler classifications retain their recorded policy; the table uses "
+        "the current maximum against the 1ms/10ms health bands.",
         "Startup includes fixture initialization; ExtraIteration excludes successful fixture "
         "setup/cleanup. Raw phase JSON is unchanged. Individual maxima can come from different "
         "phases, processes and repetitions; tied origins and all artifact aliases are listed below.",
@@ -340,7 +359,9 @@ def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results-dir", type=Path, required=True)
-    parser.add_argument("--threshold", type=float, default=compare_perf.DEFAULT_THRESHOLD_PCT)
+    parser.add_argument("--threshold", type=float, default=compare_perf.DEFAULT_THRESHOLD_PCT,
+                        help="Accepted for existing pipeline callers; health uses fixed 1ms/10ms "
+                             "bands, independent of this regression percentage.")
     parser.add_argument("--out-md", type=Path,
                         help="Alternate output path; useful for preserving historical reports.")
     parser.add_argument("--source-label", help="Identify historical evidence in a regenerated report.")

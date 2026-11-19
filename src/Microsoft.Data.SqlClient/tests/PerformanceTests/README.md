@@ -11,8 +11,10 @@ There is no separate health sweep before the perf tests.
 
 The pipeline report pairs baseline/current maxima across phases and repetitions for four
 metrics: dispatch p99, first-worker queue p99, peak ThreadPool threads and peak process threads.
-Cells show the current maximum with signed percentage/raw deltas. Status uses the configured
-dispatch-change threshold; it is not majority confirmation or proof of absolute health.
+Cells show the current maximum with signed percentage/raw deltas. Status uses the current maximum
+dispatch p99: below 1ms is healthy (green), 1-10ms inclusive is warning (yellow), above 10ms is
+unhealthy (red), and no current value is unknown. It is not majority confirmation or proof of
+sufficient sampling.
 The report preserves phase completeness and raw cohort provenance outside its compact table.
 
 | Unit | Async-health regression coverage |

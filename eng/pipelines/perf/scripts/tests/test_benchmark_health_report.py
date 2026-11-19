@@ -82,7 +82,7 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             self.assertFalse(failed)
             self.assertEqual(len(entries), 1)
             entry = entries[0]
-            self.assertEqual(entry["status"], "regression")
+            self.assertEqual(entry["status"], "unhealthy")
             dispatch = entry["metrics"]["DispatchP99Ms"]
             self.assertEqual(dispatch, dict(baseline=110, current=154, delta=44, deltaPct=40))
             self.assertEqual(entry["metrics"]["FirstWorkerQueueP99Ms"]["delta"], 15)
@@ -127,7 +127,7 @@ class BenchmarkHealthReportTests(unittest.TestCase):
         # Assert
         self.assertEqual(len(entries), 4 * len(methods))
         self.assertNotIn("SqlConnectionRunner", markdown)
-        self.assertTrue(all(entry["status"] == "unchanged" for entry in entries))
+        self.assertTrue(all(entry["status"] == "unhealthy" for entry in entries))
 
     def test_configuration_mismatch_is_not_paired(self):
         """A different runtime, pool, worker floor or workload size cannot be compared."""
@@ -152,19 +152,19 @@ class BenchmarkHealthReportTests(unittest.TestCase):
 
                 # Assert
                 self.assertEqual({e["status"] for e in entries},
-                                 {"baseline-only", "current-only"})
+                                 {"unknown", "unhealthy"})
                 self.assertIn("unmatched configuration", markdown)
                 self.assertTrue(all(e["metrics"]["DispatchP99Ms"]["deltaPct"] is None
                                     for e in entries))
 
     def test_incomplete_candidate_is_visible_even_when_both_sides_are_insufficient(self):
-        """Relative improvement must not hide a missing phase or newly incomplete work."""
+        """A low observed dispatch value must not hide missing phases or incomplete work."""
         # Arrange
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             for phase in ("Startup", "ExtraIteration"):
                 write_window(root, "baseline", window("baseline", "one", phase))
-            current = window("current", "one", dispatch=50)
+            current = window("current", "one", dispatch=0.5)
             current["Operations"]["FirstWorkerOutcomesMissing"] = 3
             current["Operations"].update(Cancelled=1, Queued=2, InFlight=3)
             current["Summary"]["OperationEvidence"] = "Incomplete"
@@ -176,10 +176,10 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             markdown, failed = report.render(root)
 
             # Assert
-            self.assertEqual(entry["status"], "improvement")
+            self.assertEqual(entry["status"], "healthy")
             self.assertEqual(entry["current"]["missingPhases"],
                              {"current-one": ["ExtraIteration"]})
-            self.assertFalse(failed)  # Relative reporting does not introduce a new failure gate.
+            self.assertFalse(failed)  # Health reporting does not introduce a new failure gate.
             self.assertIn("FirstWorkerOutcomesMissing=3", markdown)
             self.assertIn("Cancelled=1", markdown)
             self.assertIn("Queued=2", markdown)
@@ -187,7 +187,7 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             self.assertIn("missing/censored probe counts by window: `[4]`", markdown)
             self.assertIn("Incomplete", markdown)
             self.assertIn("Insufficient", markdown)
-            self.assertIn("not an absolute scheduler-health verdict", markdown)
+            self.assertIn("not proof of complete or sufficient evidence", markdown)
             self.assertIn("FirstWorkerOutcomesMissing=3", markdown.split("<details>")[0])
 
     def test_failed_execution_marker_is_retained_and_fails(self):
@@ -212,11 +212,11 @@ class BenchmarkHealthReportTests(unittest.TestCase):
 
     def test_zero_and_missing_values_never_fabricate_percentages(self):
         """Zero-to-zero is also undefined here, while signed raw differences remain visible."""
-        for baseline, current, expected in (
-            (0, 0, "0.0000 (N/A; +0.0000)"),
-            (0, 5, "5.0000 (N/A; +5.0000)"),
-            (None, 5, "5.0000 (N/A; N/A)"),
-            (5, None, "N/A (N/A; N/A)"),
+        for baseline, current, expected, status in (
+            (0, 0, "0.0000 (N/A; +0.0000)", "healthy"),
+            (0, 5, "5.0000 (N/A; +5.0000)", "warning"),
+            (None, 5, "5.0000 (N/A; N/A)", "warning"),
+            (5, None, "N/A (N/A; N/A)", "unknown"),
         ):
             with self.subTest(baseline=baseline, current=current):
                 with tempfile.TemporaryDirectory() as temp:
@@ -230,12 +230,12 @@ class BenchmarkHealthReportTests(unittest.TestCase):
                     markdown, _ = report.render(root)
 
                     # Assert
-                    self.assertEqual(entry["status"], "unknown")
+                    self.assertEqual(entry["status"], status)
                     self.assertIsNone(entry["metrics"]["DispatchP99Ms"]["deltaPct"])
                     self.assertIn(expected, markdown)
 
-    def test_strict_threshold_sorting_and_regular_policy_match(self):
-        """Sort raw deltas worst-first, use neutral equality and deterministic undefined ties."""
+    def test_health_status_preserves_sorting_and_regular_comparison_policy(self):
+        """Health uses current milliseconds; ordering and ordinary percent thresholds stay unchanged."""
         # Arrange
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -268,16 +268,18 @@ class BenchmarkHealthReportTests(unittest.TestCase):
                              ["up", "upper-boundary", "lower-boundary", "down",
                               "missing-a", "missing-b"])
             statuses = {e["parameters"]: e["status"] for e in entries}
-            self.assertEqual(statuses["up"], "regression")
-            self.assertEqual(statuses["down"], "improvement")
-            self.assertEqual(statuses["upper-boundary"], "unchanged")
-            self.assertEqual(statuses["lower-boundary"], "unchanged")
+            self.assertEqual(statuses, {
+                "up": "unhealthy", "down": "unhealthy",
+                "upper-boundary": "unhealthy", "lower-boundary": "unhealthy",
+                "missing-a": "unknown", "missing-b": "unknown"})
             self.assertEqual({e["parameterSignature"]: e["status"] for e in ordinary},
-                             {k: v for k, v in statuses.items() if not k.startswith("missing")})
+                             {"up": "regression", "down": "improvement",
+                              "upper-boundary": "unchanged", "lower-boundary": "unchanged"})
             self.assertIn("12.5%", compare_perf.render_markdown(ordinary, "baseline", 12.5))
             markdown, _ = report.render(root, 12.5)
             self.assertIn("(-12.51%; -12.5100)", markdown)
-            self.assertIn("12.5%", markdown)
+            self.assertIn("**10ms**", markdown)
+            self.assertNotIn("12.5%", markdown)
 
     def test_conflicting_aliases_and_side_origins_are_rejected(self):
         """Duplicate copies cannot silently replace values or change baseline/current identity."""
@@ -322,22 +324,74 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "driver"):
                 report.build_comparison(root)
 
-    def test_default_threshold_boundaries_and_numeric_ties(self):
-        """Default ten-percent boundaries are neutral; equal deltas use stable case ordering."""
+    def test_current_millisecond_boundary_and_numeric_ties(self):
+        """Both boundaries are yellow; classification uses unrounded milliseconds, not deltas."""
         # Arrange
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name, value in (("z", 120), ("a", 120), ("upper", 110), ("lower", 90)):
+            for name, value in (("z", 10.00001), ("a", 10.00001),
+                                ("upper", 10), ("below-upper", 9.99999),
+                                ("above-lower", 1.00001), ("lower", 1),
+                                ("below-lower", 0.99999)):
                 for side, dispatch in (("baseline", 100), ("current", value)):
                     write_window(root, side, window(side, name, dispatch=dispatch, Parameters=name))
+
+            # Act
+            entries = report.build_comparison(root, 99)
+            markdown, failed = report.render(root, 99)
+
+            # Assert
+            self.assertEqual([e["parameters"] for e in entries],
+                             ["a", "z", "upper", "below-upper",
+                              "above-lower", "lower", "below-lower"])
+            self.assertEqual([e["status"] for e in entries],
+                             ["unhealthy", "unhealthy", "warning", "warning",
+                              "warning", "warning", "healthy"])
+            self.assertFalse(failed)
+            self.assertIn("\U0001f534 unhealthy |", markdown)
+            self.assertIn("\U0001f7e1 warning |", markdown)
+            self.assertIn("\U0001f7e2 healthy |", markdown)
+
+    def test_current_only_health_does_not_require_a_baseline(self):
+        """A missing baseline prevents deltas, not classification of an observed current value."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name, dispatch in (("low", 0.5), ("medium", 5),
+                                   ("high", 11), ("missing", None)):
+                write_window(root, "current", window(
+                    "current", name, dispatch=dispatch, Parameters=name))
+            write_window(root, "baseline", window(
+                "baseline", "removed", dispatch=1, Parameters="removed"))
 
             # Act
             entries = report.build_comparison(root)
 
             # Assert
-            self.assertEqual([e["parameters"] for e in entries], ["a", "z", "upper", "lower"])
-            self.assertEqual([e["status"] for e in entries],
-                             ["regression", "regression", "unchanged", "unchanged"])
+            self.assertEqual({e["parameters"]: e["status"] for e in entries},
+                             {"low": "healthy", "medium": "warning", "high": "unhealthy",
+                              "missing": "unknown", "removed": "unknown"})
+            self.assertTrue(all(e["metrics"]["DispatchP99Ms"]["deltaPct"] is None
+                                for e in entries))
+
+    def test_large_relative_increase_below_one_millisecond_is_healthy(self):
+        """A baseline-relative regression must not turn a low current dispatch p99 red."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            write_window(root, "baseline", window("baseline", "one", dispatch=0.1))
+            write_window(root, "current", window("current", "one", dispatch=0.5))
+
+            # Act
+            entry, = report.build_comparison(root)
+            markdown, failed = report.render(root)
+
+            # Assert
+            self.assertEqual(entry["status"], "healthy")
+            self.assertEqual(entry["metrics"]["DispatchP99Ms"]["deltaPct"], 400)
+            self.assertIn("\U0001f7e2 healthy |", markdown)
+            self.assertIn("0.5000 (+400.00%; +0.4000)", markdown)
+            self.assertFalse(failed)
 
     def test_regeneration_preserves_historical_report_and_raw_evidence(self):
         """An alternate output labels historical input without overwriting source artifacts."""
@@ -359,7 +413,7 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             self.assertEqual(original.read_text(), "original report")
             self.assertEqual(raw.read_bytes(), before)
             self.assertIn("Historical run 192609", output.read_text(encoding="utf-8"))
-            self.assertIn(compare_perf.STATUS_LABELS["current-only"],
+            self.assertIn("\U0001f534 unhealthy",
                           output.read_text(encoding="utf-8"))
 
     def test_invalid_metrics_and_thresholds_fail_explicitly(self):
@@ -380,14 +434,14 @@ class BenchmarkHealthReportTests(unittest.TestCase):
                     report.build_comparison(root)
 
     def check_shell_threshold(self, shell):
-        """Execute the actual report invocation with a nondefault pipeline threshold."""
+        """Existing shell arguments remain compatible without changing the fixed health bands."""
         executable = shutil.which(shell)
         if not executable:
             self.skipTest(f"{shell} unavailable")
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             write_window(root, "baseline", window("baseline", "one", dispatch=100))
-            write_window(root, "current", window("current", "one", dispatch=111))
+            write_window(root, "current", window("current", "one", dispatch=11))
             env = dict(os.environ, TEST_ROOT=root.as_posix(), TEST_SCRIPTS=SCRIPTS.as_posix(),
                        TEST_PYTHON=Path(sys.executable).as_posix())
             if shell == "bash":
@@ -422,16 +476,17 @@ function Invoke-Native($Command, $Message) { & $Command }
             # Assert
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             markdown = (root / "benchmark-async-health.md").read_text(encoding="utf-8")
-            self.assertIn("12.5%", markdown)
-            self.assertIn(compare_perf.STATUS_LABELS["unchanged"], markdown)
+            self.assertIn("**10ms**", markdown)
+            self.assertIn("\U0001f534 unhealthy", markdown)
+            self.assertNotIn("12.5%", markdown)
             self.assertNotIn(compare_perf.STATUS_LABELS["regression"] + " |", markdown)
 
     def test_bash_forwards_nondefault_threshold(self):
-        """Linux report status uses the same queue-time threshold as normal comparisons."""
+        """Linux callers retain their arguments while health uses fixed millisecond bands."""
         self.check_shell_threshold("bash")
 
     def test_powershell_forwards_nondefault_threshold(self):
-        """Windows report status uses the same queue-time threshold as normal comparisons."""
+        """Windows callers retain their arguments while health uses fixed millisecond bands."""
         self.check_shell_threshold("pwsh")
 
 
