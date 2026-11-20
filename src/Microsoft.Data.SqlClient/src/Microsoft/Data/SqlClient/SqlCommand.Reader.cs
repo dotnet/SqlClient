@@ -1195,18 +1195,19 @@ namespace Microsoft.Data.SqlClient
             {
                 // @TODO: Make this a separate method
 
-                usedCache = TryGetCachedQueryMetadata(
-                    isRetry, out SqlQueryMetadataCache.CachedQueryMetadata cachedMetadata);
-
                 // Asynchronous preparation can yield before execution reserves the connection.
-                // Hold the in-progress flag over that window so the connection, transaction and
-                // command cannot be changed or reused. Execution releases it once started.
+                // Hold the in-progress flag over that window, including the cache probe that
+                // reaches the enclave provider, so the connection, transaction and command cannot
+                // be changed or reused. Execution releases it once started.
                 bool ownsInProgress = isAsync && !_enclaveAttestationInProgress;
                 _enclaveAttestationInProgress |= ownsInProgress;
 
                 Task prepareEncryptionTask = null;
                 try
                 {
+                    usedCache = TryGetCachedQueryMetadata(
+                        isRetry, out SqlQueryMetadataCache.CachedQueryMetadata cachedMetadata);
+
                     ValueTask preparation = PrepareForTransparentEncryption(
                         usedCache ? cachedMetadata : null,
                         timeout,
