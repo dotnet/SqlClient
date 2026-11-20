@@ -153,8 +153,18 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*' />
         protected override int AddToBatch(IDbCommand command)
         {
+            SqlCommand batchCommand = (SqlCommand)command;
+            SqlTransaction transaction = batchCommand.BoundTransaction;
+            // Append copies the text and parameters only. A server abort already on this command
+            // has to be rejected here. One found when the batch later drains is rejected again
+            // before the writes are sent. A transaction the caller already finished is left alone.
+            if (transaction != null && transaction.Connection == null && transaction.CompletedByServer)
+            {
+                throw ADP.TransactionZombied(transaction);
+            }
+
             int commandIdentifier = _commandSet.CommandCount;
-            _commandSet.Append((SqlCommand)command);
+            _commandSet.Append(batchCommand);
             return commandIdentifier;
         }
 
@@ -209,7 +219,9 @@ namespace Microsoft.Data.SqlClient
             if (command != null)
             {
                 _commandSet.Connection = command.Connection;
-                _commandSet.Transaction = command.Transaction;
+                // Transaction returns null after a server abort. The batch command still has to
+                // keep that transaction so its execute is rejected.
+                _commandSet.Transaction = command.BoundTransaction;
                 _commandSet.CommandTimeout = command.CommandTimeout;
             }
         }
