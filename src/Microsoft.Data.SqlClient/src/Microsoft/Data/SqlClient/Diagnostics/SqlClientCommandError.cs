@@ -22,7 +22,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             Guid? connectionId,
             long? transactionId,
             SqlCommand command,
-            Exception exception)
+            Exception exception,
+            IReadOnlyList<SqlBatchCommand> batchCommands)
         {
             OperationId = operationId;
             Operation = operation;
@@ -31,6 +32,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             TransactionId = transactionId;
             Command = command;
             Exception = exception;
+            BatchCommands = batchCommands;
         }
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
         public Guid OperationId { get; }
@@ -46,9 +48,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public SqlCommand Command { get; }
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/Exception/*'/>
         public Exception Exception { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/BatchCommands/*'/>
+        public IReadOnlyList<SqlBatchCommand> BatchCommands { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
-        public int Count => 3 + 4;
+        public int Count => 3 + 5;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
@@ -62,6 +66,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 4 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
                 5 => new KeyValuePair<string, object>(nameof(Command), Command),
                 6 => new KeyValuePair<string, object>(nameof(Exception), Exception),
+                7 => new KeyValuePair<string, object>(nameof(BatchCommands), BatchCommands),
                 _ => throw new IndexOutOfRangeException(nameof(index)),
             };
         }
