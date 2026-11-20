@@ -222,6 +222,8 @@ namespace Microsoft.Data.SqlClient
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
         // Provider awaits can precede both parser-state acquisition and a cached async result.
+        // Set during enclave attestation and during async key loading for cached query metadata;
+        // the cached path keeps it set until execution has been handed off.
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;
@@ -744,6 +746,13 @@ namespace Microsoft.Data.SqlClient
                 // If the transaction object has been zombied, just return null
                 if (_transaction is not null && _transaction.Connection is null)
                 {
+                    // Keep the binding while preparation is pending, so execution still sees
+                    // that its transaction completed and fails instead of running outside it.
+                    if (_enclaveAttestationInProgress)
+                    {
+                        return null;
+                    }
+
                     _transaction = null;
                 }
 
@@ -2395,7 +2404,8 @@ namespace Microsoft.Data.SqlClient
             localCompletion.Task.ContinueWith(
                 async task =>
                 {
-                    if (task.IsFaulted)
+                    if (task.IsFaulted &&
+                        task.Exception.InnerException is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                     {
                         globalCompletion.TrySetException(task.Exception.InnerException);
                         return;
@@ -2409,6 +2419,9 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
+                        // Package generation can fail before the read stage; use the same bounded retry.
+                        task.GetAwaiter().GetResult();
+
                         // Mark that we initiated the internal EndExecute. This should always be false
                         // until we set it here.
                         Debug.Assert(!_internalEndExecuteInitiated);
@@ -2473,8 +2486,15 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        // Kick off the retry
-                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // Kick off the retry. A faulted write released its reservation, so only a
+                        // read-stage failure still holds the original one.
+                        SqlConnectionInternal retryConnection = task.IsFaulted
+                            ? null
+                            : _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // A faulted write released the in-progress flag and never marked the
+                        // command pending, so hold the flag until the retry takes it over.
+                        bool holdsInProgress = task.IsFaulted && !_enclaveAttestationInProgress;
+                        _enclaveAttestationInProgress |= holdsInProgress;
                         Task<object> retryTask = null;
                         try
                         {
@@ -2483,6 +2503,14 @@ namespace Microsoft.Data.SqlClient
                             _enclaveRetryConnection = retryConnection;
                             try
                             {
+                                if (holdsInProgress)
+                                {
+                                    // The retry's RunExecuteReader sets and owns the flag again.
+                                    holdsInProgress = false;
+                                    _enclaveAttestationInProgress = false;
+                                }
+
+
                                 retryTask = (Task<object>)retryFunc(
                                     this,
                                     behavior,
@@ -2498,10 +2526,19 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
+                            // The retry holds its own reservation for End, so release the
+                            // original one. retryConnection is null when a faulted write already
+                            // released it.
+                            retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
                         {
+                            if (holdsInProgress)
+                            {
+                                _enclaveAttestationInProgress = false;
+                            }
+
                             CachedAsyncState?.ResetAsyncState();
                             // Failed retry setup cannot transfer the original reservation to End.
                             retryConnection?.DecrementAsyncCount();
