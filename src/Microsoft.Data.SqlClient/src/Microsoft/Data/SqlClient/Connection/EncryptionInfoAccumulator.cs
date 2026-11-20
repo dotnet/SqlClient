@@ -138,21 +138,18 @@ namespace Microsoft.Data.SqlClient.Connection
         /// or <see langword="null"/> if the transport did not capture a presented certificate.
         /// </summary>
         /// <remarks>
-        /// Setting an encoding that <see cref="IsReportableServerCertificateSize"/> rejects stores
-        /// <see langword="null"/>; the certificate is never truncated.
+        /// Setting an encoding stores the accumulator's own copy, which is never mutated and flows
+        /// into <see cref="ToSnapshot"/> without further copies. Setting one that
+        /// <see cref="IsReportableServerCertificateSize"/> rejects stores <see langword="null"/>
+        /// without copying; the certificate is never truncated.
         /// </remarks>
-        public byte[]? ServerCertificateDerBytes
+        public ReadOnlyMemory<byte>? ServerCertificateDerBytes
         {
             get;
-            set
-            {
-                if (value is not null && !IsReportableServerCertificateSize(value.Length))
-                {
-                    value = null;
-                }
-
-                field = value;
-            }
+            set => field =
+                value is { } derBytes && IsReportableServerCertificateSize(derBytes.Length)
+                    ? new ReadOnlyMemory<byte>(derBytes.ToArray())
+                    : (ReadOnlyMemory<byte>?)null;
         }
 
         /// <summary>
@@ -164,16 +161,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <returns><see langword="true"/> if the certificate is reported.</returns>
         internal static bool IsReportableServerCertificateSize(int length) =>
             length > 0 && length <= MaxServerCertificateDerBytesSize;
-
-        /// <summary>
-        /// Sets <see cref="ServerCertificateDerBytes"/> to a copy of <paramref name="derBytes"/>,
-        /// or to <see langword="null"/> without copying when
-        /// <see cref="IsReportableServerCertificateSize"/> rejects its length.
-        /// </summary>
-        /// <param name="derBytes">The DER encoding of the presented server certificate.</param>
-        internal void SetServerCertificateDerBytes(ReadOnlySpan<byte> derBytes) =>
-            ServerCertificateDerBytes =
-                IsReportableServerCertificateSize(derBytes.Length) ? derBytes.ToArray() : null;
 
         /// <summary>
         /// Gets or sets SqlClient's effective certificate validation verdict for the current attempt,

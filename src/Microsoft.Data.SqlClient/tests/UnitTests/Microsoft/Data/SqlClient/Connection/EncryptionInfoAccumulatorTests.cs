@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             accumulator.ServerCertificateDerBytes = SampleCertificate;
 
             // Assert
-            Assert.Same(SampleCertificate, accumulator.ServerCertificateDerBytes);
+            Assert.Equal(SampleCertificate, Assert.NotNull(accumulator.ServerCertificateDerBytes).ToArray());
             Assert.Null(accumulator.ValidationErrors);
             Assert.Null(accumulator.ChainStatus);
             AssertNegotiatedValuesUnset(accumulator);
@@ -271,7 +271,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             accumulator.ServerCertificateDerBytes = derBytes;
 
             // Assert
-            Assert.Same(derBytes, accumulator.ServerCertificateDerBytes);
+            Assert.Equal(derBytes.Length, Assert.NotNull(accumulator.ServerCertificateDerBytes).Length);
             Assert.Null(accumulator.ValidationErrors);
             Assert.Null(accumulator.ChainStatus);
             AssertNegotiatedValuesUnset(accumulator);
@@ -302,43 +302,24 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Setting the certificate from a span stores the accumulator's own copy of the encoding.
+        /// The accumulator stores its own copy of the encoding, so mutating the source afterwards
+        /// changes neither the accumulator nor a snapshot that shares its copy.
         /// </summary>
         [Fact]
-        public void SetServerCertificateDerBytes_ReportableSize_StoresCopy()
+        public void ServerCertificateDerBytes_SourceMutated_StoredCopyUnchanged()
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
             byte[] derBytes = SampleCertificate.ToArray();
 
             // Act
-            accumulator.SetServerCertificateDerBytes(derBytes);
+            accumulator.ServerCertificateDerBytes = derBytes;
+            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
             derBytes[0] ^= 0xFF;
 
             // Assert
-            Assert.Equal(SampleCertificate, accumulator.ServerCertificateDerBytes);
-            AssertNegotiatedValuesUnset(accumulator);
-        }
-
-        /// <summary>
-        /// Setting an empty or oversized certificate from a span stores it as unavailable,
-        /// replacing an earlier value, rather than truncated.
-        /// </summary>
-        [Theory]
-        [InlineData(0)]
-        [InlineData(EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize + 1)]
-        public void SetServerCertificateDerBytes_UnreportableSize_StoresNull(int length)
-        {
-            // Arrange
-            EncryptionInfoAccumulator accumulator = new();
-            accumulator.ServerCertificateDerBytes = SampleCertificate;
-
-            // Act
-            accumulator.SetServerCertificateDerBytes(new byte[length]);
-
-            // Assert
-            Assert.Null(accumulator.ServerCertificateDerBytes);
-            Assert.False(accumulator.HasValues);
+            Assert.Equal(SampleCertificate, Assert.NotNull(accumulator.ServerCertificateDerBytes).ToArray());
+            Assert.Equal(SampleCertificate, Assert.NotNull(snapshot.PresentedServerCertificateRawData).ToArray());
         }
 
         /// <summary>

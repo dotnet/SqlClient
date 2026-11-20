@@ -387,8 +387,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, verdict);
 
             // Assert
-            Assert.NotNull(info.ServerCertificateDerBytes);
-            Assert.Equal(serverCert.Export(X509ContentType.Cert), info.ServerCertificateDerBytes);
+            ReadOnlyMemory<byte> derBytes = Assert.NotNull(info.ServerCertificateDerBytes);
+            Assert.Equal(serverCert.Export(X509ContentType.Cert), derBytes.ToArray());
             Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.NoError, info.ChainStatus);
             Assert.NotNull(info.Protocol);
@@ -397,13 +397,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.NotEqual(TlsCipherSuite.TLS_NULL_WITH_NULL_NULL, info.CipherSuite);
 
             // The accumulator owns its copy; it is not the certificate's internal buffer.
-            info.ServerCertificateDerBytes[0] ^= 0xFF;
-            Assert.NotEqual(info.ServerCertificateDerBytes, serverCert.RawData);
+            Assert.False(derBytes.Span.Overlaps(serverCert.RawDataMemory.Span));
         }
 
         /// <summary>
-        /// A certificate larger than the size cap is         not recorded, while the other handshake
-                /// values are.
+        /// A certificate larger than the size cap is not recorded, while the other handshake
+        /// values are.
         /// </summary>
         [Fact]
         public void RecordTlsHandshake_OverSizeCap_DerBytesUnavailable()
@@ -446,7 +445,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, default);
 
             // Assert
-            Assert.Equal(serverCert.RawData, info.ServerCertificateDerBytes);
+            Assert.Equal(serverCert.RawData, Assert.NotNull(info.ServerCertificateDerBytes).ToArray());
         }
 
         /// <summary>
@@ -463,7 +462,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, default);
 
             // Assert
-            Assert.Equal(serverCert.RawData, info.ServerCertificateDerBytes);
+            Assert.Equal(serverCert.RawData, Assert.NotNull(info.ServerCertificateDerBytes).ToArray());
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
             Assert.NotNull(info.Protocol);

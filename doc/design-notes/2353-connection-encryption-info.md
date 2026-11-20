@@ -192,7 +192,8 @@ validity, subject alternative names, and any thumbprint the caller wants to comp
 - **Diagnostics only:** returning a certificate is not a trust decision. Validation results
   are reported separately through `ValidationErrors` and `ChainStatus`, and callers must
   not use the certificate to override or bypass the driver's validation.
-- **Storage:** the snapshot keeps a private copy of the DER bytes. Each call parses them
+- **Storage:** the snapshot shares the accumulator's private copy of the DER bytes, which is
+  never mutated, so building a snapshot copies nothing. Each call parses them
   with `X509CertificateLoader.LoadCertificate` (from `Microsoft.Bcl.Cryptography` on .NET
   Framework). Bytes that cannot be decoded are reported as `null`. The bytes are never
   written to `ToString()`, exception messages, traces, or
@@ -368,7 +369,7 @@ handshake instead.
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`X509Certificate2.RawDataMemory`, copied by the accumulator only when it is within the cap), stored as the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`X509Certificate2.RawDataMemory`, copied by the accumulator only when it is within the cap), stored as the accumulator's `ServerCertificateDerBytes` and shared by the snapshot without a further copy | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 

@@ -311,17 +311,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             {
                 try
                 {
-                    if (serverCert is X509Certificate2 serverCert2)
-                    {
-                        // Read the encoding in place; the accumulator copies it only when it is
-                        // reportable, so an oversized certificate is never copied.
-                        encryptionInfo.SetServerCertificateDerBytes(serverCert2.RawDataMemory.Span);
-                    }
-                    else
-                    {
-                        // GetRawCertData returns a new array, so the accumulator owns it.
-                        encryptionInfo.ServerCertificateDerBytes = serverCert.GetRawCertData();
-                    }
+                    // RawDataMemory is read in place; the accumulator copies it only when it is
+                    // reportable, so an oversized certificate is never copied.
+                    encryptionInfo.ServerCertificateDerBytes = serverCert is X509Certificate2 cert2
+                        ? cert2.RawDataMemory
+                        : serverCert.GetRawCertData();
                 }
                 catch (CryptographicException)
                 {
