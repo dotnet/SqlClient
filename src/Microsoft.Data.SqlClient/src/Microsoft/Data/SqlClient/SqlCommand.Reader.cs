@@ -1216,11 +1216,12 @@ namespace Microsoft.Data.SqlClient
                         isAsync,
                         cancellationToken);
 
-                    // Preparation returns default only when it completed inline. Any other task
+                    // Preparation returns default only when it finished without yielding, and
+                    // execution then starts inline too. Any other task, including a faulted one,
                     // is handed to execution even if it has already completed, so execution
-                    // revalidates the connection and stays off the caller's thread. Pending
-                    // enclave package keys also need the asynchronous continuation, so they
-                    // never load on this thread.
+                    // revalidates the connection, releases the flag and stays off the caller's
+                    // thread. Pending enclave package keys also need the asynchronous
+                    // continuation, so they never load on this thread.
                     if (isAsync
                         && (preparation != default
                             || keysToBeSentToEnclave is { IsEmpty: false }))
