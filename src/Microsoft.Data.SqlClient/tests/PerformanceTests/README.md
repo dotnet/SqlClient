@@ -1,4 +1,42 @@
-# Command and reader performance tests
+# SqlClient performance tests
+
+## Async-health benchmarks and diagnoser
+
+`OpenAsyncBurst` runs 64 open/query/close workers against four pool states: `Empty`, `Warm`,
+`Oversubscribed` (16 slots), and `NonPooled`. Only this runner has async-health instrumentation.
+Open/close-only bursts are excluded because tight synchronous checkout loops can themselves
+saturate the ThreadPool. Unrelated connection/churn benchmarks are unchanged.
+
+`EnableAsyncHealth` defaults to true. The diagnoser observes Startup/warmup and ExtraIteration,
+not normal timing iterations. Startup includes fixture setup; ExtraIteration excludes it.
+Raw queue/open/outcome/probe/resource evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
+short, censored or failed windows are not sufficient evidence of health.
+Schema-3 summaries contain the four report metrics and completeness fields; additional latency
+statistics can be derived from retained raw observations. Schema-2 reports remain readable.
+
+All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and
+`AdditionalRttMilliseconds` (default 0). The burst defaults select `PerCase`, one warmup,
+three timing iterations, one invocation per iteration and a five-minute timeout. Positive RTT
+requires supported Linux SQL-loopback netem; unsupported requests fail explicitly.
+
+The default `Burst` profile performs one operation per worker. `Extended` keeps that cold
+wave for `Empty`, but uses 16 waves and fixed `SteadyOperationsPerWorker` counts for the other
+states. Work counts drive both execution and BDN normalization; first-worker records survive
+ordinary-record truncation. Remove retired `OpenClose/...` entries from older private profiles.
+See the [opt-in 100ms profile](profiles/openasync-extended-100ms.jsonc) and its
+[measured sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
+
+The compact report preserves baseline/current deltas, phase coverage and raw provenance.
+Its current dispatch-p99 indicator is green below 1ms, yellow from 1-10ms inclusive, and red
+above 10ms; missing values are unknown. This does not replace sampling qualifications or
+ordinary performance regression policy.
+
+Use separate process configurations to compare pool versions; the switch is cached.
+For local native/interactive profiling, set `EnableAsyncHealth=false`.
+The [pipeline protocol](../../../../eng/pipelines/perf/async-health.md) documents lifecycle
+boundaries, BDN preview/JIT preparation, network ownership/cleanup, reporting and limitations.
+
+## Command and reader benchmarks
 
 The command/parser coverage lives in the existing benchmark units. Select a unit with
 `PERF_BENCHMARK`; the performance pipeline continues to discover enabled units through
@@ -59,9 +97,9 @@ Commands/buffers formerly allocated in benchmark bodies now live in setup; DataT
 materialization alongside its drain baseline; SqlCommand now uses focused one-row workloads.
 Compare baseline and candidate drivers using the same updated benchmark sources. Historical
 results from the old implementations are not directly comparable. No parser or driver API code
-is changed by this suite consolidation. A source baseline must already contain the suite update
-before it is compared with subsequent parser/API changes; the source-baseline pipeline otherwise
-builds that older ref's own benchmark sources.
+is changed by this suite consolidation. The source-baseline pipeline compiles these same candidate
+benchmark sources with `MdsSourceRoot` pointing to the baseline driver and its matching TestCommon,
+so a baseline need not already contain the benchmark updates.
 
 ## Running and configuration
 

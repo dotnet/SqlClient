@@ -6,6 +6,38 @@ dedicated performance test lab (Azure Dedicated Hosts), compare the branch under
 released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
 database.
 
+BDN runs [AsyncHealthDiagnoser](async-health.md) only for the four new `OpenAsyncBurst` query cases.
+Existing benchmarks retain their ordinary measurements without async-health instrumentation.
+The pipeline enables the diagnoser and burst unit even with an older private runner config.
+Startup/warmup and the extra diagnostic iteration are observed separately; normal timing
+iterations are not observed. Raw queue/open/outcome/probe/resource evidence is retained alongside
+each side/repetition and summarized in `benchmark-async-health.md`. There is no separate sweep
+or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
+
+The compact async-health report pairs baseline/current worst-observed burst metrics across
+phases and repetitions. Its leading indicator is **healthy (green)** below **1ms**,
+**warning (yellow)** from **1ms through 10ms inclusive**, and **unhealthy (red)** above **10ms**,
+using the current maximum dispatch p99. Missing current values are unknown.
+Relative deltas and their ordering are unchanged; ordinary performance
+statuses still use `regressionThreshold`. Coverage qualifications and raw provenance remain separate.
+
+All runner configs support explicit `ProcessIsolation` (`PerRunner` by default, or `PerCase`)
+and optional `AdditionalRttMilliseconds` (zero by default). These are independent of diagnoser
+annotations. The shared executable dispatcher handles direct CLI and pipeline runs, retains
+per-process artifacts, and verifies owned Linux SQL-only shaping when RTT is requested.
+Execution conditions also participate in ordinary timing comparisons. See the
+[execution protocol and calibrated opt-in profile](async-health.md#execution-and-workload-settings).
+
+To queue the calibrated latency workload, select `platform=linux` and
+`runnerProfile=openasync-extended-100ms`. This loads the checked-in burst-only profile instead
+of merging it into the full suite. Set `useConnectionPoolV2=true` to retain the calibrated V2
+configuration; queue-time behaviour switches still take precedence over profile values.
+`confirmationRuns=1` runs one matched baseline/current pass without additional confirmation
+passes, preserving the profile's warmup and timing iteration counts.
+The default `runnerProfile=default` retains the existing live `runnerconfig.jsonc`.
+Both entrypoints accept the corresponding `--runner-profile` / `-RunnerProfile` option;
+the Windows entrypoint rejects the Linux-only 100ms profile before setup.
+
 ## Contents
 
 | Path | Purpose |
@@ -17,6 +49,7 @@ database.
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
+| `scripts/benchmark_health_report.py` | Pairs worst-observed burst metrics, current dispatch health bands at 1ms/10ms, and separate coverage/provenance evidence. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 
@@ -60,7 +93,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
-| `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
+| `testTimeoutMinutes` | `180` (`210` for PR) | Outer task timeout; the VM runner reserves its final 10 minutes for completion polling and artifact collection. |
 | `baselineVersion` | `latest` | Highest stable MDS version in the governed feed, resolved at run time. Pin an explicit version to override. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
@@ -195,7 +228,7 @@ Switch-pipeline parameters that differ from the tables above:
 | --------- | ------- | ----------- |
 | `switchUnderTest` | `UseConnectionPoolV2` | The single switch to A/B. Baseline forces it `false`, current forces it `true`. |
 | `failIfSwitchSlower` | `false` | Maps onto the scripts' `--fail-on-regression` gate, but means something different here: "switch on is slower" is usually the *result* you queued the run to measure, not a defect. Enable it only when asserting the switch must not be a slowdown (e.g. before flipping its default). |
-| `testTimeoutMinutes` | `180` | Same as the main pipeline, not the PR pipeline's `210`: both sides are the same source, so only **one** driver build is needed. |
+| `testTimeoutMinutes` | `180` | Same as the main pipeline, not the PR pipeline's `210`: both sides are the same source. |
 
 The pipeline deliberately does **not** expose `baselineVersion` / `baselineSourceRef` (the run
 scripts reject combining those with `--switch-under-test`, since a simultaneous source change would
@@ -289,9 +322,10 @@ The `PerformanceTests` project references Microsoft.Data.SqlClient two ways, sel
 - **Baseline (package)**: `ReferenceType=Package` turns the reference into a `PackageReference`. Because the
   repo uses **Central Package Management (CPM)**, the version is pinned with `VersionOverride` via
   `-p:MdsPackageVersion=<version>` (a plain `Version` is ignored under CPM).
-- **Baseline (source)**: no reference switching at all — the baseline ref's own copy of the perf
-  project is built from `../sqlclient-perf-baseline-src`, keeping its default `ProjectReference` to
-  that ref's driver source. Used by the PR pipeline.
+- **Baseline (source)**: the candidate's perf project is built with
+  `-p:MdsSourceRoot=../sqlclient-perf-baseline-src`. Its driver and matching TestCommon references
+  come from that tree, but benchmark definitions, diagnoser and BDN version stay identical on
+  both sides. Baselines do not need the new benchmark unit or diagnostic CLI. Used by perf-pr.
 - **Baseline (switch experiment)**: no second build at all — `--switch-under-test` measures one
   source tree twice, so the scripts build the `current` variant once and point both passes at it,
   differing only in the runner config each pass is handed. Used by the experiment pipeline.

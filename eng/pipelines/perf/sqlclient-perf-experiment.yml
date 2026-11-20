@@ -80,6 +80,14 @@ parameters:
     values:
       - net10.0
 
+  - name: runnerProfile
+    displayName: Runner profile (100ms profile is Linux burst-only)
+    type: string
+    default: default
+    values:
+      - default
+      - openasync-extended-100ms
+
   # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
   # Matches the nightly pipeline rather than the PR pipeline: both passes here share ONE build (the
   # source is identical on both sides), so there is no second driver build to pay for.
@@ -158,10 +166,10 @@ variables:
   # being combined with --baseline-version / --baseline-source-ref.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
-      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -SwitchUnderTest ${{ parameters.switchUnderTest }}'
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -RunnerProfile ${{ parameters.runnerProfile }} -SwitchUnderTest ${{ parameters.switchUnderTest }} -TestTimeoutMinutes ${{ parameters.testTimeoutMinutes }}'
   - ${{ else }}:
     - name: PerfArgsCommon
-      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --switch-under-test ${{ parameters.switchUnderTest }}'
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --runner-profile ${{ parameters.runnerProfile }} --switch-under-test ${{ parameters.switchUnderTest }} --test-timeout-minutes ${{ parameters.testTimeoutMinutes }}'
 
   # Gate flag, only when the run is asserting the switch must not be a slowdown.
   - ${{ if and(eq(parameters.platform, 'windows'), eq(parameters.failIfSwitchSlower, true)) }}:

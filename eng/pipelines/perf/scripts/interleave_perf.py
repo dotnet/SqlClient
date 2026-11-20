@@ -29,10 +29,13 @@ Only the Python standard library is used so it runs on the perf VM unchanged.
 import argparse
 import glob
 import json
+import math
 import os
 import shutil
+import signal
 import subprocess
 import sys
+import time
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -109,7 +112,30 @@ def apply_affinity(proc, cpus):
 # --------------------------------------------------------------------------------------------------
 # Running one unit and collecting its artifacts.
 # --------------------------------------------------------------------------------------------------
-def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None):
+def stop_process_tree(proc):
+    """Stop only this benchmark's process tree, leaving the collector alive."""
+    if proc.poll() is not None:
+        return
+    if os.name == "nt":
+        stopped = subprocess.run(
+            ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+            capture_output=True, text=True, timeout=30)
+        if stopped.returncode and proc.poll() is None:
+            stopped.check_returncode()
+    else:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+    proc.wait(timeout=30)
+
+
+def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None,
+                     timeout=None):
     """Run one benchmark *unit* from the build at *exe_dir* in *cwd*.
 
     Returns the subprocess return code.  Kept as a small seam so tests can substitute
@@ -128,13 +154,18 @@ def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides
 
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
-                                stderr=subprocess.STDOUT)
+                                stderr=subprocess.STDOUT, start_new_session=os.name != "nt")
         apply_affinity(proc, cpus)
-        return proc.wait()
-
-
-def _report_files(root):
-    return sorted(glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=True))
+        try:
+            return proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            log.write("\nERROR: benchmark exceeded the remaining run budget.\n")
+            log.flush()
+            stop_process_tree(proc)
+            return 124
+        except BaseException:
+            stop_process_tree(proc)
+            raise
 
 
 def collect_results(cwd, dest):
@@ -146,18 +177,27 @@ def collect_results(cwd, dest):
     os.makedirs(dest, exist_ok=True)
     types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
-    for path in _report_files(artifacts):
-        shutil.copy2(path, os.path.join(dest, os.path.basename(path)))
-        try:
-            with open(path, "r", encoding="utf-8-sig") as fh:
-                for bench in json.load(fh).get("Benchmarks", []):
-                    if bench.get("Type"):
-                        types.add(bench["Type"])
-        except (OSError, ValueError):
-            pass
-    # Also keep the human-readable GitHub markdown reports alongside, best effort.
-    for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
-        shutil.copy2(md, os.path.join(dest, os.path.basename(md)))
+    for health in glob.glob(os.path.join(artifacts, "**", "async-health"), recursive=True):
+        shutil.copytree(health, os.path.join(dest, "async-health"), dirs_exist_ok=True)
+    patterns = (
+        os.path.join("processes", "**", "process.json"),
+        os.path.join("processes", "**", "network.json"),
+        os.path.join("**", "*-report-full.json"),
+        os.path.join("**", "*-report-github.md"))
+    for pattern in patterns:
+        for path in sorted(glob.glob(os.path.join(artifacts, pattern), recursive=True)):
+            relative = os.path.relpath(path, artifacts)
+            target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
+                                  else os.path.basename(path))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy2(path, target)
+            if path.endswith("-report-full.json"):
+                try:
+                    with open(path, "r", encoding="utf-8-sig") as fh:
+                        types.update(bench["Type"] for bench in json.load(fh).get("Benchmarks", [])
+                                     if bench.get("Type"))
+                except (OSError, ValueError):
+                    pass
     return types
 
 
@@ -168,7 +208,7 @@ class Runner:
     """Holds the invariant run parameters and performs interleaved unit passes."""
 
     def __init__(self, baseline_dir, current_dir, assembly, work_dir, cpus,
-                 baseline_runner_config=None, current_runner_config=None):
+                 baseline_runner_config=None, current_runner_config=None, max_run_seconds=None):
         self.baseline_dir = baseline_dir
         self.current_dir = current_dir
         self.assembly = assembly
@@ -179,14 +219,32 @@ class Runner:
         # same build). None means "no override" -> both variants use the ambient RUNNER_CONFIG.
         self.baseline_runner_config = baseline_runner_config
         self.current_runner_config = current_runner_config
+        self.deadline = (time.monotonic() + max_run_seconds
+                         if max_run_seconds is not None else None)
+        self.repeat_all_units = set()
+
+    def remaining_seconds(self):
+        if self.deadline is None:
+            return None
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("Benchmark run budget exhausted; partial artifacts are retained.")
+        return remaining
 
     def list_units(self):
         cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
         env = dict(os.environ)
-        env["PERF_LIST_BENCHMARKS"] = "1"
+        env["PERF_LIST_BENCHMARKS"] = "json"
         env.pop("PERF_BENCHMARK", None)
-        out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True)
-        return [line.strip() for line in out.splitlines() if line.strip()]
+        out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True,
+                                      timeout=self.remaining_seconds())
+        settings = json.loads(out)
+        if not isinstance(settings, list) or any(
+                not isinstance(item.get("Name"), str) or type(item.get("RepeatAll")) is not bool
+                for item in settings):
+            raise ValueError("Invalid benchmark execution metadata.")
+        self.repeat_all_units = {item["Name"] for item in settings if item["RepeatAll"]}
+        return [item["Name"] for item in settings]
 
     def _run_one(self, variant, exe_dir, unit, rep, agg_dir):
         cwd = os.path.join(self.work_dir, f"rep{rep}", variant, unit)
@@ -197,12 +255,27 @@ class Runner:
         runner_config = (self.baseline_runner_config if variant == "baseline"
                          else self.current_runner_config)
         env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
-        rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
-                              env_overrides=env_overrides)
+        started = time.monotonic()
+        rc = None
+        try:
+            rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
+                                  env_overrides=env_overrides, timeout=self.remaining_seconds())
+        finally:
+            elapsed = time.monotonic() - started
+            timing_path = os.path.join(cwd, "run-timing.json")
+            with open(timing_path + ".tmp", "w", encoding="utf-8") as timing:
+                json.dump(dict(unit=unit, variant=variant, repetition=rep,
+                               elapsed_seconds=elapsed, exit_code=rc), timing)
+            os.replace(timing_path + ".tmp", timing_path)
+            # Preserve partial evidence even when launch, execution or the deadline fails.
+            types = collect_results(cwd, agg_dir)
+            shutil.copy2(timing_path, os.path.join(agg_dir, f"{unit}-rep{rep}.timing.json"))
+            if os.path.isfile(log_path):
+                shutil.copy2(log_path, os.path.join(agg_dir, f"{unit}-rep{rep}.log"))
+            print(f"[rep {rep}] {unit} ({variant}): {elapsed:.1f}s, exit {rc}", flush=True)
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
-        types = collect_results(cwd, agg_dir)
         if not types:
             _tail(log_path)
             raise RuntimeError(
@@ -258,7 +331,8 @@ def orchestrate(runner, units, results_dir, threshold, reps):
     entries, reg_keys_1 = _regression_keys(baseline_agg, current_agg, threshold)
 
     # Which units contain a rep-1 regression?  Those are the best-of-N candidates.
-    candidate_units = []
+    candidate_units = [unit for unit in units
+                       if unit in getattr(runner, "repeat_all_units", set())]
     for e in entries:
         if e["status"] == "regression":
             unit = type_to_unit.get(e["benchmarkName"])
@@ -307,13 +381,8 @@ def orchestrate(runner, units, results_dir, threshold, reps):
 # Rendering.
 # --------------------------------------------------------------------------------------------------
 _ICON = {
-    "regression": "🔴 regression",
-    "regression-unconfirmed": "🟠 regression (unconfirmed)",
-    "improvement": "🟢 improvement",
-    "unchanged": "⚪ unchanged",
-    "current-only": "🆕 new",
-    "baseline-only": "➖ removed",
-    "unknown": "❔",
+    **compare_perf.STATUS_LABELS,
+    "regression-unconfirmed": "\U0001f7e0 regression (unconfirmed)",
 }
 
 
@@ -323,13 +392,13 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
     lines.append("# SqlClient Performance Comparison (interleaved, best-of-N)")
     lines.append("")
     lines.append(f"Baseline: **{baseline_version}** &nbsp;|&nbsp; "
-                 f"Regression threshold: **{threshold:.0f}%** &nbsp;|&nbsp; "
+                 f"Regression threshold: **{threshold:g}%** &nbsp;|&nbsp; "
                  f"Confirmation runs: **N = {reps}**")
     lines.append("")
     lines.append(f"- Benchmarks compared: **{len(entries)}**")
     lines.append(f"- **Confirmed** regressions (majority of {reps}): **{len(confirmed)}**")
     lines.append(f"- Unconfirmed (flagged once, not reproduced): **{len(unconfirmed)}**")
-    lines.append(f"- Improvements (faster > {threshold:.0f}%): **{len(improvements)}**")
+    lines.append(f"- Improvements (faster > {threshold:g}%): **{len(improvements)}**")
     lines.append("")
     lines.append("| Status | Benchmark | Method | Params | Baseline (ms) | "
                  "Current (ms) | Mean Δ | Alloc Δ | Confirm |")
@@ -346,7 +415,7 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
                 status=_ICON.get(e["status"], e["status"]),
                 name=e["benchmarkName"],
                 method=e["methodName"],
-                params=e["parameterSignature"] or "-",
+                params=compare_perf._fmt_parameters(e),
                 base=compare_perf._fmt_ms(e["baselineMeanMs"]),
                 cur=compare_perf._fmt_ms(e["currentMeanMs"]),
                 delta=compare_perf._fmt_pct(e["meanDeltaPct"]),
@@ -371,8 +440,10 @@ def main(argv=None):
     parser.add_argument("--assembly", default="PerformanceTests.dll")
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--work-dir", default=None,
-                        help="Scratch directory for per-unit run dirs (default: <results>/../perf-interleave-work).")
-    parser.add_argument("--threshold", type=float, default=10.0)
+                        help="Per-unit raw artifacts directory (default: <results>/runs).")
+    parser.add_argument("--max-run-seconds", type=float, default=None,
+                        help="Remaining execution budget, excluding pipeline collection grace.")
+    parser.add_argument("--threshold", type=float, default=compare_perf.DEFAULT_THRESHOLD_PCT)
     parser.add_argument("--reps", type=int, default=3,
                         help="Total interleaved passes for a flagged unit (best-of-N). 1 disables confirmation.")
     parser.add_argument("--baseline-version", default="baseline")
@@ -392,10 +463,13 @@ def main(argv=None):
 
     if args.reps < 1:
         parser.error("--reps must be >= 1")
+    if args.max_run_seconds is not None and (
+            not math.isfinite(args.max_run_seconds) or args.max_run_seconds <= 0):
+        parser.error("--max-run-seconds must be a positive finite number")
 
     results_dir = os.path.abspath(args.results_dir)
     work_dir = os.path.abspath(args.work_dir) if args.work_dir \
-        else os.path.join(os.path.dirname(results_dir), "perf-interleave-work")
+        else os.path.join(results_dir, "runs")
     os.makedirs(work_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
 
@@ -409,7 +483,8 @@ def main(argv=None):
                     os.path.abspath(args.current_exe_dir),
                     args.assembly, work_dir, cpus,
                     baseline_runner_config=args.baseline_runner_config,
-                    current_runner_config=args.current_runner_config)
+                    current_runner_config=args.current_runner_config,
+                    max_run_seconds=args.max_run_seconds)
 
     units = runner.list_units()
     if not units:

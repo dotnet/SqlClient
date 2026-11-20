@@ -36,6 +36,8 @@ export PYTHONDONTWRITEBYTECODE=1
 ####################################################################################################
 
 configuration="Release"
+runStartedSeconds=$SECONDS
+testTimeoutMinutes="180"
 framework="net10.0"
 resultsSubDir="perf-results"
 baselineVersion=""
@@ -58,6 +60,7 @@ failOnRegression="false"
 runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
+runnerProfile="default"
 # Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
 # default untouched".  These are written into the runner config the benchmarks run against AND, via
 # the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
@@ -83,6 +86,8 @@ usage() {
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
+         "[--runner-profile default|openasync-extended-100ms]" \
+         "[--test-timeout-minutes <11..1440>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
 }
@@ -100,6 +105,8 @@ while [[ $# -gt 0 ]]; do
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
+        --runner-profile) runnerProfile="$2"; shift 2 ;;
+        --test-timeout-minutes) testTimeoutMinutes="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
         --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
@@ -108,6 +115,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if ! [[ "${testTimeoutMinutes}" =~ ^[0-9]+$ ]] ||
+        [[ "${testTimeoutMinutes}" -lt 11 || "${testTimeoutMinutes}" -gt 1440 ]]; then
+    echo "ERROR: --test-timeout-minutes must be an integer in 11..1440." >&2
+    exit 2
+fi
+
+# Reserve ten minutes inside the ADO task timeout for the remote completion poll and collection.
+remaining_perf_seconds() {
+    local remaining=$(( (testTimeoutMinutes - 10) * 60 - (SECONDS - runStartedSeconds) ))
+    if [[ "${remaining}" -le 0 ]]; then
+        echo "ERROR: benchmark execution budget exhausted; retaining partial results." >&2
+        return 1
+    fi
+    printf '%s\n' "${remaining}"
+}
+
 # Validate queue-time inputs up front so a typo fails fast with a clear message instead of silently
 # falling back to a different code path (e.g. '--run-mode interleave' would otherwise run sequentially)
 # or erroring out obscurely much later.
@@ -115,6 +138,11 @@ case "${runMode}" in
     interleaved|sequential) ;;
     *) echo "ERROR: --run-mode must be 'interleaved' or 'sequential' (got '${runMode}')." >&2
        usage; exit 2 ;;
+esac
+case "${runnerProfile}" in
+    default|openasync-extended-100ms) ;;
+    *) echo "ERROR: --runner-profile must be default or openasync-extended-100ms." >&2
+       exit 2 ;;
 esac
 # The three baseline selectors describe different builds/configs of the same "baseline" pass, so
 # requesting more than one is always a mistake; fail fast rather than silently honouring one of them.
@@ -192,6 +220,7 @@ echo "  Perf project   : ${PERF_PROJECT}"
 echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
+echo "  Task budget    : ${testTimeoutMinutes} minutes (10 reserved for collection)"
 echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
 echo "  Baseline ref   : ${baselineSourceRef:-<none>}"
 echo "  Switch A/B     : ${switchUnderTest:-<none>}${switchUnderTest:+ (baseline=false vs current=true)}"
@@ -399,6 +428,10 @@ RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
 RESULTS_RUNNER_CONFIG="${RESULTS_DIR}/runnerconfig.json"
 SOURCE_RUNNER_CONFIG="${PERF_DIR}/runnerconfig.jsonc"
+if [[ "${runnerProfile}" != "default" ]]; then
+    SOURCE_RUNNER_CONFIG="${PERF_DIR}/profiles/${runnerProfile}.jsonc"
+fi
+echo "Runner profile: ${runnerProfile}"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
@@ -425,10 +458,11 @@ write_runner_config() {
     local results_dst="$2"
     local switch_name="${3:-}"
     local switch_value="${4:-}"
-    python3 - "$SOURCE_RUNNER_CONFIG" "$dst" "$results_dst" "$switch_name" "$switch_value" <<'PY'
+    python3 - "$SOURCE_RUNNER_CONFIG" "$dst" "$results_dst" "$switch_name" "$switch_value" \
+        "${PERF_DIR}/runnerconfig.default.jsonc" <<'PY'
 import json, os, re, sys
 
-src, dst, results_dst, switch_name, switch_value = sys.argv[1:]
+src, dst, results_dst, switch_name, switch_value, defaults_path = sys.argv[1:]
 
 with open(src, "r", encoding="utf-8-sig") as fh:
     text = fh.read()
@@ -437,6 +471,13 @@ with open(src, "r", encoding="utf-8-sig") as fh:
 # inside string values, so a simple line-comment strip is safe here.
 text = re.sub(r'(?m)^\s*//.*$', '', text)
 cfg = json.loads(text)
+
+# Pipeline diagnostics cannot depend on a pre-existing runnerconfig having the new defaults.
+with open(defaults_path, encoding="utf-8-sig") as fh:
+    defaults = json.loads(re.sub(r'(?m)^\s*//.*$', '', fh.read()))
+cfg["EnableAsyncHealth"] = True
+cfg["Benchmarks"].setdefault(
+    "OpenAsyncBurstRunnerConfig", defaults["Benchmarks"]["OpenAsyncBurstRunnerConfig"])["Enabled"] = True
 
 server = os.environ["SQL_SERVER"]
 password = os.environ["SQL_PASSWORD"]
@@ -622,9 +663,9 @@ prepare_baseline_source() {
         fi
     fi
 
-    BASELINE_PERF_PROJECT="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj"
-    if [[ ! -f "${BASELINE_PERF_PROJECT}" ]]; then
-        echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
+    if [[ ! -f "${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" ||
+          ! -f "${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" ]]; then
+        echo "ERROR: baseline source tree requires the unified driver and matching TestCommon projects." >&2
         exit 1
     fi
 
@@ -683,8 +724,8 @@ build_current_default_output() {
 
 # run_pass <label> <project> <extra dotnet build/run args...>
 # Builds and runs one benchmark pass from <project>, pinned to PERF_CLIENT_CPUS, collecting artifacts
-# into ${RESULTS_DIR}/<label>.  <project> is the candidate's perf project for every pass except a
-# source-baseline pass, which builds the baseline ref's own perf project.
+# into ${RESULTS_DIR}/<label>. Both sides compile the candidate's harness; source baselines
+# override MdsSourceRoot to reference their own driver and matching TestCommon.
 run_pass() {
     local label="$1"; shift
     local project="$1"; shift
@@ -710,6 +751,9 @@ run_pass() {
         if [[ "${label}" == "current" && "${project}" == "${PERF_PROJECT}" \
                 && "${#extra_args[@]}" -eq 0 ]]; then
             CURRENT_DEFAULT_OUTPUT_BUILT=true
+        elif [[ "${project}" == "${PERF_PROJECT}" ]]; then
+            # A baseline build used the same project output; candidate must rebuild before running.
+            CURRENT_DEFAULT_OUTPUT_BUILT=false
         fi
     fi
 
@@ -727,10 +771,13 @@ run_pass() {
 
     echo "Running (${label}): ${run_cmd[*]}"
     capture_cpu_telemetry "${label}" "before"
+    local run_status=0
+    local remaining
+    remaining="$(remaining_perf_seconds)"
     (
-        cd "${run_dir}"
-        "${run_cmd[@]}"
-    )
+        cd "${run_dir}" || exit $?
+        timeout --signal=TERM --kill-after=30 "${remaining}" "${run_cmd[@]}"
+    ) || run_status=$?
     capture_cpu_telemetry "${label}" "after"
 
     local artifacts_dir="${run_dir}/BenchmarkDotNet.Artifacts"
@@ -744,6 +791,11 @@ run_pass() {
         fi
     else
         echo "WARNING: No BenchmarkDotNet.Artifacts directory was produced for '${label}' at ${artifacts_dir}." >&2
+    fi
+
+    if [[ "${run_status}" -ne 0 ]]; then
+        echo "ERROR: pass '${label}' failed (exit ${run_status}); diagnostic artifacts retained." >&2
+        exit "${run_status}"
     fi
 
     # §2.10 Fail loud: a pass that produced zero benchmark results (server dropped, all benches
@@ -794,11 +846,12 @@ if [[ -n "${baselineVersion}" ]]; then
         -p:WarningsNotAsErrors=NU1901%3BNU1902%3BNU1903%3BNU1904 # Allow dependencies with vulnerabilities on baseline tests
     )
 elif [[ -n "${baselineSourceRef}" ]]; then
-    # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
-    # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
+    # The candidate owns both benchmark definitions and diagnostics; only the driver/common
+    # project references come from the baseline tree, so new benchmark units exist on both sides.
     prepare_baseline_source "${baselineSourceRef}"
     baselineLabel="${BASELINE_SRC_LABEL}"
-    baselineProject="${BASELINE_PERF_PROJECT}"
+    baselineProject="${PERF_PROJECT}"
+    baselineBuildArgs=(-p:MdsSourceRoot="${BASELINE_SRC_DIR}")
 elif [[ -n "${switchUnderTest}" ]]; then
     # Switch A/B: SAME source/project for both passes (baselineProject/baselineBuildArgs are already
     # the candidate's, set above), so only the runner config differs (see BASELINE_RUNNER_CONFIG /
@@ -846,6 +899,7 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         --reps "${confirmationRuns}"
         --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
+        --max-run-seconds "$(remaining_perf_seconds)"
     )
     # --switch-under-test: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
     # switch off vs on), even though both are otherwise the same build/env; every other baseline
@@ -904,6 +958,8 @@ else
     echo "Neither --baseline-version nor --baseline-source-ref supplied; running current only (no comparison)."
     run_pass "current" "${PERF_PROJECT}"
 fi
+
+python3 "${SCRIPT_DIR}/benchmark_health_report.py" --results-dir "${RESULTS_DIR}"
 
 echo "Collected results:"
 find "${RESULTS_DIR}" -type f | sort

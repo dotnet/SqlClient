@@ -120,6 +120,15 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="BenchmarkDotNet" />
+    <Compile Include="..\PerformanceTests\Config\BenchmarkConfig.cs" Link="Config\BenchmarkConfig.cs" />
+    <Compile Include="..\PerformanceTests\Config\Config.cs" Link="Config\Config.cs" />
+    <Compile Include="..\PerformanceTests\Config\CommandRunnerJob.cs" Link="Config\CommandRunnerJob.cs" />
+    <Compile Include="..\PerformanceTests\Config\Loader.cs" Link="Config\Loader.cs" />
+    <Compile Include="..\PerformanceTests\Config\OpenAsyncBurstRunnerJob.cs" Link="Config\OpenAsyncBurstRunnerJob.cs" />
+    <Compile Include="..\PerformanceTests\Execution\*.cs" Link="Execution\%(Filename)%(Extension)" />
+    <Compile Include="..\PerformanceTests\Measurements\AsyncHealth*.cs" Link="Measurements\%(Filename)%(Extension)" />
+    <Compile Include="..\PerformanceTests\Measurements\ThreadPool*.cs" Link="Measurements\%(Filename)%(Extension)" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <!-- See the net462 group above for why this reference is declared explicitly. -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

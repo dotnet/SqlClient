@@ -1,0 +1,30 @@
+{
+    // Supply the connection string privately, or let the pipeline's normal config preparation
+    // populate it. Only a local Linux TCP SQL endpoint is supported for added RTT.
+    "ConnectionString": "<connection-string>",
+    "UseManagedSniOnWindows": true,
+    "UseOptimizedAsyncBehaviour": true,
+    "UseConnectionPoolV2": true,
+    "EnableAsyncHealth": true,
+    "Benchmarks": {
+        "OpenAsyncBurstRunnerConfig": {
+            "Enabled": true,
+            "ProcessIsolation": "PerCase",
+            "AdditionalRttMilliseconds": 100,
+            "SamplingProfile": "Extended",
+            // Fixed counts calibrated on 16-CPU Linux against current and 7.1.2 drivers.
+            // Adequate sample counts do not imply healthy scheduler tails.
+            "SteadyOperationsPerWorker": {
+                "OpenQueryClose/Warm": 20,
+                "OpenQueryClose/Oversubscribed": 5,
+                "OpenQueryClose/NonPooled": 1
+            },
+            "LaunchCount": 1,
+            "WarmupCount": 1,
+            "IterationCount": 3,
+            "InvocationCount": 1,
+            "RunStrategy": "Monitoring",
+            "TimeoutMinutes": 10
+        }
+    }
+}
