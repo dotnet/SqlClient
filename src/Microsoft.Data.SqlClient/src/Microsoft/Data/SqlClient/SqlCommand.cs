@@ -746,6 +746,13 @@ namespace Microsoft.Data.SqlClient
                 // If the transaction object has been zombied, just return null
                 if (_transaction is not null && _transaction.Connection is null)
                 {
+                    // Keep the binding while preparation is pending, so execution still sees
+                    // that its transaction completed and fails instead of running outside it.
+                    if (_enclaveAttestationInProgress)
+                    {
+                        return null;
+                    }
+
                     _transaction = null;
                 }
 
