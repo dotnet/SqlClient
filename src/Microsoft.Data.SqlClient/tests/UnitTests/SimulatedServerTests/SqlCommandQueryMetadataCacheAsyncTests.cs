@@ -28,6 +28,100 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public sealed class SqlCommandQueryMetadataCacheAsyncTests
     {
         /// <summary>
+        /// Even an immediately canceled key operation runs off the caller and releases the guard
+        /// through the same coordinator as genuinely pending preparation.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_ImmediateKeyCancellation_DispatchesAndReleasesGuard()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+            using CancellationTokenSource cancellation = new();
+            int callerThread = Environment.CurrentManagedThreadId;
+            bool invoking = true;
+            bool ranInline = false;
+            fixture.Provider.DecryptAsyncCallback = token =>
+            {
+                ranInline = invoking && Environment.CurrentManagedThreadId == callerThread;
+                cancellation.Cancel();
+                return Task.FromCanceled<byte[]>(token);
+            };
+
+            // Act
+            Task<SqlDataReader> operation;
+            try
+            {
+                operation = command.ExecuteReaderAsync(cancellation.Token);
+            }
+            finally
+            {
+                invoking = false;
+            }
+
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Bounded(operation));
+            Assert.False(ranInline);
+            Assert.False(IsInProgress(command));
+            Assert.Equal(0, fixture.AsyncCount);
+            command.Connection = null;
+        }
+
+        /// <summary>
+        /// Legacy Begin/End execution uses async key preparation and honors Cancel before its
+        /// synchronous request write begins.
+        /// </summary>
+        [Fact]
+        public async Task BeginExecuteReader_CanceledDuringKeyLoad_ReleasesGuard()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+
+            // Act
+            IAsyncResult operation = command.BeginExecuteReader();
+            await fixture.KeyLoadEntered;
+            command.Cancel();
+            fixture.CompleteKeyLoad();
+
+            // Assert
+            InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => Bounded((Task)operation));
+            Assert.Equal(SQL.OperationCancelled().Message, error.Message);
+            Assert.Throws<InvalidOperationException>(() => command.EndExecuteReader(operation));
+            Assert.Equal(1, fixture.Provider.DecryptAsyncCallCount);
+            Assert.Equal(0, fixture.Provider.DecryptCallCount);
+            Assert.False(IsInProgress(command));
+            Assert.Equal(0, fixture.AsyncCount);
+        }
+
+        /// <summary>
+        /// Preparation with no parameter keys still uses the coordinator and leaves the command
+        /// reusable after execution completes.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_Parameterless_ReleasesGuardAndAllowsReuse()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = new(
+                "/* parameterless encryption */", fixture.Connection, null,
+                SqlCommandColumnEncryptionSetting.Enabled);
+
+            // Act
+            using (SqlDataReader reader = await Bounded(command.ExecuteReaderAsync()))
+            {
+                Assert.False(await reader.ReadAsync());
+            }
+
+            // Assert
+            Assert.False(IsInProgress(command));
+            Assert.Equal(0, fixture.AsyncCount);
+            Assert.Equal(-1, await Bounded(command.ExecuteNonQueryAsync()));
+            command.Connection = null;
+        }
+
+        /// <summary>
         /// Changing the connection while cached keys load must be rejected, because execution
         /// resumes on the connection that was captured when it started.
         /// </summary>
@@ -407,6 +501,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
 
             internal SqlConnection Connection { get; }
+
+            internal TestKeyStoreProvider Provider => _provider;
 
             internal Task KeyLoadEntered => Bounded(_entered.Task);
 

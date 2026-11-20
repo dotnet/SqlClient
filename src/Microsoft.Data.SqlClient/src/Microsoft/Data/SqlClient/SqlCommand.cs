@@ -221,9 +221,8 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to match naming conventions _enclaveAttestationParameters
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
-        // Provider awaits can precede both parser-state acquisition and a cached async result.
-        // Set during enclave attestation and during async key loading for cached query metadata;
-        // the cached path keeps it set until execution has been handed off.
+        // The encryption coordinator holds this across async dispatch, preparation and TDS
+        // write/setup, before a cached async result can guard the command.
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;
@@ -2404,7 +2403,8 @@ namespace Microsoft.Data.SqlClient
             localCompletion.Task.ContinueWith(
                 async task =>
                 {
-                    if (task.IsFaulted)
+                    if (task.IsFaulted &&
+                        task.Exception.InnerException is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                     {
                         globalCompletion.TrySetException(task.Exception.InnerException);
                         return;
@@ -2418,6 +2418,9 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
+                        // Dispatched package generation can fail before the read stage starts.
+                        task.GetAwaiter().GetResult();
+
                         // Mark that we initiated the internal EndExecute. This should always be false
                         // until we set it here.
                         Debug.Assert(!_internalEndExecuteInitiated);
@@ -2483,7 +2486,9 @@ namespace Microsoft.Data.SqlClient
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
                         // Kick off the retry
-                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        SqlConnectionInternal retryConnection = task.IsFaulted
+                            ? null
+                            : _activeConnection.InnerConnection as SqlConnectionInternal;
                         Task<object> retryTask = null;
                         try
                         {
@@ -2507,6 +2512,8 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
+                            // End releases the retry's reservation, not the original attempt's.
+                            retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
