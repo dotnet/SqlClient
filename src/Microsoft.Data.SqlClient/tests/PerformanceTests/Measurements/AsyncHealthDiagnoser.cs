@@ -225,10 +225,7 @@ public sealed class AsyncHealthDiagnoser(
             HasFailed |= !completed || window.ObserverError != null;
             if (operations?.Invocations > 0)
             {
-                HasFailed |= operations.Failed != 0 || operations.Cancelled != 0 ||
-                    operations.InFlight != 0 || operations.Queued != 0 ||
-                    operations.FirstWorkerOutcomesMissing != 0 ||
-                    operations.CompletedInvocations != operations.Invocations;
+                HasFailed |= !operations.IsComplete || operations.HasFailures;
             }
             Save(window, operations, HasFailed ? "Failed" : "Completed", window.ObserverError);
             // Continuing with queued callbacks would contaminate later benchmark cases.

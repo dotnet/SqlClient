@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
@@ -104,8 +103,12 @@ internal sealed class BenchmarkNetworkScope : IDisposable
         start.Environment["PYTHONDONTWRITEBYTECODE"] = "1";
         using Process process = Process.Start(start) ??
             throw new InvalidOperationException("Could not start the netem helper.");
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        if (BenchmarkProcessRunner.Wait(process, timeout.Token) != 0)
+        if (!process.WaitForExit(30000))
+        {
+            BenchmarkProcessRunner.Stop(process);
+            throw new TimeoutException("SQL-only netem " + action + " timed out.");
+        }
+        if (process.ExitCode != 0)
         {
             throw new InvalidOperationException("SQL-only netem " + action + " failed.");
         }

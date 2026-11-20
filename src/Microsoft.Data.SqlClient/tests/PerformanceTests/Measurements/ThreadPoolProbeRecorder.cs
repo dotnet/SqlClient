@@ -38,7 +38,7 @@ internal sealed class ThreadPoolProbeRecorder
     private readonly long _origin;
     private readonly Action<Action> _dispatch;
     private readonly List<ThreadPoolProbe> _samples = [];
-    private long _total, _posted, _executed, _dropped, _rejected, _skipped, _missed;
+    private long _executed, _dropped, _rejected, _skipped, _missed;
 
     public ThreadPoolProbeRecorder(
         int capacity, TimeProvider time, long origin, Action<Action> dispatch,
@@ -67,7 +67,6 @@ internal sealed class ThreadPoolProbeRecorder
         long missed = (long)((now - next) / intervalMilliseconds);
         lock (_gate)
         {
-            _total += missed;
             _missed += missed;
         }
         PostProbe(next);
@@ -79,13 +78,12 @@ internal sealed class ThreadPoolProbeRecorder
         ThreadPoolProbe probe;
         lock (_gate)
         {
-            _total++;
             if (_samples.Count >= _sampleLimit)
             {
                 _skipped++;
                 return;
             }
-            if (_posted - _executed >= _capacity)
+            if (_samples.Count - _executed >= _capacity)
             {
                 _dropped++;
                 return;
@@ -97,7 +95,6 @@ internal sealed class ThreadPoolProbeRecorder
                 PostedMilliseconds = _time.GetElapsedTime(_origin).TotalMilliseconds
             };
             _samples.Add(probe);
-            _posted++;
         }
 
         try
@@ -116,7 +113,6 @@ internal sealed class ThreadPoolProbeRecorder
             lock (_gate)
             {
                 _samples.Remove(probe);
-                _posted--;
                 _rejected++;
             }
             throw;
@@ -129,9 +125,10 @@ internal sealed class ThreadPoolProbeRecorder
         {
             return new ThreadPoolProbeSnapshot
             {
-                Total = _total, Posted = _posted, Executed = _executed, Dropped = _dropped,
+                Total = _samples.Count + _dropped + _rejected + _skipped + _missed,
+                Posted = _samples.Count, Executed = _executed, Dropped = _dropped,
                 Rejected = _rejected, Skipped = _skipped, ProducerMissed = _missed,
-                Outstanding = _posted - _executed,
+                Outstanding = _samples.Count - _executed,
                 Samples = _samples.Select(p => new ThreadPoolProbe
                 {
                     ScheduledMilliseconds = p.ScheduledMilliseconds,

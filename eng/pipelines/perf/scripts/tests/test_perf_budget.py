@@ -3,14 +3,13 @@
 import contextlib
 import io
 import json
-import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
@@ -19,6 +18,11 @@ import interleave_perf as interleave
 
 class PerfBudgetTests(unittest.TestCase):
     """Budgets terminate owned work, preserve evidence and never turn expiry into success."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
 
     def test_deadline_is_shared_across_units(self):
         """A later unit receives only the remaining budget, not a fresh full timeout."""
@@ -35,57 +39,47 @@ class PerfBudgetTests(unittest.TestCase):
     def test_timed_out_process_is_stopped_and_log_retained(self):
         """Exercise actual process termination without requiring dotnet or a SQL server."""
         # Arrange
-        original_popen = subprocess.Popen
         started = []
 
         def launch(command, **kwargs):
-            process = original_popen(
+            process = subprocess.Popen(
                 [sys.executable, "-c", "import time; print('started', flush=True); time.sleep(30)"],
                 **kwargs)
             started.append(process)
             return process
 
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            with patch.object(interleave.subprocess, "Popen", side_effect=launch):
-                # stop_process_tree invokes taskkill through subprocess.run on Windows.
-                # Restore Popen for that native termination command, rather than substituting it.
-                stop = interleave.stop_process_tree
+        # Substitute only the benchmark launch, leaving subprocess.run's termination command real.
+        with patch.object(interleave, "subprocess", Mock(
+                wraps=subprocess, Popen=launch, STDOUT=subprocess.STDOUT,
+                TimeoutExpired=subprocess.TimeoutExpired)):
+            # Act
+            code = interleave.run_unit_process(
+                self.root, "unused.dll", "Unit", self.root, [],
+                str(self.root / "run.log"), timeout=2)
 
-                def stop_real(process):
-                    with patch.object(interleave.subprocess, "Popen", original_popen):
-                        stop(process)
-
-                # Act
-                with patch.object(interleave, "stop_process_tree", side_effect=stop_real):
-                    code = interleave.run_unit_process(
-                        temp, "unused.dll", "Unit", temp, [], str(root / "run.log"), timeout=2)
-
-            # Assert
-            self.assertEqual(code, 124)
-            self.assertIsNotNone(started[0].poll())
-            self.assertIn("remaining run budget", (root / "run.log").read_text())
+        # Assert
+        self.assertEqual(code, 124)
+        self.assertIsNotNone(started[0].poll())
+        self.assertIn("remaining run budget", (self.root / "run.log").read_text())
 
     def test_exception_still_collects_partial_evidence(self):
         """Launch/execution exceptions cannot bypass the diagnostic collector."""
         # Arrange
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            runner = interleave.Runner("base", "current", "app.dll", str(root / "runs"), [])
+        runner = interleave.Runner("base", "current", "app.dll", str(self.root / "runs"), [])
 
-            def failing_run(exe, assembly, unit, cwd, cpus, log_path, **kwargs):
-                folder = Path(cwd) / "BenchmarkDotNet.Artifacts/async-health"
-                folder.mkdir(parents=True)
-                (folder / "partial.json").write_text(json.dumps({"Status": "Failed"}))
-                Path(log_path).write_text("deadline reached")
-                raise TimeoutError("deadline reached")
+        def failing_run(exe, assembly, unit, cwd, cpus, log_path, **kwargs):
+            folder = Path(cwd) / "BenchmarkDotNet.Artifacts/async-health"
+            folder.mkdir(parents=True)
+            (folder / "partial.json").write_text(json.dumps({"Status": "Failed"}))
+            Path(log_path).write_text("deadline reached")
+            raise TimeoutError("deadline reached")
 
-            # Act / Assert
-            with patch.object(interleave, "run_unit_process", side_effect=failing_run):
-                with self.assertRaises(TimeoutError):
-                    runner._run_one("current", "current", "Unit", 1, str(root / "current"))
-            self.assertTrue((root / "current/async-health/partial.json").is_file())
-            self.assertEqual((root / "current/Unit-rep1.log").read_text(), "deadline reached")
+        # Act / Assert
+        with patch.object(interleave, "run_unit_process", side_effect=failing_run):
+            with self.assertRaises(TimeoutError):
+                runner._run_one("current", "current", "Unit", 1, str(self.root / "current"))
+        self.assertTrue((self.root / "current/async-health/partial.json").is_file())
+        self.assertEqual((self.root / "current/Unit-rep1.log").read_text(), "deadline reached")
 
     def test_invalid_budget_is_rejected(self):
         """Non-finite or nonpositive inputs must fail before invoking any benchmark."""

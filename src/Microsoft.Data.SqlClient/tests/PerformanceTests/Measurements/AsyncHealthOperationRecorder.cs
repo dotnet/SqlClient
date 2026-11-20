@@ -42,6 +42,10 @@ internal sealed class AsyncHealthOperationSnapshot
     public double? CompletedPerSecond => ElapsedMilliseconds > 0
         ? Completed * 1000 / ElapsedMilliseconds : null;
     public AsyncHealthOperationObservation[] Observations { get; init; } = [];
+
+    internal bool IsComplete => Invocations > 0 && CompletedInvocations == Invocations &&
+        Queued == 0 && InFlight == 0 && FirstWorkerOutcomesMissing == 0;
+    internal bool HasFailures => Failed != 0 || Cancelled != 0;
 }
 
 /// <summary>Records actual benchmark operations only while the diagnoser is observing.</summary>

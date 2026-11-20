@@ -53,9 +53,6 @@ internal sealed class AsyncHealthSummary
             window.ResourceSamplesDropped == 0 && window.Resources.Length > 0;
         AsyncHealthOperationObservation[] records = operations?.Observations ?? [];
         bool instrumented = operations?.Invocations > 0;
-        bool operationsComplete = instrumented && operations!.Queued == 0 &&
-            operations.InFlight == 0 && operations.FirstWorkerOutcomesMissing == 0 &&
-            operations.CompletedInvocations == operations.Invocations;
         double[] firstQueue = records.Where(o => o.First && o.StartMs.HasValue)
             .Select(o => o.StartMs!.Value - o.OfferedMs).ToArray();
         return new AsyncHealthSummary
@@ -70,15 +67,15 @@ internal sealed class AsyncHealthSummary
                 missing != 0 ? "Censored" : dispatchEligible ? "Adequate" : "Sparse",
             FirstWorkerQueueSamples = firstQueue.Length,
             FirstWorkerQueueEvidence = !instrumented ? "NotInstrumented" :
-                !operationsComplete ? "Incomplete" :
+                !operations!.IsComplete ? "Incomplete" :
                 firstQueue.Length >= MinimumP99Samples ? "Adequate" : "Sparse",
             FirstWorkerQueueP99IsMaximum = firstQueue.Length > 0 && firstQueue.Length < 100,
             ProcessThreadsPeak = window.Resources.Select(r => (int?)r.ProcessThreads)
                 .Append(window.ProcessThreadsAtStart > 0 ? window.ProcessThreadsAtStart : null).Max(),
             ThreadPoolThreadsPeak = window.Resources.Select(r => (int?)r.Threads).Max(),
             OperationEvidence = !instrumented ? "NotInstrumented" :
-                !operationsComplete ? "Incomplete" :
-                operations!.Failed != 0 || operations.Cancelled != 0 ? "Failed" :
+                !operations!.IsComplete ? "Incomplete" :
+                operations.HasFailures ? "Failed" :
                 operations.ObservationsDropped != 0 ? "Truncated" : "Complete",
             FirstWorkerQueueP99Ms = Percentile(firstQueue),
             FirstWorkerOfferToOpenP99Ms = Percentile(records

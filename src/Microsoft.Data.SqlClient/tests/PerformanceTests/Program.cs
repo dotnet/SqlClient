@@ -24,19 +24,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// accessor for its per-benchmark <see cref="RunnerJob"/> in the runner config, and the
         /// BenchmarkDotNet runner type to execute.
         /// </summary>
-        private sealed class BenchmarkUnit
-        {
-            public string Name { get; }
-            public Func<Benchmarks, RunnerJob> Selector { get; }
-            public Type RunnerType { get; }
-
-            public BenchmarkUnit(string name, Func<Benchmarks, RunnerJob> selector, Type runnerType)
-            {
-                Name = name;
-                Selector = selector;
-                RunnerType = runnerType;
-            }
-        }
+        private sealed record BenchmarkUnit(
+            string Name, Func<Benchmarks, RunnerJob> Selector, Type RunnerType);
 
         /// <summary>
         /// The ordered registry of benchmark units.  The <c>Name</c> is the stable identifier the

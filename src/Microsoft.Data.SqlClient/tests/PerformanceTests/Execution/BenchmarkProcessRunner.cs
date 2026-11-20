@@ -5,11 +5,9 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
@@ -33,8 +31,16 @@ internal static class BenchmarkProcessRunner
         network.Start();
         cancellationToken.ThrowIfCancellationRequested();
 
-        ProcessStartInfo start = CreateStartInfo(
-            typeof(BenchmarkProcessRunner).Assembly.Location, directory);
+        string? executable = Environment.ProcessPath;
+        string host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ??
+            (string.Equals(Path.GetFileNameWithoutExtension(executable), "dotnet",
+                StringComparison.OrdinalIgnoreCase) ? executable! : "dotnet");
+        var start = new ProcessStartInfo(host)
+        {
+            UseShellExecute = false,
+            WorkingDirectory = directory
+        };
+        start.ArgumentList.Add(typeof(BenchmarkProcessRunner).Assembly.Location);
         start.Environment["PERF_BENCHMARK"] = selection.Unit;
         start.Environment.Remove("PERF_LIST_BENCHMARKS");
         start.Environment[SelectionVariable] = JsonSerializer.Serialize(selection);
@@ -49,7 +55,8 @@ internal static class BenchmarkProcessRunner
         try
         {
             WriteProcessEvidence(directory, selection, job, child.Id, null, null);
-            exitCode = Wait(child, cancellationToken);
+            child.WaitForExitAsync(cancellationToken).GetAwaiter().GetResult();
+            exitCode = child.ExitCode;
             return exitCode.Value;
         }
         catch
@@ -83,21 +90,6 @@ internal static class BenchmarkProcessRunner
         File.Move(path + ".tmp", path, overwrite: true);
     }
 
-    internal static ProcessStartInfo CreateStartInfo(string assembly, string directory)
-    {
-        string? executable = Environment.ProcessPath;
-        string host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ??
-            (string.Equals(Path.GetFileNameWithoutExtension(executable), "dotnet",
-                StringComparison.OrdinalIgnoreCase) ? executable! : "dotnet");
-        var start = new ProcessStartInfo(host)
-        {
-            UseShellExecute = false,
-            WorkingDirectory = directory
-        };
-        start.ArgumentList.Add(assembly);
-        return start;
-    }
-
     internal static string ChildConfigPath(string variable, string fallback)
     {
         string path = Path.GetFullPath(Environment.GetEnvironmentVariable(variable) ?? fallback);
@@ -109,21 +101,7 @@ internal static class BenchmarkProcessRunner
             : path;
     }
 
-    internal static int Wait(Process child, CancellationToken cancellationToken)
-    {
-        try
-        {
-            child.WaitForExitAsync(cancellationToken).GetAwaiter().GetResult();
-            return child.ExitCode;
-        }
-        catch (OperationCanceledException)
-        {
-            Stop(child);
-            throw;
-        }
-    }
-
-    private static void Stop(Process child)
+    internal static void Stop(Process child)
     {
         if (!child.HasExited && OperatingSystem.IsLinux())
         {

@@ -31,32 +31,43 @@ public class ThreadPoolProbeRecorderTests
         ThreadPoolProbeSnapshot after = recorder.Snapshot();
 
         // Assert
+        Assert.Equal(2, before.Total);
+        Assert.Equal(1, before.Posted);
         Assert.Equal(1, before.Dropped);
         Assert.Equal(1, before.Outstanding);
         Assert.Null(before.Samples[0].ExecutedMilliseconds);
         Assert.Equal(0, after.Outstanding);
         Assert.Equal(200, after.Samples[0].ExecutedMilliseconds);
+        Assert.Equal(before.Total, after.Total);
     }
 
-    /// <summary>Producer descheduling stays visible without injecting a burst of overdue probes.</summary>
-    [Fact]
-    public void RequestProbe_MissedCadence_RecordsOneProbeAndMissedSlots()
+    /// <summary>Missed cadence and full retention are distinct from successfully posted probes.</summary>
+    [Theory]
+    [InlineData(1, 1, 1)]
+    [InlineData(2, 2, 0)]
+    public void RequestProbe_MissedCadence_PreservesAccounting(
+        int sampleLimit, int expectedPosted, int expectedSkipped)
     {
         // Arrange
         var time = new FakeTimeProvider();
-        var recorder = new ThreadPoolProbeRecorder(1, time, time.GetTimestamp(), action => action());
+        var recorder = new ThreadPoolProbeRecorder(1, time, time.GetTimestamp(),
+            action => action(), sampleLimit);
         time.Advance(TimeSpan.FromMilliseconds(80));
         double next = 0;
 
         // Act
         recorder.RequestProbe(ref next, 80, 25);
+        time.Advance(TimeSpan.FromMilliseconds(20));
+        recorder.RequestProbe(ref next, 100, 25);
         ThreadPoolProbeSnapshot result = recorder.Snapshot();
 
         // Assert
-        Assert.Equal(100, next);
-        Assert.Equal(4, result.Total);
+        Assert.Equal(125, next);
+        Assert.Equal(5, result.Total);
         Assert.Equal(3, result.ProducerMissed);
-        Assert.Equal(1, result.Executed);
+        Assert.Equal(expectedPosted, result.Posted);
+        Assert.Equal(expectedPosted, result.Executed);
+        Assert.Equal(expectedSkipped, result.Skipped);
         Assert.Equal(0, result.Samples[0].ScheduledMilliseconds);
         Assert.Equal(80, result.Samples[0].PostedMilliseconds);
     }
