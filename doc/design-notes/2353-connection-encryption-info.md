@@ -368,7 +368,7 @@ handshake instead.
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`), stored as the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`X509Certificate2.RawDataMemory`, copied by the accumulator only when it is within the cap), stored as the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
@@ -387,7 +387,7 @@ which selects the suite, before it raises the callback, so the value is real the
 confirm it matches the suite a trusted handshake with the same server negotiates, and a
 certificate-validation failure still reports the observed suite. `SslStream.SslProtocol` and
 `SslStream.NegotiatedCipherSuite` cannot throw once the callback is raised, so they are read
-without a `try`/`catch`; only `GetRawCertData()` is guarded, against `CryptographicException`.
+without a `try`/`catch`; only the certificate read is guarded, against `CryptographicException`.
 The record keeps the raw value; the accumulator treats a suite of `0` (`TLS_NULL_WITH_NULL_NULL`,
 nothing agreed) as unavailable, and `SslProtocols.None` likewise. Without TLS,
 the properties are `null`. `NegotiatedCipherSuiteId` returns the same IANA identifier. Managed SNI

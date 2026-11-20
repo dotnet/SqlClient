@@ -302,6 +302,46 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
+        /// Setting the certificate from a span stores the accumulator's own copy of the encoding.
+        /// </summary>
+        [Fact]
+        public void SetServerCertificateDerBytes_ReportableSize_StoresCopy()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            byte[] derBytes = SampleCertificate.ToArray();
+
+            // Act
+            accumulator.SetServerCertificateDerBytes(derBytes);
+            derBytes[0] ^= 0xFF;
+
+            // Assert
+            Assert.Equal(SampleCertificate, accumulator.ServerCertificateDerBytes);
+            AssertNegotiatedValuesUnset(accumulator);
+        }
+
+        /// <summary>
+        /// Setting an empty or oversized certificate from a span stores it as unavailable,
+        /// replacing an earlier value, rather than truncated.
+        /// </summary>
+        [Theory]
+        [InlineData(0)]
+        [InlineData(EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize + 1)]
+        public void SetServerCertificateDerBytes_UnreportableSize_StoresNull(int length)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
+
+            // Act
+            accumulator.SetServerCertificateDerBytes(new byte[length]);
+
+            // Assert
+            Assert.Null(accumulator.ServerCertificateDerBytes);
+            Assert.False(accumulator.HasValues);
+        }
+
+        /// <summary>
         /// Setting the validation verdict stores it, including the zero value
         /// <see cref="SqlServerCertificateValidationErrors.None"/>, which is available rather than
         /// unset, and leaves the other values unset.

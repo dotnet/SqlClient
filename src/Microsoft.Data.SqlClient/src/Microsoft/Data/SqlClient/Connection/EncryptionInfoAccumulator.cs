@@ -5,6 +5,7 @@
 #if NET
 using System.Net.Security;
 #endif
+using System;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -163,6 +164,16 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <returns><see langword="true"/> if the certificate is reported.</returns>
         internal static bool IsReportableServerCertificateSize(int length) =>
             length > 0 && length <= MaxServerCertificateDerBytesSize;
+
+        /// <summary>
+        /// Sets <see cref="ServerCertificateDerBytes"/> to a copy of <paramref name="derBytes"/>,
+        /// or to <see langword="null"/> without copying when
+        /// <see cref="IsReportableServerCertificateSize"/> rejects its length.
+        /// </summary>
+        /// <param name="derBytes">The DER encoding of the presented server certificate.</param>
+        internal void SetServerCertificateDerBytes(ReadOnlySpan<byte> derBytes) =>
+            ServerCertificateDerBytes =
+                IsReportableServerCertificateSize(derBytes.Length) ? derBytes.ToArray() : null;
 
         /// <summary>
         /// Gets or sets SqlClient's effective certificate validation verdict for the current attempt,
