@@ -59,6 +59,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             s_tdsParserStateObject.GetField("_enforcedTimeoutDelayInMilliSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo s_tdsParserStateObject_enforceTimeoutDelay =
             s_tdsParserStateObject.GetField("_enforceTimeoutDelay", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo s_tdsParserStateObject_outputPacketCount =
+            s_tdsParserStateObject.GetField("_outputPacketCount", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public static object GetConnectionPool(object internalConnection)
         {
@@ -140,6 +142,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 
             s_tdsParserStateObject_enforceTimeoutDelay.SetValue(stateObj, enforce);
             s_tdsParserStateObject_enforcedTimeoutDelayInMilliSeconds.SetValue(stateObj, timeout);
+        }
+
+        /// <summary>
+        /// Gets the number of packets the connection's physical state object has sent for the
+        /// request currently being written. Unlike the TDS header packet number, this count does
+        /// not wrap around after 255 packets.
+        /// </summary>
+        /// <param name="connection">Open connection to inspect.</param>
+        /// <returns>The non-wrapping number of packets sent for the current request.</returns>
+        public static uint GetOutputPacketCount(this SqlConnection connection)
+        {
+            VerifyObjectIsConnection(connection);
+
+            object innerConnection = s_sqlConnection_InnerConnection.GetValue(connection, null);
+            object parser = s_sqlConnectionInternal_Parser.GetValue(innerConnection, null);
+            object stateObj = s_tdsParser_physicalStateObj.GetValue(parser);
+
+            return (uint)s_tdsParserStateObject_outputPacketCount.GetValue(stateObj);
         }
 
         /// <summary>
