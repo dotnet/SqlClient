@@ -163,10 +163,12 @@ See the [core release notes](release-notes/8.1/8.1.0-preview1.md) for platform a
   SNI, IdentityModel, Key Vault Keys, and legacy polyfill versions are unchanged from preview1.
   ([#5031](https://github.com/dotnet/SqlClient/pull/5031))
 - Authentication configuration/registration diagnostics now use resources owned by Abstractions.
-  Existing translated messages move with their satellite assemblies; messages without a
-  translation fall back to English. Exception types and authentication contracts are unchanged,
-  but exact message text can change. See the Abstractions companion notes.
-  ([#4852](https://github.com/dotnet/SqlClient/pull/4852))
+  Existing translated messages move with their satellite assemblies. Nine additional messages
+  are included in all 13 satellite resource sets but remain English until translated.
+  Exception types and authentication contracts are unchanged, but exact message text can change.
+  See the Abstractions companion notes.
+  ([#4852](https://github.com/dotnet/SqlClient/pull/4852),
+  [#5120](https://github.com/dotnet/SqlClient/pull/5120))
 
 ### Fixed
 
