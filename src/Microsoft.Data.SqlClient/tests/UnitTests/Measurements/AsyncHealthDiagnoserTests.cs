@@ -71,12 +71,30 @@ public class AsyncHealthDiagnoserTests : IDisposable
         Assert.True(startup.RootElement.GetProperty("Operations")
             .GetProperty("Completed").GetInt64() > 0);
         using JsonDocument result = ReadWindow("*-ExtraIteration-Completed.json");
+        Assert.Equal(3, result.RootElement.GetProperty("SchemaVersion").GetInt32());
         Assert.Equal("Completed", result.RootElement.GetProperty("Status").GetString());
         Assert.Equal(1, result.RootElement.GetProperty("CompletedInvocations").GetInt64());
         Assert.Equal(1, result.RootElement.GetProperty("Operations")
             .GetProperty("Completed").GetInt64());
-        Assert.Equal("Insufficient", result.RootElement.GetProperty("Summary")
-            .GetProperty("Health").GetString());
+        JsonElement summary = result.RootElement.GetProperty("Summary");
+        Assert.Equal("Sparse", summary.GetProperty("DispatchEvidence").GetString());
+        foreach (string removed in new[]
+        {
+            "Health", "ProducerP99Ms", "FirstWorkerOfferToOpenP99Ms", "SuccessfulOpenP99Ms",
+            "FailedOpenP99Ms", "CancelledOperationP99Ms", "CompletedOperationsPerSecond"
+        })
+        {
+            Assert.False(summary.TryGetProperty(removed, out _));
+        }
+        JsonElement observation = Assert.Single(result.RootElement.GetProperty("Operations")
+            .GetProperty("Observations").EnumerateArray());
+        Assert.True(observation.GetProperty("StartMs").GetDouble() <=
+            observation.GetProperty("OpenEndMs").GetDouble());
+        Assert.Equal("Completed", observation.GetProperty("Outcome").GetString());
+        Assert.Equal(0, result.RootElement.GetProperty("Measurement")
+            .GetProperty("ResourceSamplesDropped").GetInt64());
+        Assert.NotEmpty(result.RootElement.GetProperty("Measurement")
+            .GetProperty("Resources").EnumerateArray());
         Assert.NotEmpty(result.RootElement.GetProperty("Measurement")
             .GetProperty("Probes").GetProperty("Samples").EnumerateArray());
     }

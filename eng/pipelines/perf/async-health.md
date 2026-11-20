@@ -99,9 +99,15 @@ freeze results. Errors include only types/SQL numbers, not private messages or c
 Dispatch-p99 adequacy requires at least 25 seconds, 1,000 executed probes and no missing evidence.
 First-worker adequacy requires 1,000 retained starts and complete outcomes; resource completeness
 is separate. Cold 64-start p99 is its observed maximum, not a precise population estimate.
-Short/censored/incomplete windows are insufficient. The raw per-window 100ms investigative budget
-is not an SLA or CI gate; it remains distinct from the report's current-latency health bands.
+Short/censored/incomplete windows remain insufficient regardless of the report's health color.
+The report derives complete/missing/truncated/invalid resource evidence from raw observations.
 Observer bookkeeping affects diagnostic allocation/CPU measurements; it is not driver-only cost.
+
+New artifacts use schema 3: summaries retain the four displayed metrics and completeness fields,
+not the old 100ms `Health` verdict or extra producer/open/failure/cancellation latency percentiles.
+Throughput remains in `Operations.CompletedPerSecond`; raw timestamps/outcomes are unchanged and
+support recalculating other metrics from retained samples, subject to recorded truncation.
+The reader still accepts schema 2; missing raw resource metadata is reported as `Unknown`.
 
 ## Pipeline integration and artifacts
 

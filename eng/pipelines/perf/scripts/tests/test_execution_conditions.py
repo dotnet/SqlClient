@@ -38,10 +38,17 @@ class ExecutionConditionsTests(unittest.TestCase):
 
     def test_matching_conditions_pair_across_different_processes(self):
         """Volatile PIDs do not prevent a valid matched comparison."""
-        entries = self.compare()
-        self.assertEqual(len(entries), 1)
-        self.assertEqual(entries[0]["status"], "unchanged")
-        self.assertEqual(entries[0]["meanDeltaPct"], 5)
+        path, = (self.current_manifest.parent / "BenchmarkDotNet.Artifacts/results").glob(
+            "*-report-full.json")
+        data = json.loads(path.read_text())
+        for value, status in ((105, "unchanged"), (110, "unchanged"), (90, "unchanged"),
+                              (110.01, "regression"), (89.99, "improvement")):
+            with self.subTest(value=value):
+                data["Benchmarks"][0]["Statistics"]["Mean"] = value
+                path.write_text(json.dumps(data))
+                entry, = self.compare()
+                self.assertEqual(entry["status"], status)
+                self.assertAlmostEqual(entry["meanDeltaPct"], value - 100)
 
     def test_different_rtt_or_isolation_remains_unpaired(self):
         """Changed execution conditions produce new/removed rows rather than a false delta."""

@@ -11,10 +11,8 @@ internal sealed class AsyncHealthSummary
 {
     internal const int MinimumP99Samples = 1000;
     internal const int MinimumObservationMilliseconds = 25000;
-    public string Health { get; init; } = "Insufficient";
     public double WindowMilliseconds { get; init; }
     public double? DispatchP99Ms { get; init; }
-    public double? ProducerP99Ms { get; init; }
     public int Samples { get; init; }
     public long Missing { get; init; }
     public string DispatchEvidence { get; init; } = "Sparse";
@@ -25,11 +23,6 @@ internal sealed class AsyncHealthSummary
     public int? ThreadPoolThreadsPeak { get; init; }
     public string OperationEvidence { get; init; } = "NotInstrumented";
     public double? FirstWorkerQueueP99Ms { get; init; }
-    public double? FirstWorkerOfferToOpenP99Ms { get; init; }
-    public double? SuccessfulOpenP99Ms { get; init; }
-    public double? FailedOpenP99Ms { get; init; }
-    public double? CancelledOperationP99Ms { get; init; }
-    public double? CompletedOperationsPerSecond { get; init; }
 
     internal static AsyncHealthSummary Create(
         AsyncHealthWindow window, AsyncHealthOperationSnapshot? operations = null)
@@ -45,23 +38,16 @@ internal sealed class AsyncHealthSummary
             (long)(duration / ThreadPoolHealthObserver.ProbeIntervalMilliseconds) - probes.Total);
         long missing = probes.Dropped + probes.Skipped + probes.Rejected +
             probes.ProducerMissed + probes.Outstanding + missedEnd;
-        double? p99 = Percentile(delays);
         bool dispatchEligible = duration >= MinimumObservationMilliseconds &&
             delays.Length >= MinimumP99Samples &&
             missing == 0;
-        bool eligible = dispatchEligible &&
-            window.ResourceSamplesDropped == 0 && window.Resources.Length > 0;
         AsyncHealthOperationObservation[] records = operations?.Observations ?? [];
         bool instrumented = operations?.Invocations > 0;
         double[] firstQueue = records.Where(o => o.First && o.StartMs.HasValue)
             .Select(o => o.StartMs!.Value - o.OfferedMs).ToArray();
         return new AsyncHealthSummary
         {
-            Health = window.ObserverError != null ? "Invalid" :
-                p99 > 100 ? "Fail" : eligible ? "Pass" : "Insufficient",
-            WindowMilliseconds = duration, DispatchP99Ms = p99,
-            ProducerP99Ms = Percentile(samples.Select(
-                p => p.PostedMilliseconds - p.ScheduledMilliseconds).ToArray()),
+            WindowMilliseconds = duration, DispatchP99Ms = Percentile(delays),
             Samples = delays.Length, Missing = missing,
             DispatchEvidence = window.ObserverError != null ? "Invalid" :
                 missing != 0 ? "Censored" : dispatchEligible ? "Adequate" : "Sparse",
@@ -77,20 +63,7 @@ internal sealed class AsyncHealthSummary
                 !operations!.IsComplete ? "Incomplete" :
                 operations.HasFailures ? "Failed" :
                 operations.ObservationsDropped != 0 ? "Truncated" : "Complete",
-            FirstWorkerQueueP99Ms = Percentile(firstQueue),
-            FirstWorkerOfferToOpenP99Ms = Percentile(records
-                .Where(o => o.First && o.OpenEndMs.HasValue)
-                .Select(o => o.OpenEndMs!.Value - o.OfferedMs).ToArray()),
-            SuccessfulOpenP99Ms = Percentile(records
-                .Where(o => o.StartMs.HasValue && o.OpenEndMs.HasValue)
-                .Select(o => o.OpenEndMs!.Value - o.StartMs!.Value).ToArray()),
-            FailedOpenP99Ms = Percentile(records
-                .Where(o => o.Outcome == "Failed" && !o.OpenEndMs.HasValue)
-                .Select(o => o.EndMs!.Value - o.StartMs!.Value).ToArray()),
-            CancelledOperationP99Ms = Percentile(records
-                .Where(o => o.Outcome == "Cancelled")
-                .Select(o => o.EndMs!.Value - o.StartMs!.Value).ToArray()),
-            CompletedOperationsPerSecond = operations?.CompletedPerSecond
+            FirstWorkerQueueP99Ms = Percentile(firstQueue)
         };
     }
 

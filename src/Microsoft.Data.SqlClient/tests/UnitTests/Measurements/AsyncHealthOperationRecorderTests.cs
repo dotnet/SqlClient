@@ -45,10 +45,11 @@ public class AsyncHealthOperationRecorderTests
         Assert.Equal(0, result.FirstWorkerOutcomesMissing);
         Assert.Equal(1, result.PendingOpens);
         Assert.Equal(60, summary.FirstWorkerQueueP99Ms);
-        Assert.Equal(50, summary.FirstWorkerOfferToOpenP99Ms);
-        Assert.Equal(30, summary.SuccessfulOpenP99Ms);
-        Assert.Equal(40, summary.CancelledOperationP99Ms);
-        Assert.Equal(10, summary.CompletedOperationsPerSecond);
+        Assert.Equal(50, result.Observations[0].OpenEndMs);
+        Assert.Equal(20, result.Observations[0].StartMs);
+        Assert.Equal(60, result.Observations[1].StartMs);
+        Assert.Equal(100, result.Observations[1].EndMs);
+        Assert.Equal(10, result.CompletedPerSecond);
         Assert.Equal("Incomplete", summary.OperationEvidence);
     }
 
@@ -132,15 +133,14 @@ public class AsyncHealthOperationRecorderTests
         time.Advance(TimeSpan.FromMilliseconds(100));
         operation.Fail(new InvalidOperationException("private endpoint details"));
         AsyncHealthOperationSnapshot result = recorder.Snapshot();
-        AsyncHealthSummary summary = AsyncHealthSummary.Create(new AsyncHealthWindow(), result);
 
         // Assert
         Assert.Equal(1, result.Failed);
         Assert.Equal(1, result.OpenFailures);
         Assert.Equal(0, result.FirstWorkerOutcomesMissing);
         Assert.Equal(0, result.Opened);
-        Assert.Equal(100, summary.FailedOpenP99Ms);
-        Assert.Null(summary.SuccessfulOpenP99Ms);
+        Assert.Equal(100, result.Observations[0].EndMs);
+        Assert.Null(result.Observations[0].OpenEndMs);
         Assert.Equal(nameof(InvalidOperationException), result.Observations[0].Error);
     }
 }

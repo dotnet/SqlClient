@@ -11,9 +11,6 @@ import math
 from pathlib import Path
 import re
 
-import compare_perf
-
-
 DISPATCH_WARNING_THRESHOLD_MS = 1.0
 DISPATCH_UNHEALTHY_THRESHOLD_MS = 10.0
 STATUS_LABELS = {
@@ -70,7 +67,7 @@ def _load(root):
     seen, owners = {}, {}
     for path in sorted(root.glob("**/async-health/*.json")):
         data = json.loads(path.read_text(encoding="utf-8-sig"))
-        if data.get("SchemaVersion") != 2 or data.get("Kind") != "BenchmarkAsyncHealth":
+        if data.get("SchemaVersion") not in (2, 3) or data.get("Kind") != "BenchmarkAsyncHealth":
             raise ValueError(f"Unknown BDN async-health schema: {path.name}")
         benchmark = data.get("Benchmark")
         if not isinstance(benchmark, str):
@@ -122,6 +119,17 @@ def _number(value):
     return value
 
 
+def _resource_evidence(data):
+    measurement = data.get("Measurement") or {}
+    if measurement.get("ObserverError") is not None:
+        return "Invalid"
+    dropped = _number(measurement.get("ResourceSamplesDropped"))
+    samples = measurement.get("Resources")
+    if dropped is None or not isinstance(samples, list):
+        return "Unknown"
+    return "Truncated" if dropped else "Complete" if samples else "Missing"
+
+
 def _reduce(records):
     """Take independent metric maxima, retaining every tied origin and incomplete cohort."""
     data = [record["data"] for record in records]
@@ -162,7 +170,7 @@ def _reduce(records):
         missingPhases={case: sorted(PHASES - observed) for case, observed in sorted(phases.items())
                        if observed != PHASES},
         statuses=Counter(item["Status"] for item in data),
-        health=Counter(summary.get("Health", "Invalid") for summary in summaries),
+        resourceEvidence=Counter(_resource_evidence(item) for item in data),
         operationEvidence=Counter(s.get("OperationEvidence", "Unknown") for s in summaries),
         dispatchEvidence=Counter(s.get("DispatchEvidence", "Unknown") for s in summaries),
         firstQueueEvidence=Counter(s.get("FirstWorkerQueueEvidence", "Unknown") for s in summaries),
@@ -185,10 +193,10 @@ def build_comparison(root):
         for metric in METRICS:
             before = baseline["metrics"][metric] if baseline else None
             after = current["metrics"][metric] if current else None
+            delta = after - before if before is not None and after is not None else None
             metrics[metric] = dict(
-                baseline=before, current=after,
-                delta=after - before if before is not None and after is not None else None,
-                deltaPct=compare_perf._pct(before, after) if before not in (None, 0) else None)
+                baseline=before, current=after, delta=delta,
+                deltaPct=delta / before * 100 if delta is not None and before else None)
         dispatch = metrics["DispatchP99Ms"]["current"]
         if dispatch is None:
             status = "unknown"
@@ -240,7 +248,8 @@ def _provenance(entry, index):
             continue
         lines.extend([
             f"**{side}**: {len(group['records'])} unique records; "
-            f"status: {_counts(group['statuses'])}; scheduler: {_counts(group['health'])}; "
+            f"status: {_counts(group['statuses'])}; "
+            f"resource evidence: {_counts(group['resourceEvidence'])}; "
             f"operation evidence: {_counts(group['operationEvidence'])}.",
             f"Dispatch p99 sampling: {_counts(group['dispatchEvidence'])}; "
             f"first-worker p99 sampling: {_counts(group['firstQueueEvidence'])}; "
@@ -309,19 +318,17 @@ def render(root, source_label=None):
         values.extend(_cell(entry["metrics"][metric], metric) for metric in METRICS)
         lines.append("| " + " | ".join(_text(value) for value in values) + " |")
     groups = [entry[side] for entry in entries for side in ("baseline", "current") if entry[side]]
-    health = sum((group["health"] for group in groups), Counter())
+    resources = sum((group["resourceEvidence"] for group in groups), Counter())
     missing_phases = sum(len(group["missingPhases"]) for group in groups)
     failures = sum(group["statuses"].get("Failed", 0) for group in groups)
     lines.extend([
         "", "## Coverage and provenance", "",
         f"Unique records: {sum(len(group['records']) for group in groups)}; "
-        f"scheduler classifications: {_counts(health)}; "
+        f"resource evidence: {_counts(resources)}; "
         f"cases with missing phases: {missing_phases}; failed records: {failures}.",
         "**Coverage warning:** a green or yellow indicator is not proof of complete or sufficient "
         "evidence. Short/censored cohorts remain insufficient; missing phases, missing outcomes and failures "
         "are not waived by a low observed p99.",
-        "Raw per-window scheduler classifications retain their recorded policy; the table uses "
-        "the current maximum against the 1ms/10ms health bands.",
         "Startup includes fixture initialization; ExtraIteration excludes successful fixture "
         "setup/cleanup. Raw phase JSON is unchanged. Individual maxima can come from different "
         "phases, processes and repetitions; tied origins and all artifact aliases are listed below.",
@@ -332,11 +339,13 @@ def render(root, source_label=None):
         evidence = sum((group["operationEvidence"] for group in side_groups), Counter())
         dispatch = sum((group["dispatchEvidence"] for group in side_groups), Counter())
         first_queue = sum((group["firstQueueEvidence"] for group in side_groups), Counter())
+        resources = sum((group["resourceEvidence"] for group in side_groups), Counter())
         issues = sum((group["issues"] for group in side_groups), Counter())
         unknown = sorted({field for group in side_groups for field in group["unknownCounters"]})
         lines.append(f"- **{side} coverage:** operation evidence: {_counts(evidence)}; "
                      f"dispatch p99 sampling: {_counts(dispatch)}; "
                      f"first-worker p99 sampling: {_counts(first_queue)}; "
+                     f"resource evidence: {_counts(resources)}; "
                      f"outcome/retention issues: {_counts(issues)}; "
                      f"unknown counters: {', '.join(unknown) or 'none'}.")
     lines.extend(["", "<details>",

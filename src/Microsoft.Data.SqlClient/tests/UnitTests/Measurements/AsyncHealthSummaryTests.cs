@@ -13,7 +13,7 @@ public class AsyncHealthSummaryTests
 {
     /// <summary>A quick workload with a low measured tail has insufficient scheduler coverage.</summary>
     [Fact]
-    public void Create_ShortWindow_ReportsInsufficient()
+    public void Create_ShortWindow_ReportsSparseEvidence()
     {
         // Arrange
         var window = new AsyncHealthWindow
@@ -30,7 +30,7 @@ public class AsyncHealthSummaryTests
         AsyncHealthSummary result = AsyncHealthSummary.Create(window);
 
         // Assert
-        Assert.Equal("Insufficient", result.Health);
+        Assert.Equal("Sparse", result.DispatchEvidence);
         Assert.Equal(1, result.DispatchP99Ms);
     }
 
@@ -53,7 +53,6 @@ public class AsyncHealthSummaryTests
         // Assert
         Assert.Equal(expected, result.ProcessThreadsPeak);
         Assert.Null(result.ThreadPoolThreadsPeak);
-        Assert.Equal("Insufficient", result.Health);
     }
 
     /// <summary>The process peak includes the start observation and all later resource samples.</summary>
@@ -82,9 +81,9 @@ public class AsyncHealthSummaryTests
         Assert.Equal(0, result.ThreadPoolThreadsPeak);
     }
 
-    /// <summary>Enough uncensored probes and resource samples establish the investigative budget.</summary>
+    /// <summary>Adequate dispatch sampling retains both process and ThreadPool peaks.</summary>
     [Fact]
-    public void Create_CompleteWindow_ReportsHealthAndAllProcessThreads()
+    public void Create_CompleteWindow_ReportsAdequacyAndAllProcessThreads()
     {
         // Arrange
         var window = new AsyncHealthWindow
@@ -106,7 +105,6 @@ public class AsyncHealthSummaryTests
         AsyncHealthSummary result = AsyncHealthSummary.Create(window);
 
         // Assert
-        Assert.Equal("Pass", result.Health);
         Assert.Equal("Adequate", result.DispatchEvidence);
         Assert.Equal(2, result.DispatchP99Ms);
         Assert.Equal(70, result.ProcessThreadsPeak);
@@ -124,7 +122,7 @@ public class AsyncHealthSummaryTests
         AsyncHealthSummary result = AsyncHealthSummary.Create(window);
 
         // Assert
-        Assert.Equal("Insufficient", result.Health);
+        Assert.Equal("Censored", result.DispatchEvidence);
         Assert.Equal(120, result.Missing);
         Assert.Null(result.DispatchP99Ms);
     }

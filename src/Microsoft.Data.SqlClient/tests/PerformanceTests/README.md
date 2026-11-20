@@ -11,6 +11,8 @@ saturate the ThreadPool. Unrelated connection/churn benchmarks are unchanged.
 not normal timing iterations. Startup includes fixture setup; ExtraIteration excludes it.
 Raw queue/open/outcome/probe/resource evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
 short, censored or failed windows are not sufficient evidence of health.
+Schema-3 summaries contain the four report metrics and completeness fields; additional latency
+statistics can be derived from retained raw observations. Schema-2 reports remain readable.
 
 All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and
 `AdditionalRttMilliseconds` (default 0). The burst defaults select `PerCase`, one warmup,

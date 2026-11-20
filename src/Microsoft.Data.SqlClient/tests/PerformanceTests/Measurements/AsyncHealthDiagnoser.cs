@@ -170,8 +170,9 @@ public sealed class AsyncHealthDiagnoser(
         foreach (AsyncHealthSummary summary in _summaries)
         {
             logger.WriteLine(LogKind.Info,
-                $"Async health: {summary.Health}; dispatch p99={summary.DispatchP99Ms:F2} ms; " +
+                $"Async health: dispatch p99={summary.DispatchP99Ms:F2} ms; " +
                 $"probes={summary.Samples}; missing={summary.Missing}; " +
+                $"dispatch evidence={summary.DispatchEvidence}; " +
                 $"peak process threads={summary.ProcessThreadsPeak?.ToString() ?? "N/A"}");
         }
         logger.WriteLine(LogKind.Info, "Raw async-health evidence: " + _outputDirectory);
@@ -261,7 +262,7 @@ public sealed class AsyncHealthDiagnoser(
 
         var result = new
         {
-            SchemaVersion = 2, Kind = "BenchmarkAsyncHealth", Status = status, Error = error,
+            SchemaVersion = 3, Kind = "BenchmarkAsyncHealth", Status = status, Error = error,
             CaseId = _caseId, Phase = _phase,
             Benchmark = benchmark.Descriptor.Type.FullName + "." + benchmark.Descriptor.WorkloadMethod.Name,
             Parameters = benchmark.Parameters.DisplayInfo,

@@ -34,17 +34,6 @@ STATUS_LABELS = {
 }
 
 
-def classify_change(delta, threshold_pct):
-    """Classify an unrounded relative change; equality with either boundary is neutral."""
-    if delta is None:
-        return "unknown"
-    if delta > threshold_pct:
-        return "regression"
-    if delta < -threshold_pct:
-        return "improvement"
-    return "unchanged"
-
-
 def _execution_conditions(path, directory):
     """Keep new runner outputs from silently pairing across different execution conditions."""
     root = Path(directory).resolve()
@@ -160,7 +149,15 @@ def build_comparison(baseline_dir, current_dir, threshold_pct):
                 entry["allocDeltaPct"] = _pct(b["allocatedBytes"], c["allocatedBytes"])
             else:
                 entry["allocDeltaPct"] = None
-            entry["status"] = classify_change(entry["meanDeltaPct"], threshold_pct)
+            delta = entry["meanDeltaPct"]
+            if delta is None:
+                entry["status"] = "unknown"
+            elif delta > threshold_pct:
+                entry["status"] = "regression"
+            elif delta < -threshold_pct:
+                entry["status"] = "improvement"
+            else:
+                entry["status"] = "unchanged"
         elif c and not b:
             entry["meanDeltaPct"] = None
             entry["meanRatio"] = None

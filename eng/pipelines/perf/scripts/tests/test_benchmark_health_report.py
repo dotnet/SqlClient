@@ -13,13 +13,12 @@ import unittest
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
 import benchmark_health_report as report
-import compare_perf
 
 
 def window(side, case="one", phase="Startup", dispatch=100, **changes):
-    """Create one schema-2 cohort, with distinct driver identities on the two sides."""
+    """Create one schema-3 cohort, with distinct driver identities on the two sides."""
     data = dict(
-        SchemaVersion=2, Kind="BenchmarkAsyncHealth", Status="Completed", Error=None,
+        SchemaVersion=3, Kind="BenchmarkAsyncHealth", Status="Completed", Error=None,
         CaseId=f"{side}-{case}", Phase=phase,
         Benchmark="Microsoft.Data.SqlClient.PerformanceTests.OpenAsyncBurstRunner.OpenQueryClose",
         Parameters="[State=Empty]", ConfiguredInvocationsPerIteration=1, OperationsPerInvoke=64,
@@ -29,10 +28,12 @@ def window(side, case="one", phase="Startup", dispatch=100, **changes):
             MaximumWorkerThreads=32767, ProcessId=123, DriverVersion=side,
             DriverSha256=side, DiagnosticRunMode="StartupAndExtraIteration",
             FirstBenchmarkInProcess=True),
-        Summary=dict(Health="Insufficient", DispatchP99Ms=dispatch, FirstWorkerQueueP99Ms=20,
+        Summary=dict(DispatchP99Ms=dispatch, FirstWorkerQueueP99Ms=20,
                      ThreadPoolThreadsPeak=16, ProcessThreadsPeak=30, Missing=0, Samples=10,
-                     OperationEvidence="Complete"),
-        Measurement=dict(Probes={"Samples": [{"DispatchDelayMilliseconds": 1}]}, Resources=[]),
+                     OperationEvidence="Complete", DispatchEvidence="Sparse",
+                     FirstWorkerQueueEvidence="Sparse"),
+        Measurement=dict(Probes={"Samples": [{"DispatchDelayMilliseconds": 1}]},
+                         Resources=[{"Threads": 16}], ResourceSamplesDropped=0),
         Operations=dict(Failed=0, Cancelled=0, OpenFailures=0, Queued=0, InFlight=0,
                         FirstWorkerOutcomesMissing=0, ObservationsDropped=0))
     return data | changes
@@ -113,6 +114,10 @@ class BenchmarkHealthReportTests(unittest.TestCase):
                     for phase in ("Startup", "ExtraIteration"):
                         data = window(side, method + state, phase, Parameters=f"[State={state}]")
                         data["Benchmark"] = data["Benchmark"].rsplit(".", 1)[0] + "." + method
+                        if side == "baseline":
+                            data["SchemaVersion"] = 2
+                            data["Measurement"].pop("ResourceSamplesDropped")
+                            data["Summary"]["Health"] = "Pass"
                         self.write(side, data)
                 self.write(side, window(side, "existing",
                                        Benchmark="Example.SqlConnectionRunner.OpenAsyncConnection"))
@@ -124,6 +129,9 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             self.assertEqual(len(entries), 4 if method == "OpenQueryClose" else 8)
             self.assertNotIn("SqlConnectionRunner", markdown)
             self.assertTrue(all(entry["status"] == "unhealthy" for entry in entries))
+            self.assertIn("resource evidence: Unknown=", markdown)
+            self.assertIn("resource evidence: Complete=", markdown)
+            self.assertNotIn("scheduler classifications", markdown)
 
     def test_configuration_mismatch_is_not_paired(self):
         """Different runtime, pool, worker floor or workload settings must remain unpaired."""
@@ -154,6 +162,7 @@ class BenchmarkHealthReportTests(unittest.TestCase):
         current = window("current", dispatch=0.5)
         current["Operations"].update(FirstWorkerOutcomesMissing=3, Cancelled=1, Queued=2, InFlight=3)
         current["Summary"].update(OperationEvidence="Incomplete", Missing=4)
+        current["Measurement"]["ResourceSamplesDropped"] = 1
         self.write("current", current)
 
         # Act
@@ -163,10 +172,27 @@ class BenchmarkHealthReportTests(unittest.TestCase):
         self.assertEqual(entry["status"], "healthy")
         self.assertEqual(entry["current"]["missingPhases"], {"current-one": ["ExtraIteration"]})
         for text in ("FirstWorkerOutcomesMissing=3", "Cancelled=1", "Queued=2", "InFlight=3",
-                     "missing/censored probe counts by window: `[4]`", "Incomplete", "Insufficient",
-                     "not proof of complete or sufficient evidence"):
+                     "missing/censored probe counts by window: `[4]`", "Incomplete", "Sparse",
+                     "not proof of complete or sufficient evidence",
+                     "resource evidence: Truncated=1"):
             self.assertIn(text, markdown)
         self.assertIn("FirstWorkerOutcomesMissing=3", markdown.split("<details>")[0])
+
+    def test_resource_completeness_comes_from_raw_evidence(self):
+        """A low p99 cannot mask missing resources or an observer error in either schema."""
+        for case, measurement, expected in (
+            ("missing", dict(Resources=[], ResourceSamplesDropped=0), "Missing"),
+            ("error", dict(Resources=[], ObserverError="failure"), "Invalid"),
+        ):
+            # Arrange
+            data = window("current", case, dispatch=0.5, Parameters=case)
+            data["Measurement"] = measurement
+            self.write("current", data)
+            # Act
+            entries, markdown = self.compare()
+            # Assert
+            self.assertTrue(all(entry["status"] == "healthy" for entry in entries))
+            self.assertIn(f"resource evidence: {expected}=1", markdown)
 
     def test_failed_execution_marker_is_retained_and_fails(self):
         """A completed window must not deduplicate away its later execution failure."""
@@ -330,14 +356,6 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "metric"):
                 report.build_comparison(self.root)
 
-    def test_ordinary_comparison_keeps_relative_thresholds(self):
-        """Removing async percentage plumbing must not change ordinary timing classifications."""
-        # Act
-        statuses = [compare_perf.classify_change(delta, 12.5)
-                    for delta in (-12.51, -12.5, 12.5, 12.51)]
-        # Assert
-        self.assertEqual(statuses, ["improvement", "unchanged", "unchanged", "regression"])
-
     def check_shell_report(self, shell):
         """Execute each real shell's report invocation without a relative threshold argument."""
         executable = shutil.which(shell)
@@ -372,7 +390,7 @@ class BenchmarkHealthReportTests(unittest.TestCase):
         markdown = (self.root / "benchmark-async-health.md").read_text(encoding="utf-8")
         self.assertIn("**10ms**", markdown)
         self.assertIn(report.STATUS_LABELS["unhealthy"], markdown)
-        self.assertNotIn(compare_perf.STATUS_LABELS["regression"] + " |", markdown)
+        self.assertNotIn("regression |", markdown)
 
     def test_bash_generates_report(self):
         self.check_shell_report("bash")
