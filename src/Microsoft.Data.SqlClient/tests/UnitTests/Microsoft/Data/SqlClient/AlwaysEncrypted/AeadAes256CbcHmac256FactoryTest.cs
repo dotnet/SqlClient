@@ -26,7 +26,7 @@ public class AeadAes256CbcHmac256FactoryTest
         SymmetricKey symmetricKey = new(dummySymmetricKeyMaterial);
         // Act
         Action createEncryptionAlgorithm = () =>
-            AeadAes256CbcHmac256Factory.Instance.Create(symmetricKey, (EncryptionType)0xFF, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
+            AeadAes256CbcHmac256Factory.Instance.Create(symmetricKey, (EncryptionType)0xFF, AeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         // Assert
         Assert.Throws<ArgumentException>(createEncryptionAlgorithm);
@@ -56,15 +56,15 @@ public class AeadAes256CbcHmac256FactoryTest
         SymmetricKey secondRootKey = new(validSecondRootKeyMaterial);
 
         // Act
-        SqlClientEncryptionAlgorithm initialFirstAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(firstRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
-        SqlClientEncryptionAlgorithm cachedFirstAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(firstRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
-        SqlClientEncryptionAlgorithm initialSecondAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(secondRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
+        EncryptionAlgorithm initialFirstAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(firstRootKey, EncryptionType.Deterministic, AeadAes256CbcHmac256Algorithm.AlgorithmName);
+        EncryptionAlgorithm cachedFirstAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(firstRootKey, EncryptionType.Deterministic, AeadAes256CbcHmac256Algorithm.AlgorithmName);
+        EncryptionAlgorithm initialSecondAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(secondRootKey, EncryptionType.Deterministic, AeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         // Assert
         Assert.Same(initialFirstAlgorithm, cachedFirstAlgorithm);
         Assert.NotSame(initialFirstAlgorithm, initialSecondAlgorithm);
 
-        Assert.IsType<SqlAeadAes256CbcHmac256Algorithm>(initialFirstAlgorithm);
-        Assert.IsType<SqlAeadAes256CbcHmac256Algorithm>(initialSecondAlgorithm);
+        Assert.IsType<AeadAes256CbcHmac256Algorithm>(initialFirstAlgorithm);
+        Assert.IsType<AeadAes256CbcHmac256Algorithm>(initialSecondAlgorithm);
     }
 }
