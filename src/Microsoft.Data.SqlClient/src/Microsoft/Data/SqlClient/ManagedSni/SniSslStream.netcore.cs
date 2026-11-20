@@ -21,11 +21,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private readonly ConcurrentQueueSemaphore _writeAsyncSemaphore;
         private readonly ConcurrentQueueSemaphore _readAsyncSemaphore;
 
-        public SniSslStream(
-            Stream innerStream,
-            bool leaveInnerStreamOpen,
-            RemoteCertificateValidationCallback userCertificateValidationCallback)
-            : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
+        public SniSslStream(Stream innerStream, bool leaveInnerStreamOpen)
+            : base(innerStream, leaveInnerStreamOpen)
         {
             _writeAsyncSemaphore = new ConcurrentQueueSemaphore(1);
             _readAsyncSemaphore = new ConcurrentQueueSemaphore(1);

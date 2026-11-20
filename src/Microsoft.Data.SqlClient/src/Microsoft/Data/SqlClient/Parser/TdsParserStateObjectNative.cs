@@ -435,7 +435,9 @@ namespace Microsoft.Data.SqlClient.Parser
             return error;
         }
 
-        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
+        // Native SNI does not report handshake details through this call; TdsParser records the
+        // negotiated protocol after the handshake.
+        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename, Connection.EncryptionInfoAccumulator encryptionInfo)
         {
             AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;

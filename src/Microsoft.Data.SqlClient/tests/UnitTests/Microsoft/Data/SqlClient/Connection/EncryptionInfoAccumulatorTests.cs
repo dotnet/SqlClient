@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.Connection;
 using Xunit;
 using static Microsoft.Data.SqlClient.UnitTests.Utilities.EncryptionInfoTestData;
@@ -19,6 +20,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
     {
         // IANA identifier for TLS_AES_128_GCM_SHA256.
         private const int OtherCipherSuite = 0x1301;
+
+        // Stand-in DER bytes; the accumulator stores the certificate without parsing it.
+        private static readonly byte[] SampleCertificate = { 0x30, 0x82, 0x01, 0x0A, 0x5A, 0xC3, 0x7E, 0x11 };
+
+        private const X509ChainStatusFlags SampleChainStatus =
+            X509ChainStatusFlags.UntrustedRoot | X509ChainStatusFlags.NotTimeValid;
 
         #region Test data
 
@@ -39,18 +46,36 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 .Where(protocol => protocol != SslProtocols.None));
 
         /// <summary>
-        /// Every subset of the mode, protocol and cipher suite, as flags saying which are set.
+        /// Every <see cref="SqlServerCertificateValidationErrors"/> value, including
+        /// <see cref="SqlServerCertificateValidationErrors.None"/>, plus all flags combined.
         /// </summary>
-        public static TheoryData<bool, bool, bool> AllPropertySubsets
+        public static TheoryData<SqlServerCertificateValidationErrors> AllValidationErrors
         {
             get
             {
-                TheoryData<bool, bool, bool> data = new();
-                for (int subset = 0; subset < 8; subset++)
-                {
-                    data.Add((subset & 1) != 0, (subset & 2) != 0, (subset & 4) != 0);
-                }
+                SqlServerCertificateValidationErrors[] values =
+                    (SqlServerCertificateValidationErrors[])Enum.GetValues(typeof(SqlServerCertificateValidationErrors));
+                TheoryData<SqlServerCertificateValidationErrors> data = new(values);
+                data.Add(values.Aggregate((all, value) => all | value));
                 return data;
+            }
+        }
+
+        /// <summary>
+        /// A clean chain, a single chain status flag, and every chain status flag combined.
+        /// </summary>
+        public static TheoryData<X509ChainStatusFlags> ChainStatuses
+        {
+            get
+            {
+                X509ChainStatusFlags[] values =
+                    (X509ChainStatusFlags[])Enum.GetValues(typeof(X509ChainStatusFlags));
+                return new TheoryData<X509ChainStatusFlags>
+                {
+                    X509ChainStatusFlags.NoError,
+                    X509ChainStatusFlags.UntrustedRoot,
+                    values.Aggregate((all, value) => all | value),
+                };
             }
         }
 
@@ -59,7 +84,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region Mode
 
         /// <summary>
-        /// Setting the mode stores it and leaves the protocol and cipher suite unset.
+        /// Setting the mode stores it and leaves every other value unset.
         /// </summary>
         [Theory]
         [MemberData(nameof(AllModes))]
@@ -76,6 +101,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(mode, accumulator.Mode);
             Assert.Null(accumulator.Protocol);
             Assert.Null(accumulator.CipherSuite);
+            AssertCertificateFieldsUnset(accumulator);
             Assert.True(accumulator.HasValues);
         }
 
@@ -101,11 +127,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(accumulator.Protocol);
             Assert.Null(accumulator.Mode);
             Assert.Null(accumulator.CipherSuite);
+            AssertCertificateFieldsUnset(accumulator);
             Assert.False(accumulator.HasValues);
         }
 
         /// <summary>
-        /// A reported protocol is stored unchanged and leaves the mode and cipher suite unset.
+        /// A reported protocol is stored unchanged and leaves every other value unset.
         /// </summary>
         [Theory]
         [MemberData(nameof(ReportedProtocols))]
@@ -122,6 +149,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(protocol, accumulator.Protocol);
             Assert.Null(accumulator.Mode);
             Assert.Null(accumulator.CipherSuite);
+            AssertCertificateFieldsUnset(accumulator);
             Assert.True(accumulator.HasValues);
         }
 
@@ -130,11 +158,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region CipherSuite
 
         /// <summary>
-        /// The smallest and largest valid IANA identifiers are stored and leave the mode and
-        /// protocol unset.
+        /// The smallest and largest IANA identifiers that can be negotiated are stored and leave
+        /// every other value unset.
         /// </summary>
         [Theory]
-        [InlineData(0)]
+        [InlineData(1)]
         [InlineData(0xFFFF)]
         public void CipherSuite_BoundaryValue_StoresValueOnly(int cipherSuite)
         {
@@ -149,8 +177,32 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(ToConstructorCipherSuite(cipherSuite), accumulator.CipherSuite);
             Assert.Null(accumulator.Mode);
             Assert.Null(accumulator.Protocol);
+            AssertCertificateFieldsUnset(accumulator);
             Assert.True(accumulator.HasValues);
             Assert.Equal(cipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
+        }
+
+        /// <summary>
+        /// The null cipher suite (TLS_NULL_WITH_NULL_NULL, <c>0</c>) is never negotiated, so it means
+        /// none was reported: it is stored as unavailable, replacing an earlier value, and leaves the
+        /// other values unset.
+        /// </summary>
+        [Fact]
+        public void CipherSuite_SetNullCipherSuite_StoresNull()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
+
+            // Act
+            accumulator.CipherSuite = ToConstructorCipherSuite(0);
+
+            // Assert
+            Assert.Null(accumulator.CipherSuite);
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.Protocol);
+            AssertCertificateFieldsUnset(accumulator);
+            Assert.False(accumulator.HasValues);
         }
 
 #if NETFRAMEWORK
@@ -175,59 +227,171 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SampleCipherSuite, accumulator.CipherSuite);
             Assert.Null(accumulator.Mode);
             Assert.Null(accumulator.Protocol);
+            AssertCertificateFieldsUnset(accumulator);
             Assert.Equal(SampleCipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
         }
 #endif
 
         #endregion
 
-        #region Combinations
+        #region Certificate
 
         /// <summary>
-        /// Any combination of the mode, protocol and cipher suite can be set, and exactly the set
-        /// values are stored and surfaced in the snapshot.
+        /// Setting the presented certificate stores it and leaves the other values unset.
         /// </summary>
-        [Theory]
-        [MemberData(nameof(AllPropertySubsets))]
-        public void Properties_AnySubsetSet_StoresExactlyThatSubset(
-            bool setMode,
-            bool setProtocol,
-            bool setCipherSuite)
+        [Fact]
+        public void ServerCertificateDerBytes_Set_StoresValueOnly()
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
 
             // Act
-            if (setMode)
-            {
-                accumulator.Mode = SqlConnectionEncryptionMode.Full;
-            }
-            if (setProtocol)
-            {
-                accumulator.Protocol = SslProtocols.Tls12;
-            }
-            if (setCipherSuite)
-            {
-                accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
-            }
-            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
 
             // Assert
-            // The accumulator holds exactly the values that were set.
-            SqlConnectionEncryptionMode? expectedMode =
-                setMode ? SqlConnectionEncryptionMode.Full : null;
-            SslProtocols? expectedProtocol = setProtocol ? SslProtocols.Tls12 : null;
-            int? expectedCipherSuite = setCipherSuite ? SampleCipherSuite : null;
-            Assert.Equal(expectedMode, accumulator.Mode);
-            Assert.Equal(expectedProtocol, accumulator.Protocol);
-            Assert.Equal(setCipherSuite, accumulator.CipherSuite is not null);
-            Assert.Equal(setMode || setProtocol || setCipherSuite, accumulator.HasValues);
+            Assert.Equal(SampleCertificate, Assert.NotNull(accumulator.ServerCertificateDerBytes).ToArray());
+            Assert.Null(accumulator.ValidationErrors);
+            Assert.Null(accumulator.ChainStatus);
+            AssertNegotiatedValuesUnset(accumulator);
+            Assert.True(accumulator.HasValues);
+            Assert.Equal(SampleCertificate, Assert.NotNull(accumulator.ToSnapshot().PresentedServerCertificateRawData).ToArray());
+        }
 
-            // The snapshot surfaces the same values, and is empty when none is set.
-            Assert.Equal(expectedMode, snapshot.NegotiatedEncryptionMode);
-            Assert.Equal(expectedProtocol, snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(expectedCipherSuite, snapshot.NegotiatedCipherSuiteId);
-            Assert.Equal(!accumulator.HasValues, snapshot.IsEmpty);
+        /// <summary>
+        /// A certificate of exactly the maximum reported size is stored.
+        /// </summary>
+        [Fact]
+        public void ServerCertificateDerBytes_SetMaximumSize_StoresValue()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            byte[] derBytes = new byte[EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize];
+
+            // Act
+            accumulator.ServerCertificateDerBytes = derBytes;
+
+            // Assert
+            Assert.Equal(derBytes.Length, Assert.NotNull(accumulator.ServerCertificateDerBytes).Length);
+            Assert.Null(accumulator.ValidationErrors);
+            Assert.Null(accumulator.ChainStatus);
+            AssertNegotiatedValuesUnset(accumulator);
+        }
+
+        /// <summary>
+        /// An empty or oversized certificate is not reported: it is stored as unavailable, replacing
+        /// an earlier value, rather than truncated, and leaves the other values unset.
+        /// </summary>
+        [Theory]
+        [InlineData(0)]
+        [InlineData(EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize + 1)]
+        public void ServerCertificateDerBytes_SetUnreportableSize_StoresNull(int length)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
+
+            // Act
+            accumulator.ServerCertificateDerBytes = new byte[length];
+
+            // Assert
+            Assert.Null(accumulator.ServerCertificateDerBytes);
+            Assert.Null(accumulator.ValidationErrors);
+            Assert.Null(accumulator.ChainStatus);
+            AssertNegotiatedValuesUnset(accumulator);
+            Assert.False(accumulator.HasValues);
+        }
+
+        /// <summary>
+        /// The accumulator stores its own copy of the encoding, so mutating the source afterwards
+        /// changes neither the accumulator nor a snapshot that shares its copy.
+        /// </summary>
+        [Fact]
+        public void ServerCertificateDerBytes_SourceMutated_StoredCopyUnchanged()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            byte[] derBytes = SampleCertificate.ToArray();
+
+            // Act
+            accumulator.ServerCertificateDerBytes = derBytes;
+            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
+            derBytes[0] ^= 0xFF;
+
+            // Assert
+            Assert.Equal(SampleCertificate, Assert.NotNull(accumulator.ServerCertificateDerBytes).ToArray());
+            Assert.Equal(SampleCertificate, Assert.NotNull(snapshot.PresentedServerCertificateRawData).ToArray());
+        }
+
+        /// <summary>
+        /// Setting the validation verdict stores it, including the zero value
+        /// <see cref="SqlServerCertificateValidationErrors.None"/>, which is available rather than
+        /// unset, and leaves the other values unset.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(AllValidationErrors))]
+        public void ValidationErrors_Set_StoresValueOnly(SqlServerCertificateValidationErrors errors)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.ValidationErrors = errors;
+
+            // Assert
+            Assert.NotNull(accumulator.ValidationErrors);
+            Assert.Equal(errors, accumulator.ValidationErrors);
+            Assert.Null(accumulator.ServerCertificateDerBytes);
+            Assert.Null(accumulator.ChainStatus);
+            AssertNegotiatedValuesUnset(accumulator);
+            Assert.True(accumulator.HasValues);
+            Assert.Equal(errors, accumulator.ToSnapshot().ValidationErrors);
+        }
+
+        /// <summary>
+        /// Setting the chain status stores every flag unchanged, including the zero value
+        /// <see cref="X509ChainStatusFlags.NoError"/>, which is available rather than unset, and
+        /// leaves the other values unset.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(ChainStatuses))]
+        public void ChainStatus_Set_StoresValueOnly(X509ChainStatusFlags chainStatus)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.ChainStatus = chainStatus;
+
+            // Assert
+            Assert.NotNull(accumulator.ChainStatus);
+            Assert.Equal(chainStatus, accumulator.ChainStatus);
+            Assert.Null(accumulator.ServerCertificateDerBytes);
+            Assert.Null(accumulator.ValidationErrors);
+            AssertNegotiatedValuesUnset(accumulator);
+            Assert.True(accumulator.HasValues);
+            Assert.Equal(chainStatus, accumulator.ToSnapshot().ChainStatus);
+        }
+
+        /// <summary>
+        /// The snapshot's text never contains the certificate or any common encoding of it.
+        /// </summary>
+        [Fact]
+        public void ToSnapshot_CertificateSet_NotInSnapshotText()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
+            accumulator.ValidationErrors = SqlServerCertificateValidationErrors.ChainError;
+
+            // Act
+            string text = accumulator.ToSnapshot().ToString() ?? string.Empty;
+
+            // Assert
+            Assert.DoesNotContain(Convert.ToBase64String(SampleCertificate), text);
+            Assert.DoesNotContain(
+                BitConverter.ToString(SampleCertificate).Replace("-", string.Empty),
+                text,
+                StringComparison.OrdinalIgnoreCase);
         }
 
         #endregion
@@ -245,14 +409,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
             accumulator.Mode = SqlConnectionEncryptionMode.Full;
             accumulator.Protocol = SslProtocols.Tls12;
             accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
+            accumulator.ValidationErrors = SqlServerCertificateValidationErrors.ChainError;
+            accumulator.ChainStatus = SampleChainStatus;
 
             // Act
             accumulator.Reset();
 
             // Assert
-            Assert.Null(accumulator.Mode);
-            Assert.Null(accumulator.Protocol);
-            Assert.Null(accumulator.CipherSuite);
+            AssertNegotiatedValuesUnset(accumulator);
+            AssertCertificateFieldsUnset(accumulator);
             Assert.False(accumulator.HasValues);
             Assert.Same(SqlConnectionEncryptionInfo.Empty, accumulator.ToSnapshot());
         }
@@ -279,10 +445,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// The snapshot carries the mode, protocol and cipher suite, and no certificate fields.
+        /// Without certificate details, the snapshot carries the mode, protocol and cipher suite, and
+        /// reports the certificate fields as unavailable.
         /// </summary>
         [Fact]
-        public void ToSnapshot_AllSet_SurfacesValuesWithoutCertificateFields()
+        public void ToSnapshot_CertificateFieldsNotSet_ReturnsNullCertificateFields()
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
@@ -362,6 +529,30 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // Assert
             Assert.Equal(SampleCipherSuite, first.NegotiatedCipherSuiteId);
             Assert.Equal(OtherCipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
+        }
+
+        #endregion
+
+        #region Helpers
+
+        /// <summary>
+        /// Asserts that the mode, protocol and cipher suite are unset.
+        /// </summary>
+        private static void AssertNegotiatedValuesUnset(EncryptionInfoAccumulator accumulator)
+        {
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.Protocol);
+            Assert.Null(accumulator.CipherSuite);
+        }
+
+        /// <summary>
+        /// Asserts that the certificate, validation errors and chain status are unset.
+        /// </summary>
+        private static void AssertCertificateFieldsUnset(EncryptionInfoAccumulator accumulator)
+        {
+            Assert.Null(accumulator.ServerCertificateDerBytes);
+            Assert.Null(accumulator.ValidationErrors);
+            Assert.Null(accumulator.ChainStatus);
         }
 
         #endregion

@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 // Act
                 // SNI errors are thread-static, so read the error on the thread that ran EnableSsl.
                 Task<(uint Result, SniError Error)> enableSsl = Task.Run(
-                    () => (handle.EnableSsl(0, handshakeTimeout.Token), SniLoadHandle.LastError));
+                    () => (handle.EnableSsl(0, null, handshakeTimeout.Token), SniLoadHandle.LastError));
                 Task settled = await Task.WhenAny(enableSsl, Task.Delay(HandshakeBudget));
 
                 // Assert
