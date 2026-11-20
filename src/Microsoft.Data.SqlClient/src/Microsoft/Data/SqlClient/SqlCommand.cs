@@ -2404,7 +2404,8 @@ namespace Microsoft.Data.SqlClient
             localCompletion.Task.ContinueWith(
                 async task =>
                 {
-                    if (task.IsFaulted)
+                    if (task.IsFaulted &&
+                        task.Exception.InnerException is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                     {
                         globalCompletion.TrySetException(task.Exception.InnerException);
                         return;
@@ -2418,6 +2419,9 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
+                        // Package generation can fail before the read stage; use the same bounded retry.
+                        task.GetAwaiter().GetResult();
+
                         // Mark that we initiated the internal EndExecute. This should always be false
                         // until we set it here.
                         Debug.Assert(!_internalEndExecuteInitiated);
@@ -2482,8 +2486,15 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        // Kick off the retry
-                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // Kick off the retry. A faulted write released its reservation, so only a
+                        // read-stage failure still holds the original one.
+                        SqlConnectionInternal retryConnection = task.IsFaulted
+                            ? null
+                            : _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // A faulted write released the in-progress flag and never marked the
+                        // command pending, so hold the flag until the retry takes it over.
+                        bool holdsInProgress = task.IsFaulted && !_enclaveAttestationInProgress;
+                        _enclaveAttestationInProgress |= holdsInProgress;
                         Task<object> retryTask = null;
                         try
                         {
@@ -2492,6 +2503,14 @@ namespace Microsoft.Data.SqlClient
                             _enclaveRetryConnection = retryConnection;
                             try
                             {
+                                if (holdsInProgress)
+                                {
+                                    // The retry's RunExecuteReader sets and owns the flag again.
+                                    holdsInProgress = false;
+                                    _enclaveAttestationInProgress = false;
+                                }
+
+
                                 retryTask = (Task<object>)retryFunc(
                                     this,
                                     behavior,
@@ -2507,10 +2526,19 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
+                            // The retry holds its own reservation for End, so release the
+                            // original one. retryConnection is null when a faulted write already
+                            // released it.
+                            retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
                         {
+                            if (holdsInProgress)
+                            {
+                                _enclaveAttestationInProgress = false;
+                            }
+
                             CachedAsyncState?.ResetAsyncState();
                             // Failed retry setup cannot transfer the original reservation to End.
                             retryConnection?.DecrementAsyncCount();

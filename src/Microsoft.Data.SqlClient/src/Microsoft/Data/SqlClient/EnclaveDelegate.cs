@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -47,19 +48,28 @@ namespace Microsoft.Data.SqlClient
         /// Decrypt the keys that need to be sent to the enclave
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="serverName"></param>
-        /// <param name="connection"></param>
-        /// <param name="command"></param>
-        /// <returns></returns>
-        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection, SqlCommand command)
+        /// <param name="connection">Connection executing the query</param>
+        /// <param name="command">Command executing the query</param>
+        /// <param name="isAsync">
+        /// True to resolve keys with the asynchronous key store APIs, so providers performing
+        /// network I/O do not block a thread.
+        /// </param>
+        /// <param name="cancellationToken">Token used to cancel the operation</param>
+        internal async ValueTask<List<ColumnEncryptionKeyInfo>> GetDecryptedKeysToBeSentToEnclave(
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave,
+            SqlConnection connection,
+            SqlCommand command,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                (SymmetricKey sqlClientSymmetricKey, _) = SqlSecurityUtility.DecryptSymmetricKey(
-                    cipherInfo, connection, command, isAsync: false, CancellationToken.None)
-                    .GetAwaiter().GetResult();
+                (SymmetricKey sqlClientSymmetricKey, _) =
+                    await SqlSecurityUtility.DecryptSymmetricKey(
+                            cipherInfo, connection, command, isAsync, cancellationToken)
+                        .ConfigureAwait(false);
 
                 if (sqlClientSymmetricKey == null)
                 {

@@ -4,18 +4,14 @@
 
 using System;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS;
-using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.EnvChange;
 using Microsoft.SqlServer.TDS.Servers;
-using Microsoft.SqlServer.TDS.SQLBatch;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
@@ -467,41 +463,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 TdsServerArguments arguments = new();
                 return new TdsServer(new UseDatabaseQueryEngine(arguments), arguments);
-            }
-        }
-
-        /// <summary>
-        /// Answers USE batches with the database change token, so
-        /// <see cref="SqlConnection.ChangeDatabase(string)"/> moves the client to the new database.
-        /// </summary>
-        private sealed class UseDatabaseQueryEngine : QueryEngine
-        {
-            private static readonly Regex s_use = new(
-                @"^\s*use\s+\[?(?<db>[^\]\s;]+)\]?\s*;?\s*$",
-                RegexOptions.IgnoreCase);
-
-            internal UseDatabaseQueryEngine(TdsServerArguments arguments)
-                : base(arguments)
-            {
-            }
-
-            protected override TDSMessageCollection CreateQueryResponse(
-                ITDSServerSession session, TDSSQLBatchToken batchRequest)
-            {
-                Match match = s_use.Match(batchRequest.Text);
-                if (!match.Success)
-                {
-                    return base.CreateQueryResponse(session, batchRequest);
-                }
-
-                // Move the session and report the change the way a server does.
-                string oldDatabase = session.Database;
-                session.Database = match.Groups["db"].Value;
-                return new TDSMessageCollection(new TDSMessage(
-                    TDSMessageType.Response,
-                    new TDSEnvChangeToken(
-                        TDSEnvChangeTokenType.Database, session.Database, oldDatabase),
-                    new TDSDoneToken(TDSDoneTokenStatusType.Final)));
             }
         }
     }
