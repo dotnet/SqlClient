@@ -2,12 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -18,70 +20,42 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// </summary>
 public sealed class SqlMetaDataFactoryDataTypesTest
 {
-    private static Stream GetMetaDataXmlStream()
+    private static DataTable ReadDataTypesTable(bool jsonTypeSupported)
     {
-        Assembly assembly = typeof(SqlConnection).Assembly;
-        Stream? stream = assembly.GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
-        Assert.NotNull(stream);
-        return stream;
-    }
-
-    private static SqlMetaDataFactory CreateFactory(bool jsonTypeSupported)
-    {
-        Stream stream = GetMetaDataXmlStream();
-        ConnectionCapabilities capabilities = new()
+        using TdsServer server = new();
+        server.Start();
+        SqlConnectionStringBuilder builder = new()
         {
-            TdsVersion = TdsEnums.TDS7X_VERSION,
-            ServerMajorVersion = 12,
-            ServerMinorVersion = 0,
-            ServerBuildNumber = 0,
-            JsonType = jsonTypeSupported
+            DataSource = $"localhost,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional
         };
-        return new SqlMetaDataFactory(stream, capabilities);
-    }
+        using SqlConnection connection = new(builder.ConnectionString);
+        connection.Open();
 
-    private static bool DataTypesContainsJson(SqlMetaDataFactory factory)
-    {
-        FieldInfo? field = typeof(SqlMetaDataFactory)
-            .GetField("_collectionDataSet", BindingFlags.NonPublic | BindingFlags.Instance);
-        Assert.NotNull(field);
+        connection.InnerConnection.Capabilities.TdsVersion = TdsEnums.TDS7X_VERSION;
+        connection.InnerConnection.Capabilities.ServerMajorVersion = 12;
+        connection.InnerConnection.Capabilities.ServerMinorVersion = 0;
+        connection.InnerConnection.Capabilities.ServerBuildNumber = 0;
+        connection.InnerConnection.Capabilities.JsonType = jsonTypeSupported;
 
-        DataSet? dataSet = (DataSet?)field.GetValue(factory);
-        Assert.NotNull(dataSet);
+        DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.DataTypes);
 
-        DataTable? dataTypes = dataSet.Tables[DbMetaDataCollectionNames.DataTypes];
-        Assert.NotNull(dataTypes);
-
-        DataColumn? typeNameColumn = dataTypes.Columns[DbMetaDataColumnNames.TypeName];
-        Assert.NotNull(typeNameColumn);
-
-        return dataTypes.Rows
-            .Cast<DataRow>()
-            .Any(row => (string)row[typeNameColumn] == "json");
+        connection.InnerConnection.Capabilities.Reset();
+        return dataTypes;
     }
 
     /// <summary>
     /// Verifies that <c>json</c> appears in the DataTypes schema collection when
     /// <see cref="ConnectionCapabilities.JsonType"/> is <see langword="true"/>.
     /// </summary>
-    [Fact]
-    public void DataTypesTable_ContainsJson_WhenJsonTypeSupported()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DataTypesTable_Json_Supported(bool jsonTypeSupported)
     {
-        using SqlMetaDataFactory factory = CreateFactory(jsonTypeSupported: true);
+        DataTable dataTypes = ReadDataTypesTable(jsonTypeSupported);
 
-        Assert.True(DataTypesContainsJson(factory));
-    }
-
-    /// <summary>
-    /// Verifies that <c>json</c> does not appear in the DataTypes schema collection when
-    /// <see cref="ConnectionCapabilities.JsonType"/> is <see langword="false"/>, covering
-    /// Azure SQL which always reports version 12.x regardless of json support.
-    /// </summary>
-    [Fact]
-    public void DataTypesTable_DoesNotContainJson_WhenJsonTypeNotSupported()
-    {
-        using SqlMetaDataFactory factory = CreateFactory(jsonTypeSupported: false);
-
-        Assert.False(DataTypesContainsJson(factory));
+        DataRow[] rows = dataTypes.Select("TypeName = 'json'");
+        Assert.Equal(jsonTypeSupported, rows.Length == 1);
     }
 }
