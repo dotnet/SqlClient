@@ -67,6 +67,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseBulkCopyCatalogMetadataDiscovery = null;
         switchesHelper.UseMinimumLoginTimeout = null;
+        switchesHelper.UseLegacyUdtAssemblyLoad = null;
         #if NET
         switchesHelper.EnableAppConfig = null;
         switchesHelper.GlobalizationInvariantMode = null;
@@ -97,6 +98,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
+        Assert.False(switchesHelper.UseLegacyUdtAssemblyLoad);
         Assert.False(switchesHelper.EnableTransactionIsolationLevelReset);
         Assert.True(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
