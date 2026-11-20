@@ -320,19 +320,19 @@ namespace Microsoft.Data.SqlClient
                         endMethod: nameof(EndExecuteXmlReader),
                         cancellationToken))
                 {
-                    // @TODO: globalCompletion isn't being used past here! Why are we doing this??
                     globalCompletion = localCompletion;
                 }
 
-                // Add callback after work is done to avoid overlapping Begin/End methods
+                // Add callback after work is done to avoid overlapping Begin/End methods.
+                // Callers must observe the retry's outcome, not a retried first attempt.
                 if (callback is not null)
                 {
-                    localCompletion.Task.ContinueWith(
+                    globalCompletion.Task.ContinueWith(
                         static (task, state) => ((AsyncCallback)state)(task),
                         state: callback);
                 }
 
-                return localCompletion.Task;
+                return globalCompletion.Task;
             }
             finally
             {
