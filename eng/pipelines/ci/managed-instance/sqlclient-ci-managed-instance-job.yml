@@ -120,20 +120,21 @@ jobs:
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 
-      # Write the config.jsonc file pointing the tests at the Managed Instance.  Integrated security
-      # and managed identity are not supported against the Managed Instance, and IsManagedInstance
-      # opts the test suite into Managed-Instance-specific behavior.
+      # Write config.jsonc using the same user-assigned identity for ordinary connections and
+      # explicit token tests. IsManagedInstance selects Managed-Instance-specific test behavior.
+      # In the variable group, SQL_MI_TCP_CONN_STRING also references SqlMiUserManagedIdentityClientId
+      # in its UID so older test harnesses continue to use the same identity.
       - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          # The Managed Instance connection strings carry their own credentials, so no local SA
-          # password is used here; pass an empty string for the required saPassword parameter.
+          # Managed identity authentication does not use a local SA password.
           saPassword: ''
           TCPConnectionString: $(SQL_MI_TCP_CONN_STRING)
           # Azure SQL Managed Instance exposes TDS over TCP and does not support Named Pipes.
           NPConnectionString: ''
           SupportsIntegratedSecurity: false
-          ManagedIdentitySupported: false
+          ManagedIdentitySupported: true
+          UserManagedIdentityClientId: $(SqlMiUserManagedIdentityClientId)
           IsManagedInstance: true
           UseManagedSNIOnWindows: ${{ parameters.useManagedSNI }}
 
