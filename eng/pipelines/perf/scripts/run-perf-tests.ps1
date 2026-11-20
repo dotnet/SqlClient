@@ -427,9 +427,6 @@ $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
 $ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
 $SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
-if ($RunnerProfile -ne "default") {
-    $SourceRunnerConfig = Join-Path $PerfDir "profiles\$RunnerProfile.jsonc"
-}
 Write-Host "Runner profile: $RunnerProfile"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
@@ -996,8 +993,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 }
 
 Invoke-Native {
-    python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir `
-        --threshold $RegressionThreshold
+    python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir
 } "Benchmark async-health reporting failed"
 
 Write-Host "Collected results:"

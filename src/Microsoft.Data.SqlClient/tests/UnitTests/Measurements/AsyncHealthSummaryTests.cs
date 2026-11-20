@@ -34,38 +34,24 @@ public class AsyncHealthSummaryTests
         Assert.Equal(1, result.DispatchP99Ms);
     }
 
-    /// <summary>Missing resource observations must not look like measured zero thread counts.</summary>
-    [Fact]
-    public void Create_NoThreadObservations_ReportsMissingPeaks()
-    {
-        // Arrange
-        var window = new AsyncHealthWindow { WorkloadEndMilliseconds = 1 };
-
-        // Act
-        AsyncHealthSummary result = AsyncHealthSummary.Create(window);
-
-        // Assert
-        Assert.Null(result.ProcessThreadsPeak);
-        Assert.Null(result.ThreadPoolThreadsPeak);
-        Assert.Equal("Insufficient", result.Health);
-    }
-
-    /// <summary>A window that ends before periodic sampling still retains its process start count.</summary>
-    [Fact]
-    public void Create_OnlyStartObservation_RetainsProcessPeak()
+    /// <summary>Without periodic samples, only a recorded start count provides a thread peak.</summary>
+    [Theory]
+    [InlineData(0, null)]
+    [InlineData(25, 25)]
+    public void Create_NoPeriodicObservations_RetainsOnlyKnownPeaks(int start, int? expected)
     {
         // Arrange
         var window = new AsyncHealthWindow
         {
             WorkloadEndMilliseconds = 1,
-            ProcessThreadsAtStart = 25
+            ProcessThreadsAtStart = start
         };
 
         // Act
         AsyncHealthSummary result = AsyncHealthSummary.Create(window);
 
         // Assert
-        Assert.Equal(25, result.ProcessThreadsPeak);
+        Assert.Equal(expected, result.ProcessThreadsPeak);
         Assert.Null(result.ThreadPoolThreadsPeak);
         Assert.Equal("Insufficient", result.Health);
     }

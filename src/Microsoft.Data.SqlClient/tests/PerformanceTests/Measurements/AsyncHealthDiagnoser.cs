@@ -33,16 +33,18 @@ public sealed class AsyncHealthDiagnoserAttribute : Attribute;
 /// Observes BDN startup/warmup and its extra iteration separately, not timing iterations.
 /// Startup includes fixture initialization; extra-iteration observation excludes fixture work.
 /// </summary>
-public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
+public sealed class AsyncHealthDiagnoser(
+    bool poolV2, bool managedSni, bool optimizedAsync,
+    string? outputDirectory = null, RunnerJob? job = null) : EventProcessor, IInProcessDiagnoser
 {
     private static readonly ConcurrentDictionary<string, AsyncHealthDiagnoser> s_active = new();
     private static AsyncHealthOperationRecorder? s_operations;
     private static int s_benchmarksStarted;
     private readonly string _handlerId = Guid.NewGuid().ToString("N");
     private readonly List<AsyncHealthSummary> _summaries = [];
-    private readonly bool _poolV2, _managedSni, _optimizedAsync;
-    private readonly string _outputDirectory;
-    private readonly RunnerJob _job;
+    private readonly string _outputDirectory =
+        outputDirectory ?? Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
+    private readonly RunnerJob _job = job ?? new RunnerJob();
     private BenchmarkCase? _case;
     private ThreadPoolHealthObserver? _observer;
     private AsyncHealthOperationRecorder? _operations;
@@ -51,17 +53,6 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     private bool _startupCompleted;
     private bool _firstBenchmarkInProcess;
     private string? _phase;
-
-    public AsyncHealthDiagnoser(
-        bool poolV2, bool managedSni, bool optimizedAsync,
-        string? outputDirectory = null, RunnerJob? job = null)
-    {
-        _poolV2 = poolV2;
-        _managedSni = managedSni;
-        _optimizedAsync = optimizedAsync;
-        _outputDirectory = outputDirectory ?? Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
-        _job = job ?? new RunnerJob();
-    }
 
     internal bool HasFailed { get; private set; }
     internal bool IsObserving => _observer != null && _phase == "ExtraIteration";
@@ -101,7 +92,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         _startupCompleted = false;
         _operations = null;
         _phase = null;
-        if (_poolV2 && !Equals(typeof(SqlConnection).Assembly
+        if (poolV2 && !Equals(typeof(SqlConnection).Assembly
             .GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches")
             ?.GetProperty("UseConnectionPoolV2",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -282,8 +273,8 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             CompletedInvocations = operations?.CompletedInvocations,
             Configuration = new
             {
-                UseConnectionPoolV2 = _poolV2, UseManagedSni = _managedSni,
-                UseOptimizedAsync = _optimizedAsync, Runtime = Environment.Version.ToString(),
+                UseConnectionPoolV2 = poolV2, UseManagedSni = managedSni,
+                UseOptimizedAsync = optimizedAsync, Runtime = Environment.Version.ToString(),
                 OS = Environment.OSVersion.Platform.ToString(), Environment.ProcessorCount,
                 MinimumWorkerThreads = minimumWorkers, MaximumWorkerThreads = maximumWorkers,
                 Environment.ProcessId, DriverVersion = typeof(SqlConnection).Assembly.FullName,

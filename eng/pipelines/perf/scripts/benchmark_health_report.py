@@ -124,13 +124,15 @@ def _number(value):
 
 def _reduce(records):
     """Take independent metric maxima, retaining every tied origin and incomplete cohort."""
-    drivers = {(r["data"]["Configuration"]["DriverVersion"],
-                r["data"]["Configuration"]["DriverSha256"]) for r in records}
+    data = [record["data"] for record in records]
+    summaries = [item.get("Summary") or {} for item in data]
+    drivers = {(item["Configuration"]["DriverVersion"], item["Configuration"]["DriverSha256"])
+               for item in data}
     if len(drivers) != 1:
         raise ValueError("Multiple driver identities in one BDN side/configuration.")
     metrics, origins, missing_values = {}, {}, {}
     for metric in METRICS:
-        values = [_number((r["data"].get("Summary") or {}).get(metric)) for r in records]
+        values = [_number(summary.get(metric)) for summary in summaries]
         metrics[metric] = max((v for v in values if v is not None), default=None)
         origins[metric] = [r for r, value in zip(records, values)
                            if value is not None and value == metrics[metric]]
@@ -139,44 +141,36 @@ def _reduce(records):
     phases = defaultdict(set)
     issues, unknown = Counter(), set()
     samples, missing_probes = [], []
-    for record in records:
-        data = record["data"]
-        observed = phases[data["CaseId"]]
-        if data.get("Measurement") is not None:
-            observed.add(data["Phase"])
-            summary = data.get("Summary") or {}
-            samples.append(_number(summary.get("Samples")))
-            missing_probes.append(_number(summary.get("Missing")))
-            # Execution-failure markers can repeat the last window's snapshot.
-            for field in OUTCOME_FIELDS:
-                value = _number((data.get("Operations") or {}).get(field))
-                if value is None:
-                    unknown.add(field)
-                else:
-                    issues[field] += value
+    for item, summary in zip(data, summaries):
+        observed = phases[item["CaseId"]]
+        # Execution-failure markers can repeat the last window's snapshot.
+        if item.get("Measurement") is None:
+            continue
+        observed.add(item["Phase"])
+        samples.append(_number(summary.get("Samples")))
+        missing_probes.append(_number(summary.get("Missing")))
+        for field in OUTCOME_FIELDS:
+            value = _number((item.get("Operations") or {}).get(field))
+            if value is None:
+                unknown.add(field)
+            else:
+                issues[field] += value
     return dict(
         records=records, metrics=metrics, origins=origins, driver=next(iter(drivers)),
         missingValues=missing_values, issues=issues, unknownCounters=sorted(unknown),
         samples=samples, missingProbes=missing_probes,
         missingPhases={case: sorted(PHASES - observed) for case, observed in sorted(phases.items())
                        if observed != PHASES},
-        statuses=Counter(r["data"]["Status"] for r in records),
-        health=Counter((r["data"].get("Summary") or {}).get("Health", "Invalid") for r in records),
-        operationEvidence=Counter((r["data"].get("Summary") or {}).get(
-            "OperationEvidence", "Unknown") for r in records),
-        dispatchEvidence=Counter((r["data"].get("Summary") or {}).get(
-            "DispatchEvidence", "Unknown") for r in records),
-        firstQueueEvidence=Counter((r["data"].get("Summary") or {}).get(
-            "FirstWorkerQueueEvidence", "Unknown") for r in records),
-        firstQueueSamples=[(r["data"].get("Summary") or {}).get("FirstWorkerQueueSamples")
-                           for r in records])
+        statuses=Counter(item["Status"] for item in data),
+        health=Counter(summary.get("Health", "Invalid") for summary in summaries),
+        operationEvidence=Counter(s.get("OperationEvidence", "Unknown") for s in summaries),
+        dispatchEvidence=Counter(s.get("DispatchEvidence", "Unknown") for s in summaries),
+        firstQueueEvidence=Counter(s.get("FirstWorkerQueueEvidence", "Unknown") for s in summaries),
+        firstQueueSamples=[summary.get("FirstWorkerQueueSamples") for summary in summaries])
 
 
-def build_comparison(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT):
+def build_comparison(root):
     """Pair only compatible settings; percentages compare maxima, never pooled sample percentiles."""
-    # Keep validating the legacy percentage argument for existing pipeline callers.
-    if not math.isfinite(threshold) or threshold < 0:
-        raise ValueError("The comparison threshold must be finite and nonnegative.")
     groups = defaultdict(lambda: defaultdict(list))
     for record in _load(Path(root)):
         data = record["data"]
@@ -283,9 +277,9 @@ def _provenance(entry, index):
     return lines
 
 
-def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None):
+def render(root, source_label=None):
     """Render current dispatch health separately from relative deltas and coverage qualifications."""
-    entries = build_comparison(root, threshold)
+    entries = build_comparison(root)
     lines = ["# OpenAsyncBurst async-health comparison", ""]
     if source_label:
         lines.extend(["Source: " + _text(source_label), ""])
@@ -347,26 +341,20 @@ def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None
                      f"unknown counters: {', '.join(unknown) or 'none'}.")
     lines.extend(["", "<details>",
                   "<summary>Per-row coverage and raw cohort provenance</summary>", ""])
-    failed = False
     for index, entry in enumerate(entries, 1):
         lines.extend(_provenance(entry, index))
-        failed |= any(group and group["statuses"].get("Failed", 0)
-                      for group in (entry["baseline"], entry["current"]))
     lines.extend(["</details>", ""])
-    return "\n".join(lines) + "\n", failed
+    return "\n".join(lines) + "\n", failures > 0
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results-dir", type=Path, required=True)
-    parser.add_argument("--threshold", type=float, default=compare_perf.DEFAULT_THRESHOLD_PCT,
-                        help="Accepted for existing pipeline callers; health uses fixed 1ms/10ms "
-                             "bands, independent of this regression percentage.")
     parser.add_argument("--out-md", type=Path,
                         help="Alternate output path; useful for preserving historical reports.")
     parser.add_argument("--source-label", help="Identify historical evidence in a regenerated report.")
     args = parser.parse_args(argv)
-    markdown, failed = render(args.results_dir, args.threshold, args.source_label)
+    markdown, failed = render(args.results_dir, args.source_label)
     output = args.out_md or args.results_dir / "benchmark-async-health.md"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(markdown, encoding="utf-8")

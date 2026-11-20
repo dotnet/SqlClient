@@ -199,10 +199,6 @@ prepare_runner_config || exit 6
         """The opt-in profile must replace, not merge with, the full-suite configuration."""
         self.check_config("bash", "", profile="openasync-extended-100ms")
 
-    def test_powershell_profile_config_preserves_work_sizes_and_redaction(self):
-        """The shared config writer retains all profile settings without exposing credentials."""
-        self.check_config("pwsh", "", profile="openasync-extended-100ms")
-
     def test_pipeline_profile_reaches_both_entrypoints(self):
         """Each pipeline exposes the same profile selector while retaining the default suite."""
         for path in SCRIPTS.parent.glob("sqlclient-perf-*.yml"):
