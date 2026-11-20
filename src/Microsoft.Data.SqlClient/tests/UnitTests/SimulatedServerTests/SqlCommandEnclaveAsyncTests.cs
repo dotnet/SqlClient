@@ -211,7 +211,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Task<SqlDataReader> second = command.ExecuteReaderAsync();
 
                 // Assert
-                // The overlapping execution fails without disturbing the pending one.
+                // The overlapping execution fails without disturbing the pending one. Bound the
+                // wait so an unguarded second execution blocked on the key fails instead of hanging.
+                Assert.Same(
+                    second, await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(30))));
                 await Assert.ThrowsAsync<InvalidOperationException>(() => second);
                 Assert.False(execution.IsCompleted);
 
@@ -371,11 +374,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 "pending-package-key", "PENDING_PACKAGE_KEY", "RSA_OAEP");
             command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
             Assert.True(command.keysToBeSentToEnclave.TryAdd(0, entry));
+
+            // RunExecuteReader sets the in-progress flag and hands its release to execution.
+            SetField(command, "_enclaveAttestationInProgress", true);
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
                 true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask,
-                false
+                true
             };
             typeof(SqlCommand)
                 .GetMethod(
@@ -1158,6 +1164,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 // Assert
                 // The overlap is rejected, and the retry's key load still observes the original
                 // token, so canceling it releases the execution.
+                Assert.NotNull(second);
+                Assert.Same(
+                    second, await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(30))));
                 await Assert.ThrowsAsync<InvalidOperationException>(() => second);
                 Assert.Equal(cancellation.Token, keyToken);
                 await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation);
