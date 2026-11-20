@@ -222,6 +222,8 @@ namespace Microsoft.Data.SqlClient
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
         // Provider awaits can precede both parser-state acquisition and a cached async result.
+        // Set during enclave attestation and during async key loading for cached query metadata;
+        // the cached path keeps it set until execution has been handed off.
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;
@@ -744,6 +746,13 @@ namespace Microsoft.Data.SqlClient
                 // If the transaction object has been zombied, just return null
                 if (_transaction is not null && _transaction.Connection is null)
                 {
+                    // Keep the binding while preparation is pending, so execution still sees
+                    // that its transaction completed and fails instead of running outside it.
+                    if (_enclaveAttestationInProgress)
+                    {
+                        return null;
+                    }
+
                     _transaction = null;
                 }
 
