@@ -54,10 +54,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override SslProtocols ProtocolVersion => _connection.ProtocolVersion;
 
-        /// <inheritdoc/>
-        public override Connection.TlsHandshakeInfo TlsHandshakeInfo =>
-            _connection.TlsHandshakeInfo;
-
         /// <summary>
         /// Dispose object
         /// </summary>
@@ -570,7 +566,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
         }
 
-        public override uint EnableSsl(uint options, CancellationToken cancellationToken) => _connection.EnableSsl(options, cancellationToken);
+        public override uint EnableSsl(uint options, Connection.EncryptionInfoAccumulator encryptionInfo, CancellationToken cancellationToken) => _connection.EnableSsl(options, encryptionInfo, cancellationToken);
 
         public override void DisableSsl() => _connection.DisableSsl();
 

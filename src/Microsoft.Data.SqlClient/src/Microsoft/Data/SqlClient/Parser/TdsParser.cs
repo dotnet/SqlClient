@@ -953,22 +953,12 @@ namespace Microsoft.Data.SqlClient.Parser
 #if NETFRAMEWORK
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 #endif
-            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
-
-            // The certificate validation callback runs synchronously within EnableSsl, so the
-            // transport's handshake record is complete here. It is the authority for the attempt's
-            // protocol, cipher suite and certificate details; record it before any failure is
-            // reported so that the login exception carries it.
-            TlsHandshakeInfo handshakeInfo = _physicalStateObj.GetTlsHandshakeInfo();
             EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
-            if (accumulator is not null && handshakeInfo is not null)
-            {
-                accumulator.ChainStatus = handshakeInfo.ChainStatus;
-                accumulator.CipherSuite = handshakeInfo.CipherSuite;
-                accumulator.Protocol = handshakeInfo.Protocol;
-                accumulator.ServerCertificateDerBytes = handshakeInfo.DerBytes;
-                accumulator.ValidationErrors = handshakeInfo.ValidationErrors;
-            }
+
+            // Managed SNI records the handshake into the accumulator from its certificate
+            // validation callback, before EnableSsl returns, so a failed handshake's login
+            // exception still carries what was observed.
+            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename, accumulator);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -1009,9 +999,9 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            // Transports without a handshake record (native SNI) report the protocol from the
-            // completed handshake instead.
-            if (handshakeInfo is null)
+            // Transports that did not record the protocol during the handshake (native SNI) report
+            // it from the completed handshake instead.
+            if (accumulator?.Protocol is null)
             {
                 RecordNegotiatedProtocol(protocol);
             }

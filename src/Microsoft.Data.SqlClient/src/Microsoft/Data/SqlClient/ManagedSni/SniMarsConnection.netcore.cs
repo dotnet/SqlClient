@@ -37,13 +37,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public SslProtocols ProtocolVersion => _lowerHandle.ProtocolVersion;
 
-        /// <summary>
-        /// Gets the record of the most recent TLS handshake on the underlying physical connection,
-        /// or <see langword="null"/> if none was recorded. MARS sessions share that connection's
-        /// TLS session.
-        /// </summary>
-        internal Connection.TlsHandshakeInfo TlsHandshakeInfo => _lowerHandle.TlsHandshakeInfo;
-
         internal object DemuxerSync => _sync;
 
         /// <summary>
@@ -391,11 +384,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public uint EnableSsl(uint options, CancellationToken cancellationToken)
+        public uint EnableSsl(uint options, Connection.EncryptionInfoAccumulator encryptionInfo, CancellationToken cancellationToken)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                return _lowerHandle.EnableSsl(options, cancellationToken);
+                return _lowerHandle.EnableSsl(options, encryptionInfo, cancellationToken);
             }
         }
 

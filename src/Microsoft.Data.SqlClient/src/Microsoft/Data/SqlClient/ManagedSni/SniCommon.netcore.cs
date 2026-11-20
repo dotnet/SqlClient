@@ -291,48 +291,40 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
 
         /// <summary>
-        /// Creates the transport-level record of one TLS handshake from within the certificate
-        /// validation callback. SslStream agrees the protocol and cipher suite before it raises
-        /// the callback, so both are available even when the certificate is then rejected.
+        /// Records what one TLS handshake observed from within the certificate validation
+        /// callback. SslStream agrees the protocol and cipher suite before it raises the callback,
+        /// so both are recorded even when the certificate is then rejected.
         /// </summary>
+        /// <param name="encryptionInfo">The connection attempt's accumulator.</param>
         /// <param name="sslStream">The stream raising the validation callback.</param>
         /// <param name="serverCert">The certificate presented by the server, if any.</param>
         /// <param name="verdict">The verdict recorded by validation; default when not evaluated.</param>
-        /// <returns>The record. Never <see langword="null"/>.</returns>
-        internal static TlsHandshakeInfo CreateTlsHandshakeInfo(
+        internal static void RecordTlsHandshake(
+            EncryptionInfoAccumulator encryptionInfo,
             SslStream sslStream,
             X509Certificate? serverCert,
             in ServerCertificateVerdict verdict)
         {
-            byte[]? derBytes = null;
+            // Recorded as observed; the accumulator decides which values are reportable.
+            encryptionInfo.ServerCertificateDerBytes = null;
             if (serverCert is not null)
             {
                 try
                 {
-                    // GetRawCertData returns a new array, so the record owns it.
-                    derBytes = serverCert.GetRawCertData();
+                    // GetRawCertData returns a new array, so the accumulator owns it.
+                    encryptionInfo.ServerCertificateDerBytes = serverCert.GetRawCertData();
                 }
                 catch (CryptographicException)
                 {
                     // Capture must never affect the handshake outcome; leave the certificate
                     // unavailable.
                 }
-
-                if (derBytes is not null
-                    && !EncryptionInfoAccumulator.IsReportableServerCertificateSize(derBytes.Length))
-                {
-                    // Applied here so an oversized certificate is not retained by the handle.
-                    derBytes = null;
-                }
             }
 
-            // Reported as observed; EncryptionInfoAccumulator decides which values are reportable.
-            return new TlsHandshakeInfo(
-                verdict.ChainStatus,
-                sslStream.NegotiatedCipherSuite,
-                derBytes,
-                sslStream.SslProtocol,
-                verdict.ValidationErrors);
+            encryptionInfo.ChainStatus = verdict.ChainStatus;
+            encryptionInfo.CipherSuite = sslStream.NegotiatedCipherSuite;
+            encryptionInfo.Protocol = sslStream.SslProtocol;
+            encryptionInfo.ValidationErrors = verdict.ValidationErrors;
         }
 #nullable restore
 

@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
-        private volatile TlsHandshakeInfo _tlsHandshakeInfo;
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private uint _status = TdsEnums.SNI_UNINITIALIZED;
         private Guid _connectionId = Guid.NewGuid();
@@ -274,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         _sslOverTdsStream = new SslOverTdsStream(_tcpStream, _connectionId);
                         stream = _sslOverTdsStream;
                     }
-                    _sslStream = new SniSslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                    _sslStream = new SniSslStream(stream, true);
                 }
                 catch (SocketException se)
                 {
@@ -754,26 +753,23 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public override uint EnableSsl(uint options, CancellationToken cancellationToken)
+        public override uint EnableSsl(uint options, EncryptionInfoAccumulator encryptionInfo, CancellationToken cancellationToken)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
-                _tlsHandshakeInfo = null;
 
+                // Cleared when this method returns, so a callback that runs late cannot write to the
+                // connection attempt's accumulator.
+                EncryptionInfoAccumulator handshakeEncryptionInfo = encryptionInfo;
                 try
                 {
                     // The handshake reads block on the socket, so closing the transport is what bounds them.
                     using (cancellationToken.UnsafeRegister(static stream => ((Stream)stream).Dispose(), _tcpStream))
                     {
-                        if (_tlsFirst)
-                        {
-                            AuthenticateAsClient(_sslStream, _targetServer, null);
-                        }
-                        else
-                        {
-                            _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
-                        }
+                        AuthenticateAsClient(_sslStream, _targetServer, _tlsFirst,
+                            (sender, certificate, chain, policyErrors) => ValidateServerCertificate(
+                                sender, certificate, chain, policyErrors, handshakeEncryptionInfo));
                     }
                     // A timeout landing after the handshake but before the registration ended has already closed the transport.
                     cancellationToken.ThrowIfCancellationRequested();
@@ -796,6 +792,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
                     return ReportTcpSNIError(ioe);
+                }
+                finally
+                {
+                    handshakeEncryptionInfo = null;
                 }
 
                 _stream = _sslStream;
@@ -827,8 +827,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="serverCertificate">X.509 certificate provided from the server</param>
         /// <param name="chain">X.509 chain</param>
         /// <param name="policyErrors">Policy errors</param>
+        /// <param name="encryptionInfo">
+        /// Receives what this handshake observed, or <see langword="null"/> to record nothing.
+        /// </param>
         /// <returns>True if certificate is valid</returns>
-        private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
+        private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors, EncryptionInfoAccumulator encryptionInfo)
         {
             ServerCertificateVerdict verdict = default;
             try
@@ -845,20 +848,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             finally
             {
                 // Recorded for both outcomes (including when validation is bypassed) so that a failed
-                // handshake still reports what was observed. Each callback replaces the previous
-                // record.
-                if (sender is SslStream sslStream)
+                // handshake still reports what was observed.
+                if (encryptionInfo is not null && sender is SslStream sslStream)
                 {
-                    _tlsHandshakeInfo = SniCommon.CreateTlsHandshakeInfo(
-                        sslStream,
-                        serverCertificate,
-                        verdict);
+                    SniCommon.RecordTlsHandshake(encryptionInfo, sslStream, serverCertificate, verdict);
                 }
             }
         }
-
-        /// <inheritdoc/>
-        public override TlsHandshakeInfo TlsHandshakeInfo => _tlsHandshakeInfo;
 
         /// <summary>
         /// Set buffer size

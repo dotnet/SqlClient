@@ -22,11 +22,11 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 {
     /// <summary>
-    /// Tests for the TLS handshake record that managed SNI creates in the TLS validation callback:
-    /// SqlClient's effective validation verdict, the original callback chain status, the DER
-    /// encoding of the presented certificate, and the negotiated protocol and cipher suite.
+    /// Tests for what managed SNI records in the TLS validation callback: SqlClient's effective
+    /// validation verdict, the original callback chain status, the DER encoding of the presented
+    /// certificate, and the negotiated protocol and cipher suite.
     /// </summary>
-    public class SniCommonTlsHandshakeInfoTest
+    public class SniCommonTlsHandshakeRecordingTest
     {
         private const string ServerName = "server.contoso.com";
 
@@ -362,7 +362,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             }
 
             // The recorded DER bytes are the certificate's raw data; see
-            // CreateTlsHandshakeInfo_InCallback_RecordsDerProtocolAndCipherSuite.
+            // RecordTlsHandshake_InCallback_RecordsDerProtocolAndCipherSuite.
             if (capturing is not null && cert is not null)
             {
                 AssertNoLeak(cert.RawData, capturing.Message);
@@ -371,12 +371,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
-        /// Created inside a real validation callback, the record holds its own copy of the DER
-        /// encoding of the presented certificate, the verdict it was created with, and the protocol
-        /// and cipher suite that SslStream agreed before raising the callback.
+        /// Recorded inside a real validation callback, the accumulator holds its own copy of the
+        /// DER encoding of the presented certificate, the verdict, and the protocol and cipher suite
+        /// that SslStream agreed before raising the callback.
         /// </summary>
         [Fact]
-        public void CreateTlsHandshakeInfo_InCallback_RecordsDerProtocolAndCipherSuite()
+        public void RecordTlsHandshake_InCallback_RecordsDerProtocolAndCipherSuite()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
@@ -384,11 +384,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 SqlServerCertificateValidationErrors.None, X509ChainStatusFlags.NoError);
 
             // Act
-            TlsHandshakeInfo info = CreateInHandshakeCallback(serverCert, verdict);
+            EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, verdict);
 
             // Assert
-            Assert.NotNull(info.DerBytes);
-            Assert.Equal(serverCert.Export(X509ContentType.Cert), info.DerBytes);
+            Assert.NotNull(info.ServerCertificateDerBytes);
+            Assert.Equal(serverCert.Export(X509ContentType.Cert), info.ServerCertificateDerBytes);
             Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.NoError, info.ChainStatus);
             Assert.NotNull(info.Protocol);
@@ -396,17 +396,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.NotNull(info.CipherSuite);
             Assert.NotEqual(TlsCipherSuite.TLS_NULL_WITH_NULL_NULL, info.CipherSuite);
 
-            // The record owns its copy; it is not the certificate's internal buffer.
-            info.DerBytes[0] ^= 0xFF;
-            Assert.NotEqual(info.DerBytes, serverCert.RawData);
+            // The accumulator owns its copy; it is not the certificate's internal buffer.
+            info.ServerCertificateDerBytes[0] ^= 0xFF;
+            Assert.NotEqual(info.ServerCertificateDerBytes, serverCert.RawData);
         }
 
         /// <summary>
-        /// A certificate larger than the size cap is not recorded, while the rest of the record
-        /// is kept.
+        /// A certificate larger than the size cap is         not recorded, while the other handshake
+                /// values are.
         /// </summary>
         [Fact]
-        public void CreateTlsHandshakeInfo_OverSizeCap_DerBytesUnavailable()
+        public void RecordTlsHandshake_OverSizeCap_DerBytesUnavailable()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName,
@@ -417,11 +417,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot);
 
             // Act
-            TlsHandshakeInfo info = CreateInHandshakeCallback(serverCert, verdict);
+            EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, verdict);
 
             // Assert
             // Only the certificate is dropped; the other recorded values are unaffected.
-            Assert.Null(info.DerBytes);
+            Assert.Null(info.ServerCertificateDerBytes);
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.UntrustedRoot, info.ChainStatus);
             Assert.NotNull(info.Protocol);
@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// A certificate within the size cap is recorded.
         /// </summary>
         [Fact]
-        public void CreateTlsHandshakeInfo_WithinSizeCap_DerBytesRecorded()
+        public void RecordTlsHandshake_WithinSizeCap_DerBytesRecorded()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName,
@@ -443,10 +443,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize);
 
             // Act
-            TlsHandshakeInfo info = CreateInHandshakeCallback(serverCert, default);
+            EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, default);
 
             // Assert
-            Assert.Equal(serverCert.RawData, info.DerBytes);
+            Assert.Equal(serverCert.RawData, info.ServerCertificateDerBytes);
         }
 
         /// <summary>
@@ -454,16 +454,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// while the certificate, protocol and cipher suite are recorded.
         /// </summary>
         [Fact]
-        public void CreateTlsHandshakeInfo_Bypass_VerdictUnavailable()
+        public void RecordTlsHandshake_Bypass_VerdictUnavailable()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
 
             // Act
-            TlsHandshakeInfo info = CreateInHandshakeCallback(serverCert, default);
+            EncryptionInfoAccumulator info = RecordInHandshakeCallback(serverCert, default);
 
             // Assert
-            Assert.Equal(serverCert.RawData, info.DerBytes);
+            Assert.Equal(serverCert.RawData, info.ServerCertificateDerBytes);
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
             Assert.NotNull(info.Protocol);
@@ -475,17 +475,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// kept.
         /// </summary>
         [Fact]
-        public void CreateTlsHandshakeInfo_NoCertificate_DerBytesUnavailable()
+        public void RecordTlsHandshake_NoCertificate_DerBytesUnavailable()
         {
             // Arrange
             ServerCertificateVerdict verdict = new(
                 SqlServerCertificateValidationErrors.ServerCertificateMissing, null);
 
             // Act
-            TlsHandshakeInfo info = CreateInHandshakeCallback(null, verdict);
+            EncryptionInfoAccumulator info = RecordInHandshakeCallback(null, verdict);
 
             // Assert
-            Assert.Null(info.DerBytes);
+            Assert.Null(info.ServerCertificateDerBytes);
             Assert.Equal(SqlServerCertificateValidationErrors.ServerCertificateMissing,
                 info.ValidationErrors);
             Assert.Null(info.ChainStatus);
@@ -693,16 +693,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
-        /// Performs a loopback TLS handshake and creates the record from inside the client's
-        /// validation callback, as managed SNI does, passing <paramref name="presented"/> as the
-        /// presented certificate.
+        /// Performs a loopback TLS handshake and records it into a new accumulator from inside the
+        /// client's validation callback, as managed SNI does, passing
+        /// <paramref name="presented"/> as the presented certificate.
         /// </summary>
         /// <param name="presented">
-        /// The certificate passed to the record, which can differ from the one the server sends so
-        /// that certificates TLS could not carry, and no certificate, can be tested.
+        /// The certificate to record, which can differ from the one the server sends so that
+        /// certificates TLS could not carry, and no certificate, can be tested.
         /// </param>
-        /// <param name="verdict">The verdict passed to the record.</param>
-        private static TlsHandshakeInfo CreateInHandshakeCallback(
+        /// <param name="verdict">The verdict to record.</param>
+        private static EncryptionInfoAccumulator RecordInHandshakeCallback(
             X509Certificate? presented,
             ServerCertificateVerdict verdict)
         {
@@ -715,7 +715,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             listener.Start();
             try
             {
-                TlsHandshakeInfo? info = null;
+                EncryptionInfoAccumulator info = new();
                 Task server = Task.Run(async () =>
                 {
                     using TcpClient accepted = await listener.AcceptTcpClientAsync();
@@ -728,14 +728,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 using SslStream clientStream = new(client.GetStream(), false,
                     (sender, certificate, chain, policyErrors) =>
                     {
-                        info = SniCommon.CreateTlsHandshakeInfo((SslStream)sender, presented,
-                            verdict);
+                        SniCommon.RecordTlsHandshake(info, (SslStream)sender, presented, verdict);
                         return true;
                     });
                 clientStream.AuthenticateAsClient(ServerName);
                 server.GetAwaiter().GetResult();
 
-                return Assert.IsType<TlsHandshakeInfo>(info);
+                return info;
             }
             finally
             {

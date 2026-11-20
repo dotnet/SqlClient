@@ -159,10 +159,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <paramref name="length"/> bytes is reported: it is not empty and does not exceed
         /// <see cref="MaxServerCertificateDerBytesSize"/>.
         /// </summary>
-        /// <remarks>
-        /// Transports call this before retaining a certificate, so an oversized one is never
-        /// held beyond the validation callback.
-        /// </remarks>
         /// <param name="length">The length of the DER encoding, in bytes.</param>
         /// <returns><see langword="true"/> if the certificate is reported.</returns>
         internal static bool IsReportableServerCertificateSize(int length) =>

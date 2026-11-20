@@ -25,20 +25,46 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
 
-        protected static async Task AuthenticateAsClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate, CancellationToken token)
+        private static async Task AuthenticateAsClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate, RemoteCertificateValidationCallback validationCallback, CancellationToken token)
         {
             SslClientAuthenticationOptions sslClientOptions = new()
             {
                 TargetHost = serverNameIndication,
                 ApplicationProtocols = s_tdsProtocols,
-                ClientCertificates = certificate
+                ClientCertificates = certificate,
+                RemoteCertificateValidationCallback = validationCallback
             };
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
         }
 
-        protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
+        /// <summary>
+        /// Performs the client TLS handshake, raising <paramref name="validationCallback"/> to
+        /// validate the server certificate for this handshake only.
+        /// </summary>
+        /// <param name="sslStream">The stream to authenticate. It must not have a validation callback of its own.</param>
+        /// <param name="targetServer">The server name the certificate is validated against.</param>
+        /// <param name="tlsFirst">
+        /// <see langword="true"/> for Strict (TDS 8), which negotiates the TDS 8 application protocol.
+        /// </param>
+        /// <param name="validationCallback">The server certificate validation callback.</param>
+        protected static void AuthenticateAsClient(SslStream sslStream, string targetServer, bool tlsFirst, RemoteCertificateValidationCallback validationCallback)
         {
-            AuthenticateAsClientAsync(sslStream, serverNameIndication, certificate, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            if (tlsFirst)
+            {
+                AuthenticateAsClientAsync(sslStream, targetServer, null, validationCallback, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            }
+            else
+            {
+                // Equivalent to AuthenticateAsClient(targetServer, null, s_supportedProtocols, false),
+                // which cannot take a per-handshake validation callback.
+                sslStream.AuthenticateAsClient(new SslClientAuthenticationOptions
+                {
+                    TargetHost = targetServer,
+                    EnabledSslProtocols = s_supportedProtocols,
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                    RemoteCertificateValidationCallback = validationCallback
+                });
+            }
         }
 
         /// <summary>
@@ -92,9 +118,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Enable SSL
         /// </summary>
         /// <param name="options">SSL options</param>
+        /// <param name="encryptionInfo">
+        /// Receives the negotiated protocol, cipher suite and certificate details of this handshake,
+        /// including when it fails; <see langword="null"/> to record nothing.
+        /// </param>
         /// <param name="cancellationToken">Cancelled when the connection's Connect Timeout elapses; aborts a handshake still in progress.</param>
         /// <returns>SNI error code</returns>
-        public abstract uint EnableSsl(uint options, CancellationToken cancellationToken);
+        public abstract uint EnableSsl(uint options, EncryptionInfoAccumulator encryptionInfo, CancellationToken cancellationToken);
 
         /// <summary>
         /// Disable SSL
@@ -127,13 +157,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Gets a value that indicates the security protocol used to authenticate this connection.
         /// </summary>
         public virtual SslProtocols ProtocolVersion { get; } = 0;
-
-        /// <summary>
-        /// Gets the record of the most recent TLS handshake on this handle, or
-        /// <see langword="null"/> if the certificate validation callback has not run since TLS was
-        /// last enabled.
-        /// </summary>
-        public virtual TlsHandshakeInfo TlsHandshakeInfo => null;
 
         #if DEBUG
         /// <summary>
