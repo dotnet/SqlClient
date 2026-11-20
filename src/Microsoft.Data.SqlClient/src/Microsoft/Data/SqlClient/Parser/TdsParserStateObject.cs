@@ -603,7 +603,16 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
-        internal abstract uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion);
+        /// <summary>
+        /// Waits for the TLS handshake started by <see cref="EnableSsl"/> to complete.
+        /// </summary>
+        /// <param name="protocolVersion">The negotiated TLS protocol, if reported.</param>
+        /// <param name="encryptionInfo">
+        /// Receives what the completed handshake observed, including when it fails, from transports
+        /// that record it only once the handshake completes; <see langword="null"/> to record nothing.
+        /// </param>
+        /// <returns>The SNI error code.</returns>
+        internal abstract uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion, Connection.EncryptionInfoAccumulator encryptionInfo);
 
         internal abstract uint DisableSsl();
 

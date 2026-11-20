@@ -956,8 +956,9 @@ namespace Microsoft.Data.SqlClient.Parser
             EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
 
             // Managed SNI records the handshake into the accumulator from its certificate
-            // validation callback, before EnableSsl returns, so a failed handshake's login
-            // exception still carries what was observed.
+            // validation callback, before EnableSsl returns. Native SNI records it when EnableSsl
+            // fails, and otherwise once the handshake wait below completes. Either way a failed
+            // handshake's login exception still carries what was observed.
             error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename, accumulator);
 
             if (error != TdsEnums.SNI_SUCCESS)
@@ -976,7 +977,7 @@ namespace Microsoft.Data.SqlClient.Parser
             if (OsConstants.IsWindows)
 #endif
             {
-                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
+                error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol, accumulator);
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -999,8 +1000,8 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            // Transports that did not record the protocol during the handshake (native SNI) report
-            // it from the completed handshake instead.
+            // A transport that did not record a protocol (an SNI library without the capture
+            // exports, or one that reported none) reports it from the completed handshake instead.
             if (accumulator?.Protocol is null)
             {
                 RecordNegotiatedProtocol(protocol);
@@ -1110,7 +1111,7 @@ namespace Microsoft.Data.SqlClient.Parser
             // warning to preserve existing behavior.
             if (protocol == SslProtocols.None && !OsConstants.IsWindows)
             {
-                if (_physicalStateObj.WaitForSSLHandShakeToComplete(out SslProtocols reported) == TdsEnums.SNI_SUCCESS)
+                if (_physicalStateObj.WaitForSSLHandShakeToComplete(out SslProtocols reported, encryptionInfo: null) == TdsEnums.SNI_SUCCESS)
                 {
                     protocol = reported;
                 }

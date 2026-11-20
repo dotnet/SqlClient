@@ -1308,16 +1308,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the values reported for a certificate-validation failure. The fixture certificate is
         /// self-signed and untrusted, and the server allows only TLS 1.2. The pre-login response
         /// selected full encryption, so the mode is reported even though the TLS handshake failed.
-        /// Native SNI rejects the certificate inside the TLS handshake before reporting a protocol,
-        /// so no protocol or cipher suite is reported. Managed SNI records the protocol and cipher
-        /// suite SslStream agreed before raising the validation callback. Certificate fields are
-        /// asserted by <c>ManagedSniCertificateCaptureTests</c>.
+        /// Managed SNI records the protocol and cipher suite SslStream agreed before raising the
+        /// validation callback. Native SNI reports the same values when sni.dll provides the
+        /// validation info export, because it validates the certificate after Schannel has agreed the
+        /// protocol and cipher suite; an older sni.dll observes neither. Certificate fields are
+        /// asserted by <c>ManagedSniCertificateCaptureTests</c> and <c>NativeSniEncryptionInfoTests</c>.
         /// </summary>
         private static void AssertUntrustedCertificateFailure(SqlException ex, SqlConnection connection, TdsServer server)
         {
             Assert.True(server.PreLoginCount >= 1);
             Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
-            if (LocalAppContextSwitches.UseManagedNetworking)
+            if (LocalAppContextSwitches.UseManagedNetworking
+                || !SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
             {
                 Assert.Equal(SslProtocols.Tls12, ex.EncryptionInfo.NegotiatedEncryptionProtocol);
                 Assert.InRange(Assert.NotNull(ex.EncryptionInfo.NegotiatedCipherSuiteId), 1, 0xFFFF);
@@ -1353,7 +1355,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the values published by a successful <c>Encrypt=Strict</c> open whose server
         /// certificate is pinned. Managed SNI also publishes the presented certificate with no
         /// validation errors, and no chain status because the pin, not the chain, decides trust.
-        /// Native SNI does not capture certificate details.
+        /// Native SNI reports the same values and the cipher suite when sni.dll provides the
+        /// validation info export, with the certificate only when it also provides the certificate
+        /// export; an older sni.dll reports no certificate details.
         /// </summary>
         private void AssertStrict(SqlConnectionEncryptionInfo info)
         {
@@ -1362,6 +1366,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             if (LocalAppContextSwitches.UseManagedNetworking)
             {
                 AssertPresentedCertificate(info);
+                Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
+            }
+            else if (!SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+            {
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+                AssertNativeCertificate(info);
                 Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             }
             else
@@ -1376,10 +1386,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Asserts the values reported when the <c>Encrypt=Strict</c> TLS handshake rejects the
         /// untrusted certificate. Strict is recorded before the handshake starts, so it is
-        /// reported, and no pre-login message is exchanged. Native SNI rejects the certificate
-        /// inside the handshake before reporting a protocol, cipher suite or certificate. Managed
-        /// SNI records the protocol, cipher suite, presented certificate, ChainError and the chain
-        /// status from the validation callback.
+        /// reported, and no pre-login message is exchanged. Managed SNI records the protocol,
+        /// cipher suite, presented certificate, ChainError and the chain status from the validation
+        /// callback. Native SNI reports the same values when sni.dll provides the validation info
+        /// export, because it validates the certificate after Schannel has agreed the protocol and
+        /// cipher suite, with the certificate only when it also provides the certificate export; an
+        /// older sni.dll reports none of them.
         /// </summary>
         private void AssertStrictHandshakeFailure(SqlException ex, SqlConnection connection, TdsServer server)
         {
@@ -1392,6 +1404,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
                 AssertPresentedCertificate(info);
                 Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
+                Assert.NotEqual(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
+            }
+            else if (!SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+            {
+                Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+                AssertNativeCertificate(info);
+                Assert.True(Assert.NotNull(info.ValidationErrors)
+                    .HasFlag(SqlServerCertificateValidationErrors.ChainError));
                 Assert.NotEqual(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
             }
             else
@@ -1407,6 +1428,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Asserts the certificate reported by Native SNI: the fixture certificate's DER when sni.dll
+        /// provides <c>SNIGetServerCertificateWrapper</c>, and no certificate otherwise.
+        /// </summary>
+        private void AssertNativeCertificate(SqlConnectionEncryptionInfo info)
+        {
+            if (SniNativeCertificateCapture.Default.IsCertificateUnavailable)
+            {
+                Assert.Null(info.PresentedServerCertificateRawData);
+            }
+            else
+            {
+                AssertPresentedCertificate(info);
+            }
+        }
+
+        /// <summary>
         /// Asserts that the published certificate is exactly the fixture certificate's DER.
         /// </summary>
         private void AssertPresentedCertificate(SqlConnectionEncryptionInfo info)
@@ -1419,17 +1456,33 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the certificate fields for tests that use <c>TrustServerCertificate=true</c>.
         /// SqlClient never evaluates the certificate, so the verdict and chain status are always
         /// unavailable. Managed SNI still records the presented certificate and cipher suite whenever
-        /// a TLS handshake took place; native SNI does not capture certificate details.
+        /// a TLS handshake took place. Native SNI records the cipher suite only when sni.dll provides
+        /// <c>SNIGetCertValidationInfoWrapper</c>, and the certificate only when it also provides
+        /// <c>SNIGetServerCertificateWrapper</c>.
         /// </summary>
         private void AssertBypassedCertificateFields(SqlConnectionEncryptionInfo info, ServerEncryption serverEncryption)
         {
-            if (serverEncryption != ServerEncryption.NotSupported && LocalAppContextSwitches.UseManagedNetworking)
+            if (serverEncryption != ServerEncryption.NotSupported)
             {
-                Assert.NotNull(info.PresentedServerCertificateRawData);
-                Assert.Equal(_certificate.RawData, info.PresentedServerCertificateRawData.Value.ToArray());
-                using X509Certificate2? presented = info.GetServerCertificate();
-                Assert.NotNull(presented);
-                Assert.Equal(_certificate.RawData, presented.RawData);
+                // Native SNI captures the certificate only with an sni.dll that has the certificate
+                // capture exports, so accept either no certificate (older sni.dll) or the presented
+                // one. Managed SNI must always capture it.
+                if (LocalAppContextSwitches.UseManagedNetworking)
+                {
+                    Assert.NotNull(info.PresentedServerCertificateRawData);
+                }
+
+                if (info.PresentedServerCertificateRawData is ReadOnlyMemory<byte> rawData)
+                {
+                    Assert.Equal(_certificate.RawData, rawData.ToArray());
+                    using X509Certificate2? presented = info.GetServerCertificate();
+                    Assert.NotNull(presented);
+                    Assert.Equal(_certificate.RawData, presented.RawData);
+                }
+                else
+                {
+                    Assert.Null(info.GetServerCertificate());
+                }
             }
             else
             {
@@ -1448,6 +1501,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             else if (LocalAppContextSwitches.UseManagedNetworking)
             {
                 Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+            }
+            else if (info.NegotiatedCipherSuiteId is int cipherSuite)
+            {
+                // Native SNI reports the cipher suite through SNIGetCertValidationInfoWrapper, while
+                // the certificate comes from the separate SNIGetServerCertificateWrapper export. A
+                // cipher suite therefore implies a certificate only when that export is present.
+                Assert.InRange(cipherSuite, 1, 0xFFFF);
+                if (!SniNativeCertificateCapture.Default.IsCertificateUnavailable)
+                {
+                    Assert.NotNull(info.PresentedServerCertificateRawData);
+                }
             }
         }
 

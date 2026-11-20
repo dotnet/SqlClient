@@ -34,6 +34,9 @@ namespace Interop.Windows.Sni
         public uint SniClose(IntPtr pConn) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
+        public uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo) =>
+            throw ADP.SNIPlatformNotSupported(_architecture);
+
         public uint SniGetMaxComposedSpnLength() =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
@@ -50,6 +53,9 @@ namespace Interop.Windows.Sni
             throw ADP.SNIPlatformNotSupported(_architecture);
 
         public void SniGetLastError(out SniError pLastError) =>
+            throw ADP.SNIPlatformNotSupported(_architecture);
+
+        public unsafe uint SniGetServerCertificate(SNIHandle pConn, byte* pbCertificate, uint cbCertificate, out uint pcbCertificate) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
         public uint SniGetPeerAddrStrWrapper(

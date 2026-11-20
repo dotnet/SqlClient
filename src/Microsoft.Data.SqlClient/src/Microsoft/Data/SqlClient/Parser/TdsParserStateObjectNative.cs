@@ -435,8 +435,10 @@ namespace Microsoft.Data.SqlClient.Parser
             return error;
         }
 
-        // Native SNI does not report handshake details through this call; TdsParser records the
-        // negotiated protocol after the handshake.
+        // Native SNI keeps a record of the most recent TLS handshake until the handle is closed,
+        // including after a failed handshake. A failed handshake is recorded here so the login
+        // exception carries it; a successful one is recorded by WaitForSSLHandShakeToComplete,
+        // once an asynchronous handshake has also completed.
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename, Connection.EncryptionInfoAccumulator encryptionInfo)
         {
             AuthProviderInfo authInfo = new AuthProviderInfo();
@@ -445,14 +447,24 @@ namespace Microsoft.Data.SqlClient.Parser
             authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
             // Add SSL (Encryption) SNI provider.
-            return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
+            uint error = SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
+            if (error != TdsEnums.SNI_SUCCESS)
+            {
+                SniNativeCertificateCapture.Default.Record(_sessionHandle, encryptionInfo);
+            }
+
+            return error;
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion) =>
-            SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion, Connection.EncryptionInfoAccumulator encryptionInfo)
+        {
+            uint error = SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
+            SniNativeCertificateCapture.Default.Record(_sessionHandle, encryptionInfo);
+            return error;
+        }
 
         internal override SniErrorDetails GetErrorDetails()
         {
