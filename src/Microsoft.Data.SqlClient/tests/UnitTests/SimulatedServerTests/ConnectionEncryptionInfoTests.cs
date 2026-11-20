@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             AssertNegotiated(connection.EncryptionInfo, serverEncryption);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, serverEncryption);
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             AssertNegotiated(connection.EncryptionInfo, serverEncryption);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, serverEncryption);
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
         }
 
         /// <summary>
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
         }
 
         /// <summary>
@@ -478,7 +478,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// A synchronous open that fails certificate validation inside the TLS handshake reports
-        /// the mode selected by pre-login, but no protocol.
+        /// the mode selected by pre-login. Managed SNI also reports the protocol it observed.
         /// </summary>
         [Theory]
         [InlineData(ServerEncryption.Off)]
@@ -501,7 +501,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// An asynchronous open that fails certificate validation inside the TLS handshake reports
-        /// the mode selected by pre-login, but no protocol.
+        /// the mode selected by pre-login. Managed SNI also reports the protocol it observed.
         /// </summary>
         [Theory]
         [InlineData(ServerEncryption.Off)]
@@ -566,11 +566,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// A synchronous open with <c>Encrypt=Strict</c> whose TLS handshake rejects the untrusted
-        /// server certificate reports <c>Strict</c>, which is known before the handshake, but no
-        /// protocol.
+        /// server certificate reports <c>Strict</c>, which is known before the handshake, together
+        /// with whatever the transport observed before rejecting the certificate.
         /// </summary>
         [Fact]
-        public void Open_EncryptStrictUntrustedCertificate_ExceptionReportsStrictWithoutProtocol()
+        public void Open_EncryptStrictUntrustedCertificate_ExceptionReportsStrict()
         {
             // Arrange
             using TdsServer server = StartStrictServer(expectTlsHandshakeFailure: true);
@@ -585,11 +585,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// An asynchronous open with <c>Encrypt=Strict</c> whose TLS handshake rejects the untrusted
-        /// server certificate reports <c>Strict</c>, which is known before the handshake, but no
-        /// protocol.
+        /// server certificate reports <c>Strict</c>, which is known before the handshake, together
+        /// with whatever the transport observed before rejecting the certificate.
         /// </summary>
         [Fact]
-        public async Task OpenAsync_EncryptStrictUntrustedCertificate_ExceptionReportsStrictWithoutProtocol()
+        public async Task OpenAsync_EncryptStrictUntrustedCertificate_ExceptionReportsStrict()
         {
             // Arrange
             using TdsServer server = StartStrictServer(expectTlsHandshakeFailure: true);
@@ -747,7 +747,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.NotSame(held, connection.EncryptionInfo);
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
             AssertNegotiated(held, ServerEncryption.Required);
         }
 
@@ -774,7 +774,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.NotSame(held, connection.EncryptionInfo);
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
             AssertNegotiated(held, ServerEncryption.Required);
         }
 
@@ -999,7 +999,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// error with the negotiated encryption info, left the connection without a snapshot, and
         /// did not cause an additional login.
         /// </summary>
-        private static void AssertIsolationLevelResetFailure(
+        private void AssertIsolationLevelResetFailure(
             SqlException ex,
             SqlConnection connection,
             TransientTdsErrorTdsServer server)
@@ -1007,7 +1007,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal((int)IsolationLevelResetErrorNumber, ex.Number);
             Assert.Equal(1, server.Login7Count);
             AssertNegotiated(ex.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(ex.EncryptionInfo);
+            AssertBypassedCertificateFields(ex.EncryptionInfo, ServerEncryption.Required);
             AssertEmpty(connection.EncryptionInfo);
             Assert.NotEqual(ConnectionState.Open, connection.State);
         }
@@ -1090,7 +1090,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             Assert.Equal(expectedLogins, server.Login7Count);
             AssertNegotiated(ex.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(ex.EncryptionInfo);
             AssertEmpty(connection.EncryptionInfo);
             Assert.NotEqual(ConnectionState.Open, connection.State);
 
@@ -1292,14 +1291,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts that a login rejected after pre-login carries the negotiated values on the
         /// exception only, and not in its message.
         /// </summary>
-        private static void AssertLoginFailureCarriesNegotiatedValues(
+        private void AssertLoginFailureCarriesNegotiatedValues(
             SqlException ex,
             SqlConnection connection,
             ServerEncryption serverEncryption)
         {
             Assert.Equal(18456, ex.Number);
             AssertNegotiated(ex.EncryptionInfo, serverEncryption);
-            AssertCertificateFieldsNull(ex.EncryptionInfo);
+            AssertBypassedCertificateFields(ex.EncryptionInfo, serverEncryption);
             AssertEmpty(connection.EncryptionInfo);
             Assert.DoesNotContain("Tls12", ex.Message);
             Assert.DoesNotContain("LoginOnly", ex.Message);
@@ -1309,16 +1308,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the values reported for a certificate-validation failure. The fixture certificate is
         /// self-signed and untrusted, and the server allows only TLS 1.2. The pre-login response
         /// selected full encryption, so the mode is reported even though the TLS handshake failed.
-        /// Both the managed and native SNI implementations reject the certificate inside the TLS
-        /// handshake, before a protocol is reported, so no protocol or cipher suite is reported.
-        /// Certificate fields are owned by later slices and are not asserted here.
+        /// Native SNI rejects the certificate inside the TLS handshake before reporting a protocol,
+        /// so no protocol or cipher suite is reported. Managed SNI records the protocol and cipher
+        /// suite SslStream agreed before raising the validation callback. Certificate fields are
+        /// asserted by <c>ManagedSniCertificateCaptureTests</c>.
         /// </summary>
         private static void AssertUntrustedCertificateFailure(SqlException ex, SqlConnection connection, TdsServer server)
         {
             Assert.True(server.PreLoginCount >= 1);
             Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
-            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
-            Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
+            if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.Equal(SslProtocols.Tls12, ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+                Assert.InRange(Assert.NotNull(ex.EncryptionInfo.NegotiatedCipherSuiteId), 1, 0xFFFF);
+            }
+            else
+            {
+                Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+                Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
+            }
+
             AssertEmpty(connection.EncryptionInfo);
         }
 
@@ -1341,38 +1350,105 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Asserts the values published by a successful <c>Encrypt=Strict</c> open.
+        /// Asserts the values published by a successful <c>Encrypt=Strict</c> open whose server
+        /// certificate is pinned. Managed SNI also publishes the presented certificate with no
+        /// validation errors, and no chain status because the pin, not the chain, decides trust.
+        /// Native SNI does not capture certificate details.
         /// </summary>
-        private static void AssertStrict(SqlConnectionEncryptionInfo info)
+        private void AssertStrict(SqlConnectionEncryptionInfo info)
         {
             Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
-            AssertCertificateFieldsNull(info);
+            if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                AssertPresentedCertificate(info);
+                Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
+            }
+            else
+            {
+                Assert.Null(info.PresentedServerCertificateRawData);
+                Assert.Null(info.ValidationErrors);
+            }
+
+            Assert.Null(info.ChainStatus);
         }
 
         /// <summary>
-        /// Asserts the values reported when the <c>Encrypt=Strict</c> TLS handshake fails. Strict is
-        /// recorded before the handshake starts, so it is reported, but the handshake never
-        /// reports a protocol or cipher suite. No pre-login message is exchanged.
+        /// Asserts the values reported when the <c>Encrypt=Strict</c> TLS handshake rejects the
+        /// untrusted certificate. Strict is recorded before the handshake starts, so it is
+        /// reported, and no pre-login message is exchanged. Native SNI rejects the certificate
+        /// inside the handshake before reporting a protocol, cipher suite or certificate. Managed
+        /// SNI records the protocol, cipher suite, presented certificate, ChainError and the chain
+        /// status from the validation callback.
         /// </summary>
-        private static void AssertStrictHandshakeFailure(SqlException ex, SqlConnection connection, TdsServer server)
+        private void AssertStrictHandshakeFailure(SqlException ex, SqlConnection connection, TdsServer server)
         {
+            SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
             Assert.Equal(0, server.PreLoginCount);
-            Assert.Equal(SqlConnectionEncryptionMode.Strict, ex.EncryptionInfo.NegotiatedEncryptionMode);
-            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
-            Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
+            Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
+            if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+                AssertPresentedCertificate(info);
+                Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
+                Assert.NotEqual(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
+            }
+            else
+            {
+                Assert.Null(info.NegotiatedEncryptionProtocol);
+                Assert.Null(info.NegotiatedCipherSuiteId);
+                Assert.Null(info.PresentedServerCertificateRawData);
+                Assert.Null(info.ValidationErrors);
+                Assert.Null(info.ChainStatus);
+            }
+
             AssertEmpty(connection.EncryptionInfo);
         }
 
         /// <summary>
-        /// Asserts that no certificate field is populated.
+        /// Asserts that the published certificate is exactly the fixture certificate's DER.
         /// </summary>
-        private static void AssertCertificateFieldsNull(SqlConnectionEncryptionInfo info)
+        private void AssertPresentedCertificate(SqlConnectionEncryptionInfo info)
         {
-            Assert.Null(info.PresentedServerCertificateRawData);
-            Assert.Null(info.GetServerCertificate());
+            Assert.NotNull(info.PresentedServerCertificateRawData);
+            Assert.Equal(_certificate.RawData, info.PresentedServerCertificateRawData.Value.ToArray());
+        }
+
+        /// <summary>
+        /// Asserts the certificate fields for tests that use <c>TrustServerCertificate=true</c>.
+        /// SqlClient never evaluates the certificate, so the verdict and chain status are always
+        /// unavailable. Managed SNI still records the presented certificate and cipher suite whenever
+        /// a TLS handshake took place; native SNI does not capture certificate details.
+        /// </summary>
+        private void AssertBypassedCertificateFields(SqlConnectionEncryptionInfo info, ServerEncryption serverEncryption)
+        {
+            if (serverEncryption != ServerEncryption.NotSupported && LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.NotNull(info.PresentedServerCertificateRawData);
+                Assert.Equal(_certificate.RawData, info.PresentedServerCertificateRawData.Value.ToArray());
+                using X509Certificate2? presented = info.GetServerCertificate();
+                Assert.NotNull(presented);
+                Assert.Equal(_certificate.RawData, presented.RawData);
+            }
+            else
+            {
+                Assert.Null(info.PresentedServerCertificateRawData);
+                Assert.Null(info.GetServerCertificate());
+            }
+
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
+
+            if (serverEncryption == ServerEncryption.NotSupported)
+            {
+                // No TLS handshake took place, so no cipher suite was negotiated.
+                Assert.Null(info.NegotiatedCipherSuiteId);
+            }
+            else if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+            }
         }
 
         /// <summary>
