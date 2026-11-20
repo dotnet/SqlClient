@@ -1196,10 +1196,11 @@ namespace Microsoft.Data.SqlClient
                         isAsync,
                         cancellationToken);
 
-                    // Preparation returns default only when it completed inline, and execution
-                    // then starts inline too. Any other task is handed to execution even if it
-                    // has already completed, so execution revalidates the connection and stays
-                    // off the caller's thread.
+                    // Preparation returns default only when it finished without yielding, and
+                    // execution then starts inline too. Any other task, including a faulted one,
+                    // is handed to execution even if it has already completed, so execution
+                    // revalidates the connection, releases the flag and stays off the caller's
+                    // thread.
                     if (isAsync && preparation != default)
                     {
                         prepareEncryptionTask = preparation.AsTask();
