@@ -46,8 +46,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using ECDiffieHellman key = ECDiffieHellman.Create();
             key.KeySize = 384;
             var parameters = new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), key);
-            Task preparation = Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, false, CancellationToken.None);
+            Task preparation = PrepareAsync(command, false, CancellationToken.None);
             Assert.False(preparation.IsCompleted);
             using SqlCommand other = new SqlCommand("/* competing reader */", fixture.Connection);
             using (SqlDataReader reader = other.ExecuteReader())
@@ -59,31 +58,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
             Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
             fixture.Provider.CacheHit = true;
-            await Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, false, CancellationToken.None);
+            await PrepareAsync(command, false, CancellationToken.None);
             Assert.Equal(-1, await other.ExecuteNonQueryAsync());
         }
 
-        /// <summary>Queued execution rechecks readers opened after encryption preparation completed.</summary>
+        /// <summary>Execution rechecks readers opened while enclave preparation is pending.</summary>
         [Fact]
         public async Task Execute_QueuedPreparation_RevalidatesConnection()
         {
+            // Arrange
             using Fixture fixture = new Fixture();
-            using SqlCommand command = new SqlCommand("/* queued execution */", fixture.Connection);
-            var preparation = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-            object[] arguments =
-            {
-                CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, null, preparation.Task
-            };
-            using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
-                .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, arguments);
-            Task execution = (Task)arguments[5];
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.Attestation = true;
+
+            // Act
+            Task execution = command.ExecuteReaderAsync();
+            await fixture.Provider.PreparationEntered.Task;
             using SqlCommand other = new SqlCommand("/* competing reader */", fixture.Connection);
             using (SqlDataReader reader = other.ExecuteReader())
             {
-                preparation.SetResult(null);
+                using ECDiffieHellman key = ECDiffieHellman.Create();
+                key.KeySize = 384;
+                fixture.Provider.CompleteParameters(
+                    new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), key));
+
+                // Assert
                 await Assert.ThrowsAsync<InvalidOperationException>(() => execution);
                 Assert.False(reader.IsClosed);
             }
@@ -110,8 +109,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SetField(command, "_enclaveRetryConnection", inner);
             try
             {
-                Task preparation = Invoke(command, "PrepareForTransparentEncryptionAsync",
-                    30, true, true, CancellationToken.None);
+                Task preparation = PrepareAsync(command, true, CancellationToken.None);
                 SetField(command, "_enclaveRetryConnection", null);
                 if (pending)
                 {
@@ -134,10 +132,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        /// <summary>A warm, parameterless enclave batch must not defer otherwise synchronous TDS setup.</summary>
+        /// <summary>A warm, parameterless enclave batch needs no describe round trip.</summary>
         [Fact]
-        public void Prepare_ParameterlessEnclaveBatch_WarmSessionCompletesInline()
+        public async Task Prepare_ParameterlessEnclaveBatch_WarmSessionSkipsDescribe()
         {
+            // Arrange
             using Fixture fixture = new Fixture();
             using SqlCommand command = fixture.CreateCommand();
             fixture.Provider.CacheHit = true;
@@ -147,14 +146,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             command.AddBatchCommand(new SqlBatchCommand("SELECT 2",
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
             command.SetBatchRPCModeReadyToExecute();
-            object[] arguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, arguments);
-            Assert.Null(arguments[3]);
-            Assert.Equal(false, arguments[5]);
+
+            // Act
+            await InvokePrepare(command, false, CancellationToken.None);
+
+            // Assert
             Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
             Assert.Equal(1, fixture.Provider.AsyncCalls);
             Assert.Equal(0, fixture.Provider.SyncCalls);
@@ -172,13 +168,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, second.Connection.State);
         }
 
-        /// <summary>No-work preparation stays inline and immediately reserves the connection for its reader.</summary>
+        /// <summary>Dispatched no-work preparation reserves the connection before waiting for its response.</summary>
         [Fact]
-        public async Task ExecuteReaderAsync_NonEnclaveWithoutParameters_RejectsImmediateSecondCommand()
+        public async Task ExecuteReaderAsync_NonEnclaveWithoutParameters_ReservesConnection()
         {
+            // Arrange
             using ManualResetEventSlim responseGate = new ManualResetEventSlim(false);
             TdsServerArguments arguments = new TdsServerArguments();
-            using TdsServer server = new TdsServer(new GatedQueryEngine(arguments, responseGate), arguments);
+            GatedQueryEngine engine = new GatedQueryEngine(arguments, responseGate);
+            using TdsServer server = new TdsServer(engine, arguments);
             server.Start();
             using Fixture fixture = new Fixture(server);
             using SqlCommand command = fixture.CreateCommand();
@@ -186,25 +184,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .SetValue(fixture.Connection.ConnectionOptions, null);
             typeof(SqlConnectionOptions).GetField("_attestationProtocol", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(fixture.Connection.ConnectionOptions, SqlConnectionAttestationProtocol.NotSpecified);
-            object[] preparationArguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, preparationArguments);
-            Assert.Null(preparationArguments[3]);
-            Assert.Equal(false, preparationArguments[5]);
             Task<SqlDataReader> operation;
             try
             {
+                // Act
                 operation = command.ExecuteReaderAsync();
                 Assert.False(operation.IsCompleted);
+                await engine.RequestEntered.Task;
+
+                // Assert
                 Assert.Equal(1, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
                 using SqlCommand other = new SqlCommand("SELECT 1", fixture.Connection);
                 Assert.Throws<InvalidOperationException>(() => other.ExecuteNonQuery());
             }
             finally
             {
+                // Cleanup
                 responseGate.Set();
             }
             using SqlDataReader reader = await operation;
@@ -337,13 +332,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(3, true, true)]
         public async Task ExecuteAsync_PendingProvider_PropagatesCompletion(int api, bool attestation, bool cancel)
         {
+            // Arrange
             using Fixture fixture = new Fixture();
             using SqlCommand command = fixture.CreateCommand();
             using CancellationTokenSource cancellation = new CancellationTokenSource();
             fixture.Provider.Attestation = attestation;
 
+            // Act
             Task operation = ExecuteAsync(command, api, cancellation.Token);
 
+            await fixture.Provider.PreparationEntered.Task;
+
+            // Assert
             Assert.False(operation.IsCompleted);
             Assert.Equal(cancellation.Token, fixture.Provider.Token);
             Assert.Throws<InvalidOperationException>(() => command.Connection = null);
@@ -364,6 +364,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // The same command must be reusable after provider failure or cancellation.
             fixture.Provider.Reset();
             Task retry = ExecuteAsync(command, api, CancellationToken.None);
+            await fixture.Provider.PreparationEntered.Task;
             Assert.False(retry.IsCompleted);
             fixture.Provider.Fail();
             Assert.Same(fixture.Provider.Error, await Assert.ThrowsAsync<InvalidOperationException>(() => retry));
@@ -378,14 +379,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(2)]
         public async Task BeginExecute_PendingLookup_UsesAsyncProvider(int api)
         {
+            // Arrange
             using Fixture fixture = new Fixture();
             using SqlCommand command = fixture.CreateCommand();
+
+            // Act
             IAsyncResult result = api switch
             {
                 0 => command.BeginExecuteReader(),
                 1 => command.BeginExecuteNonQuery(),
                 _ => command.BeginExecuteXmlReader()
             };
+            await fixture.Provider.PreparationEntered.Task;
+
+            // Assert
             Assert.False(result.IsCompleted);
             fixture.Provider.Fail();
             Assert.Same(fixture.Provider.Error,
@@ -451,6 +458,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(2, true)]
         public async Task ExecuteBatchAsync_PendingLookup_PropagatesCompletion(int api, bool cancel)
         {
+            // Arrange
             using Fixture fixture = new Fixture();
             using SqlBatch batch = new SqlBatch { Connection = fixture.Connection };
             batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1",
@@ -458,12 +466,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2",
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
             using CancellationTokenSource cancellation = new CancellationTokenSource();
+
+            // Act
             Task operation = api switch
             {
                 0 => batch.ExecuteReaderAsync(cancellation.Token),
                 1 => batch.ExecuteNonQueryAsync(cancellation.Token),
                 _ => batch.ExecuteScalarAsync(cancellation.Token)
             };
+            await fixture.Provider.PreparationEntered.Task;
+
+            // Assert
             Assert.False(operation.IsCompleted);
             Assert.Equal(cancellation.Token, fixture.Provider.Token);
             if (cancel)
@@ -563,15 +576,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Inline package failures await invalidation before retrying and release command state on either failure path.
+        /// Dispatched package failures await invalidation before retrying and release command state on failure.
         /// </summary>
         [Theory]
         [InlineData(false, false)]
         [InlineData(false, true)]
         [InlineData(true, false)]
         [InlineData(true, true)]
-        public async Task ExecuteReaderAsync_InlineEnclaveRetry_AbortsCleanly(bool retryPreparation, bool cancel)
+        public async Task ExecuteReaderAsync_DispatchedEnclaveRetry_AbortsCleanly(bool retryPreparation, bool cancel)
         {
+            // Arrange
             using Fixture fixture = new Fixture();
             using SqlCommand command = fixture.CreateCommand();
             using CancellationTokenSource cancellation = new CancellationTokenSource();
@@ -588,8 +602,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
             };
             SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+
+            // Act
             Task<SqlDataReader> operation = command.ExecuteReaderAsync(cancellation.Token);
 
+            await Task.WhenAny(fixture.Provider.Entered.Task, operation);
+
+            // Assert
             Assert.True(fixture.Provider.Entered.Task.IsCompleted);
             Assert.False(operation.IsCompleted);
             Assert.Equal(1, fixture.Provider.AsyncCalls);
@@ -635,9 +654,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
             Assert.False((bool)GetField(command, "_internalEndExecuteInitiated"));
             Assert.Equal(0, GetAsyncCount(inner));
-            using SqlCommand reusable = new SqlCommand("/* reuse after inline enclave retry */", fixture.Connection);
+            using SqlCommand reusable = new SqlCommand("/* reuse after dispatched enclave retry */", fixture.Connection);
             Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
             Assert.Equal(0, GetAsyncCount(inner));
+        }
+
+        /// <summary>
+        /// XML Begin/End observes the retry's outcome when dispatched package generation fails,
+        /// rather than ending the failed first attempt while the retry is still preparing.
+        /// </summary>
+        [Fact]
+        public async Task BeginExecuteXmlReader_PackageFailure_ReturnsRetryOutcome()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            command.SetBatchRPCMode(true, 1);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            fixture.Provider.CacheHit = true;
+            fixture.Provider.OnCacheHit = () =>
+            {
+                command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                command.keysToBeSentToEnclave[0] = new SqlTceCipherInfoEntry();
+                SetField(command, "enclavePackage",
+                    new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
+            };
+
+            // Act
+            IAsyncResult operation = command.BeginExecuteXmlReader();
+            await Task.WhenAny(fixture.Provider.Entered.Task, (Task)operation);
+            Assert.True(fixture.Provider.Entered.Task.IsCompleted);
+            fixture.Provider.CacheHit = false;
+            fixture.Provider.CompleteSessionOperation();
+            await fixture.Provider.PreparationEntered.Task;
+            fixture.Provider.Fail();
+
+            // Assert
+            Assert.Same(fixture.Provider.Error,
+                await Assert.ThrowsAsync<InvalidOperationException>(() => (Task)operation));
+            Assert.Same(fixture.Provider.Error,
+                Assert.Throws<InvalidOperationException>(() => command.EndExecuteXmlReader(operation)));
+            Assert.Equal(2, fixture.Provider.AsyncCalls);
+            Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
         }
 
         /// <summary>
@@ -685,7 +746,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.CompleteSessionOperation();
                 await global.Task;
                 Assert.Equal(1, retries);
-                inner.DecrementAsyncCount();
             }
             else if (outcome == 1)
             {
@@ -781,7 +841,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.Attestation = stage == 1;
                 Task preparation = stage == 2
                     ? command.CreateEnclaveSession(new byte[] { 1 }, isRetry: true, isAsync: true, cancellation.Token).AsTask()
-                    : Invoke(command, "PrepareForTransparentEncryptionAsync", 30, true, true, cancellation.Token);
+                    : PrepareAsync(command, true, cancellation.Token);
                 retryEntered.SetResult(null);
                 await preparation;
                 return null;
@@ -791,6 +851,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>Invokes command-owned session logic without requiring a real attestation service.</summary>
         private static Task Invoke(SqlCommand command, string method, params object[] args) =>
             (Task)typeof(SqlCommand).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(command, args);
+
+        /// <summary>Starts uncached asynchronous encryption preparation, as execution does.
+        /// </summary>
+        private static Task PrepareAsync(
+            SqlCommand command, bool isRetry, CancellationToken token) =>
+            InvokePrepare(command, isRetry, token);
+
+        /// <summary>Invokes uncached asynchronous encryption preparation once.</summary>
+        private static Task InvokePrepare(
+            SqlCommand command, bool isRetry, CancellationToken token) =>
+            (Task)typeof(SqlCommand)
+                .GetMethod(
+                    "PrepareForTransparentEncryption",
+                    BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    null, GetField(command, "_enclaveRetryConnection"), 30, true, isRetry,
+                    nameof(SqlCommand.ExecuteReader), true, token
+                });
 
         /// <summary>Cold preparation serializes awaited parameters and preserves provider custom data.</summary>
         [Fact]
@@ -839,6 +918,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         private sealed class GatedQueryEngine : QueryEngine
         {
             private readonly ManualResetEventSlim _responseGate;
+            internal readonly TaskCompletionSource<bool> RequestEntered =
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             internal GatedQueryEngine(TdsServerArguments arguments, ManualResetEventSlim responseGate)
                 : base(arguments)
@@ -853,6 +934,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             protected override TDSMessageCollection CreateQueryResponse(
                 ITDSServerSession session, TDSSQLBatchToken batchRequest)
             {
+                RequestEntered.TrySetResult(true);
                 _responseGate.Wait();
                 TDSMessage response = new TDSMessage(TDSMessageType.Response);
                 response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
@@ -939,6 +1021,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             internal readonly TaskCompletionSource<bool> RetryLookupEntered =
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            internal TaskCompletionSource<bool> PreparationEntered =
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             private TaskCompletionSource<SqlEnclaveAttestationParameters> _pending =
                 new TaskCompletionSource<SqlEnclaveAttestationParameters>(TaskCreationOptions.RunContinuationsAsynchronously);
             private TaskCompletionSource<bool> _sessionOperation =
@@ -961,8 +1045,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             internal void CompleteParameters(SqlEnclaveAttestationParameters parameters) => _pending.SetResult(parameters);
 
             /// <summary>Creates an independent operation for command reuse checks.</summary>
-            internal void Reset() => _pending =
-                new TaskCompletionSource<SqlEnclaveAttestationParameters>(TaskCreationOptions.RunContinuationsAsynchronously);
+            internal void Reset()
+            {
+                _pending = new TaskCompletionSource<SqlEnclaveAttestationParameters>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+                PreparationEntered = new TaskCompletionSource<bool>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+            }
 
             internal override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)>
                 GetEnclaveSessionAsync(EnclaveSessionParameters parameters, bool generateCustomData, bool isRetry,
@@ -1018,6 +1107,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Token = cancellationToken;
                 using (cancellationToken.Register(() => _pending.TrySetCanceled()))
                 {
+                    PreparationEntered.TrySetResult(true);
                     return await _pending.Task.ConfigureAwait(false);
                 }
             }
