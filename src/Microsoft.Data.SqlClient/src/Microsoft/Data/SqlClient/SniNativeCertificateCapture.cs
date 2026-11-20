@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 #if NET
 using System.Net.Security;
 #endif
-using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Connection;
@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Reads what native SNI recorded for the most recent client TLS handshake on a connection and
-    /// maps it to a <see cref="TlsHandshakeInfo"/>.
+    /// records it into the login attempt's <see cref="EncryptionInfoAccumulator"/>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -54,13 +54,23 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// The instance used by <see cref="Parser.TdsParserStateObjectNative"/>, bound to the loaded
-        /// SNI library.
+        /// SNI library. A missing handle is rejected without calling native code.
         /// </summary>
         internal static SniNativeCertificateCapture Default { get; } = new SniNativeCertificateCapture(
             static (SNIHandle? handle, ref SniCertValidationInfo info) =>
-                SniNativeWrapper.SniGetCertValidationInfo(handle!, ref info),
+                handle is null
+                    ? ERROR_INVALID_PARAMETER
+                    : SniNativeWrapper.SniGetCertValidationInfo(handle, ref info),
             static (SNIHandle? handle, Span<byte> certificate, out uint certificateSize) =>
-                SniNativeWrapper.SniGetServerCertificate(handle!, certificate, out certificateSize));
+            {
+                if (handle is null)
+                {
+                    certificateSize = 0;
+                    return ERROR_INVALID_PARAMETER;
+                }
+
+                return SniNativeWrapper.SniGetServerCertificate(handle, certificate, out certificateSize);
+            });
 
         private readonly CertValidationInfoQuery _validationInfoQuery;
         private readonly ServerCertificateQuery _certificateQuery;
@@ -89,26 +99,44 @@ namespace Microsoft.Data.SqlClient
         internal bool IsCertificateUnavailable => _certificateUnavailable;
 
         /// <summary>
-        /// Reads the handshake record native SNI kept for <paramref name="handle"/>.
+        /// Records what native SNI kept for the most recent TLS handshake on
+        /// <paramref name="handle"/> into <paramref name="accumulator"/>.
         /// </summary>
-        /// <returns>
-        /// The record, or <see langword="null"/> when native SNI reported nothing usable, the export
-        /// is not available, or the query returned an error code.
-        /// </returns>
-        internal TlsHandshakeInfo? ReadTlsHandshakeInfo(SNIHandle? handle)
+        /// <remarks>
+        /// Native SNI is the single source of these values, so a usable report replaces all five of
+        /// them, including with <see langword="null"/>. When native SNI reports nothing usable, the
+        /// export is not available, or the query returns an error code, the accumulator is left
+        /// unchanged.
+        /// </remarks>
+        internal void Record(SNIHandle? handle, EncryptionInfoAccumulator? accumulator)
         {
-            if (!TryQueryValidationInfo(handle, out SniCertValidationInfo info))
+            if (accumulator is null || !TryQueryValidationInfo(handle, out SniCertValidationInfo info))
             {
-                return null;
+                return;
             }
 
-            byte[]? derBytes = null;
-            if ((info.dwAvailable & (uint)SniCertInfoAvailability.Certificate) != 0)
+            if ((info.dwAvailable & (uint)SniCertInfoAvailability.Certificate) == 0
+                || !TryQueryCertificateSize(handle, out int size))
             {
-                derBytes = TryReadCertificate(handle);
+                Apply(info, derBytes: null, accumulator);
+                return;
             }
 
-            return CreateTlsHandshakeInfo(info, derBytes);
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(size);
+            try
+            {
+                uint result = _certificateQuery(handle, buffer.AsSpan(0, size), out uint written);
+                ReadOnlyMemory<byte>? derBytes = result == ERROR_SUCCESS && written == (uint)size
+                    ? new ReadOnlyMemory<byte>(buffer, 0, size)
+                    : null;
+
+                // The accumulator stores its own copy, so the pooled buffer can be returned.
+                Apply(info, derBytes, accumulator);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
 
         /// <summary>
@@ -133,7 +161,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _validationInfoUnavailable = true;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                    "<sc.SniNativeCertificateCapture.ReadTlsHandshakeInfo|ADV> " +
+                    "<sc.SniNativeCertificateCapture.Record|ADV> " +
                     "SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; " +
                     "handshake details are unavailable.");
                 return false;
@@ -143,55 +171,55 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Reads the presented certificate with a size query followed by a copy, caching a missing
-        /// export. An error code leaves the certificate unavailable without affecting the other
-        /// values.
+        /// Queries the size of the presented certificate, caching a missing export.
         /// </summary>
-        private byte[]? TryReadCertificate(SNIHandle? handle)
+        /// <returns>
+        /// <see langword="true"/> if native SNI reported a certificate whose size is within
+        /// <see cref="EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize"/>.
+        /// </returns>
+        private bool TryQueryCertificateSize(SNIHandle? handle, out int size)
         {
+            size = 0;
             if (_certificateUnavailable)
             {
-                return null;
+                return false;
             }
 
             uint result;
-            uint size;
+            uint reported;
             try
             {
-                result = _certificateQuery(handle, Span<byte>.Empty, out size);
+                result = _certificateQuery(handle, Span<byte>.Empty, out reported);
             }
             catch (EntryPointNotFoundException)
             {
                 _certificateUnavailable = true;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                    "<sc.SniNativeCertificateCapture.ReadTlsHandshakeInfo|ADV> " +
+                    "<sc.SniNativeCertificateCapture.Record|ADV> " +
                     "SNIGetServerCertificateWrapper is not exported by the loaded SNI library; " +
                     "the presented certificate is unavailable.");
-                return null;
+                return false;
             }
 
-            if (result != ERROR_INSUFFICIENT_BUFFER || size == 0 || size > TlsHandshakeInfo.MaxDerBytesSize)
+            if (result != ERROR_INSUFFICIENT_BUFFER
+                || reported > EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize
+                || !EncryptionInfoAccumulator.IsReportableServerCertificateSize((int)reported))
             {
-                return null;
+                return false;
             }
 
-            byte[] certificate = new byte[size];
-            result = _certificateQuery(handle, certificate, out uint written);
-            if (result != ERROR_SUCCESS || written != size)
-            {
-                return null;
-            }
-
-            return certificate;
+            size = (int)reported;
+            return true;
         }
 
         private static bool IsValid(SniCertValidationInfo info) =>
             info.cbSize >= SniCertValidationInfo.Size && info.dwVersion >= SniCertValidationInfo.CurrentVersion;
 
         /// <summary>
-        /// Maps a native <see cref="SniCertValidationInfo"/> and the separately read presented
-        /// certificate to a <see cref="TlsHandshakeInfo"/>. Only values whose availability flag is
-        /// set are populated; all others remain <see langword="null"/>.
+        /// Records a native <see cref="SniCertValidationInfo"/> and the separately read presented
+        /// certificate into <paramref name="accumulator"/>. Only values whose availability flag is
+        /// set are reported; all others are set to <see langword="null"/>. A malformed structure
+        /// leaves the accumulator unchanged.
         /// </summary>
         /// <param name="info">The structure returned by native SNI.</param>
         /// <param name="derBytes">
@@ -199,76 +227,45 @@ namespace Microsoft.Data.SqlClient
         /// <see langword="null"/>. Ignored unless <see cref="SniCertInfoAvailability.Certificate"/>
         /// is set.
         /// </param>
-        /// <returns>
-        /// The record, or <see langword="null"/> if the structure is malformed or reports no usable
-        /// value.
-        /// </returns>
-        internal static TlsHandshakeInfo? CreateTlsHandshakeInfo(SniCertValidationInfo info, byte[]? derBytes = null)
+        /// <param name="accumulator">The accumulator of the in-progress login attempt.</param>
+        internal static void Apply(
+            SniCertValidationInfo info,
+            ReadOnlyMemory<byte>? derBytes,
+            EncryptionInfoAccumulator accumulator)
         {
             if (!IsValid(info))
             {
-                return null;
+                return;
             }
 
             SniCertInfoAvailability available = (SniCertInfoAvailability)info.dwAvailable;
 
-            byte[]? certificate = null;
-            if ((available & SniCertInfoAvailability.Certificate) != 0
-                && derBytes is { Length: > 0 and <= TlsHandshakeInfo.MaxDerBytesSize })
-            {
-                certificate = derBytes;
-            }
+            // The accumulator stores a copy only when the encoding is within its cap.
+            accumulator.ServerCertificateDerBytes = (available & SniCertInfoAvailability.Certificate) != 0
+                ? derBytes
+                : null;
 
             // Bit values are defined to be identical to the managed enums; unknown bits are preserved.
-            SqlServerCertificateValidationErrors? validationErrors = null;
-            if ((available & SniCertInfoAvailability.ValidationErrors) != 0)
-            {
-                validationErrors = (SqlServerCertificateValidationErrors)info.dwValidationErrors;
-            }
+            accumulator.ValidationErrors = (available & SniCertInfoAvailability.ValidationErrors) != 0
+                ? (SqlServerCertificateValidationErrors)info.dwValidationErrors
+                : null;
 
             // ChainStatusLeafTimeOnly means only the pinned leaf's validity period was checked and no
             // chain was built. ChainStatus describes a built chain, so it stays unknown, as with
             // Managed SNI for a pinned certificate.
-            X509ChainStatusFlags? chainStatus = null;
-            if ((available & SniCertInfoAvailability.ChainStatus) != 0
-                && (available & SniCertInfoAvailability.ChainStatusLeafTimeOnly) == 0)
-            {
-                chainStatus = (X509ChainStatusFlags)info.dwChainStatus;
-            }
+            accumulator.ChainStatus = (available & SniCertInfoAvailability.ChainStatus) != 0
+                && (available & SniCertInfoAvailability.ChainStatusLeafTimeOnly) == 0
+                ? (X509ChainStatusFlags)info.dwChainStatus
+                : null;
 
             // Native SNI reads the protocol from the Schannel connection info after the server's
             // ServerHello, so this is the version the server selected, not merely the one offered.
-            SslProtocols? protocol = null;
-            if ((available & SniCertInfoAvailability.Protocol) != 0)
-            {
-                SslProtocols mapped = SniNativeWrapper.ToSslProtocols((SniSslProtocols)info.dwProtocol);
-                if (mapped != SslProtocols.None)
-                {
-                    protocol = mapped;
-                }
-            }
+            // An unmapped protocol is stored as null by the accumulator.
+            accumulator.Protocol = (available & SniCertInfoAvailability.Protocol) != 0
+                ? SniNativeWrapper.ToSslProtocols((SniSslProtocols)info.dwProtocol)
+                : null;
 
-#if NET
-            TlsCipherSuite? cipherSuite = MapCipherSuite(info);
-#else
-            int? cipherSuite = MapCipherSuite(info);
-#endif
-
-            if (certificate is null
-                && validationErrors is null
-                && chainStatus is null
-                && protocol is null
-                && cipherSuite is null)
-            {
-                return null;
-            }
-
-            return new TlsHandshakeInfo(
-                chainStatus,
-                cipherSuite,
-                certificate,
-                protocol,
-                validationErrors);
+            accumulator.CipherSuite = MapCipherSuite(info);
         }
 
         /// <summary>

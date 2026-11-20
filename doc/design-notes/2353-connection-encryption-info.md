@@ -405,10 +405,17 @@ stays `null` until native SNI support (Slice D).
 Native SNI (Windows) records the same details through two `sni.dll` exports that return values
 SNI saved during the client TLS handshake: `SNIGetCertValidationInfoWrapper` fills a structure
 with the validation details, and `SNIGetServerCertificateWrapper` copies the presented leaf
-certificate's DER encoding. SqlClient queries them after the handshake completes and again when
-it fails (before the handle closes). Querying performs no validation or network work, never
-changes `SNIGetLastError`, and never throws: any error leaves the fields `null` without changing
-the connection outcome or the thrown exception.
+certificate's DER encoding. Like Managed SNI, the native handle writes the details directly to
+the attempt's `EncryptionInfoAccumulator`, which `TdsParser.EnableSsl` passes to
+`TdsParserStateObject.EnableSsl` and `WaitForSSLHandShakeToComplete`. The handle records them
+after waiting for the handshake to complete, and in `EnableSsl` when adding the SSL provider
+fails (before the handle closes). It keeps no handshake state and builds no intermediate record.
+Native SNI is the single source of these values, so a usable report replaces all five of them
+(certificate, validation errors, chain status, protocol and cipher suite), setting `null` for
+any whose availability flag isn't set. Querying performs no validation or network work, never
+changes `SNIGetLastError`, and an error code, missing export or malformed structure leaves the
+accumulator unchanged without changing the connection outcome or the thrown exception. A null
+handle is rejected before reaching native code.
 
 `SNI_CERT_VALIDATION_INFO` is a 32-byte blittable structure of `DWORD` fields (version 1):
 `cbSize` (0), `dwVersion` (4), `dwAvailable` (8), `dwValidationMode` (12), `dwProtocol` (16),
@@ -419,8 +426,9 @@ ignored, and trailing data from newer versions is ignored.
 
 The certificate is read only when the `CERTIFICATE` flag (0x4) is set. SqlClient first queries
 its size with an empty buffer, which returns `ERROR_INSUFFICIENT_BUFFER` (122) and the size, and
-then copies it into a buffer of that size, which must return `ERROR_SUCCESS` with the same size.
-A size of 0 or above 64 KiB (`ServerCertificateCapture.MaxRawCertificateSize`), any other return
+then copies it into a pooled buffer of that size, which must return `ERROR_SUCCESS` with the same
+size; the accumulator stores its own copy. A size of 0 or above 64 KiB
+(`EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize`), any other return
 code (such as `ERROR_NOT_FOUND`, 1168), or a size that changed between the calls leaves the
 certificate `null`; the other fields are still reported.
 
@@ -429,8 +437,8 @@ certificate `null`; the other fields are still reported.
 | `PresentedServerCertificateRawData` / `GetServerCertificate()` | `SNIGetServerCertificateWrapper` (`CERTIFICATE` 0x4) | DER bytes copied; 1 byte to 64 KiB |
 | `ServerCertificateValidationErrors` | `dwValidationErrors` (`VALIDATION_ERRORS`) | Same bit values; unknown bits preserved |
 | `ServerCertificateChainStatus` | `dwChainStatus` (`CHAIN_STATUS`) | Raw `CERT_TRUST_*` error status equals `X509ChainStatusFlags`; unknown bits preserved. `null` when `CHAIN_STATUS_LEAF_TIME_ONLY` (0x40) is also set: for a pinned certificate SNI checks only the leaf validity period and builds no chain, matching Managed SNI, which reports no chain status in pinned modes |
-| `NegotiatedProtocol` | `dwProtocol` (`PROTOCOL`) | `SP_PROT_*` client bits mapped as for the handshake result; used only when the protocol was not already recorded (for example, after a failed handshake). SNI reads it from the Schannel connection info after the server hello, so it is the version the server selected, not the client's offered set |
-| `NegotiatedCipherSuiteId` (and `NegotiatedCipherSuite` on .NET) | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | Values of 0 or above 0xFFFF are ignored. `TdsParser.EnableSsl` reads it through `GetNegotiatedCipherSuite()` (which queries only the validation info, without copying the certificate) and, when that reported none, adopts it from the certificate capture. Exposed as `int?` `NegotiatedCipherSuiteId` on every target; on .NET, `NegotiatedCipherSuite` returns the same value as `TlsCipherSuite`, keeping identifiers with no named member |
+| `NegotiatedProtocol` | `dwProtocol` (`PROTOCOL`) | `SP_PROT_*` client bits mapped as for the handshake result. When native SNI doesn't report it, `TdsParser.EnableSsl` records the protocol from the completed handshake instead. SNI reads it from the Schannel connection info after the server hello, so it is the version the server selected, not the client's offered set |
+| `NegotiatedCipherSuiteId` (and `NegotiatedCipherSuite` on .NET) | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | 0 is reported as `null`; values above 0xFFFF are ignored by the accumulator. Exposed as `int?` `NegotiatedCipherSuiteId` on every target; on .NET, `NegotiatedCipherSuite` returns the same value as `TlsCipherSuite`, keeping identifiers with no named member |
 
 The cipher suite is captured at the same points as the certificate and protocol: after a
 successful handshake, after a deferred-validation failure, and best effort after an
