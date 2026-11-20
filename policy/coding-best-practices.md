@@ -37,6 +37,40 @@ and the codebase evolves.
 - Do not let undocumented exceptions escape from an API.
 - Be permissive with what you accept, and strict with what you produce.
 - Consider Constrained Execution Regions for .NET Framework implementations.
+- Never use `catch (Exception)` or a bare `catch` that swallows the exception
+  or converts it into a default value.
+- Catch only the specific exception types the called API documents, and only
+  where the code can recover.  Before adding a `try`/`catch`, name what can
+  actually throw; if nothing can, do not add it.
+- Best-effort and diagnostic code must not hide fatal exceptions.
+
+## Type Safety
+
+- Keep strong types end to end.  On .NET, never cast a BCL type such as
+  `SslProtocols` or `TlsCipherSuite` to `int` or another primitive.  When a
+  type is missing on .NET Framework, confine the primitive and its conversion
+  to that `#if NETFRAMEWORK` branch.
+- Declare parameters with the most specific type the caller must supply (for
+  example `SslStream`, not `object`).  The caller performs any runtime type
+  check.
+- Use the narrowest type for the domain, including in test data (for example
+  `ushort` for 16-bit protocol values).
+
+## Design and State
+
+- Give each fact exactly one authoritative source.  Do not store a second copy
+  of a value that another component reports authoritatively, or reconcile
+  copies with precedence rules.
+- Keep data holders (accumulators, snapshots, DTOs) simple: settable
+  properties, a reset, and a snapshot method.  Rules about when to set a value
+  belong where the value becomes known.
+- When a value can be observed more than once, apply one rule (for example,
+  latest wins) to every field.  Do not mix first-wins and latest-wins.
+- Use `null` for "not yet known" rather than an empty object with an
+  `IsEmpty` check.  Do not keep in-progress and completed copies unless both
+  are read.
+- Record a value as soon as it is known, and never erase a value that is still
+  correct because a later step failed.
 
 ## Async, Concurrency & Thread Safety (if applicable)
 
