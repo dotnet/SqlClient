@@ -62,6 +62,24 @@ summary to determine whether environment details are still missing, not labels.
 Tests also reject diagnostic placeholders within required fields,
 duplicate required rows/sections, and unfinished content in additional prose.
 
+## Version bump PR tests
+
+`new-version-bump-pr.Tests.ps1` uses Pester 5. Run it from the repository root:
+
+```bash
+pwsh -c "Invoke-Pester ./.github/scripts/tests/new-version-bump-pr.Tests.ps1"
+```
+
+`new-version-bump-pr.ps1` runs from `version-bump-pr.yml` when a GitHub release is published.
+Tests cover tag parsing, version ordering, next-version and PR milestone selection,
+`Versions.props` updates, and the end-to-end flow against a mocked GitHub API. To preview a live
+run, use `-DryRun`, which writes nothing:
+
+```bash
+GITHUB_TOKEN=$(gh auth token) pwsh ./.github/scripts/new-version-bump-pr.ps1 \
+  -ReleaseTag v7.1.2 -DryRun
+```
+
 ## Shell script tests
 
 This directory contains tests for the shell scripts used by the
