@@ -265,6 +265,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Fact]
         public async Task DescribeCompletion_DelayedRegistration_KeepsConnectionReserved()
         {
+            // Arrange
             using Fixture fixture = new Fixture();
             using SqlCommand command = new SqlCommand("/* empty describe response */", fixture.Connection);
             SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
@@ -288,6 +289,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .GetValue(inner.ReferenceCollection);
             Task completion;
             Exception reservationFailure;
+            // Act
             lock (gate)
             {
                 completion = Invoke(command, "CompleteParameterEncryptionAsync",
@@ -295,8 +297,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 reservationFailure = Record.Exception(() =>
                 {
                     Assert.True(SpinWait.SpinUntil(
-                        () => GetField(command, "_stateObj") is null || completion.IsCompleted,
+                        () => reader.IsInitialized || completion.IsCompleted,
                         TimeSpan.FromSeconds(10)), "The completion worker did not reach reader registration.");
+                    // Assert
                     Assert.False(completion.IsCompleted);
                     Assert.Equal(1, GetAsyncCount(inner));
                     using SqlCommand other = new SqlCommand("SELECT 1", fixture.Connection);

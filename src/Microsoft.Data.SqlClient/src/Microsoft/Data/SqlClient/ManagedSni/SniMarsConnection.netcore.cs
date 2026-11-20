@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         }
                         catch (Exception e)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "SMUX_ACK | MARS Session Id {0}, Exception occurred: {2}", args0: _currentHeader?.sessionId, args1: e?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "SMUX_ACK | MARS Session Id {0}, Exception occurred: {1}", args0: _currentHeader?.sessionId, args1: e?.Message);
                             SniCommon.ReportSNIError(SniProviders.SMUX_PROV, SniCommon.InternalExceptionError, e);
                         }
 #if DEBUG
@@ -373,7 +373,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             }
 
                             HandleReceiveError(packet);
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "MARS Session Id {0}, packet.DataLeft 0, SNI error {2}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "MARS Session Id {0}, packet.DataLeft 0, SNI error {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
                             return;
                         }
                     }
