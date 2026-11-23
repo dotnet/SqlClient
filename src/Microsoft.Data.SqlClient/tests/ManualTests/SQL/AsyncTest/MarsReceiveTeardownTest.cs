@@ -94,6 +94,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnection connection = new(connectionString);
             SqlDataReader? reader = null;
             Task<Exception?>? consumer = null;
+            Exception? terminateError = null;
+            Exception? consumeError = null;
             using SqlCommand stream = new(
                 "SELECT TOP (200000) a.object_id, b.name, REPLICATE('x', 200) AS pad " +
                 "FROM sys.all_objects a CROSS JOIN sys.all_columns b", connection);
@@ -121,16 +123,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using SqlCommand terminate = new(
                     "RAISERROR('SqlClient MARS receive teardown regression', 20, 1) WITH LOG", connection);
-                SqlException error;
+                // The streaming session can observe the server closing the connection before this
+                // command parses its own fatal error. That session then reports the fatal error
+                // and closes the connection, so this command can instead fail because the
+                // connection is closed or complete without reading its error token.
                 if (async)
                 {
-                    error = await Assert.ThrowsAsync<SqlException>(() => terminate.ExecuteNonQueryAsync());
+                    terminateError = await Record.ExceptionAsync(
+                        () => terminate.ExecuteNonQueryAsync());
                 }
                 else
                 {
-                    error = Assert.Throws<SqlException>(() => terminate.ExecuteNonQuery());
+                    terminateError = Record.Exception(() => terminate.ExecuteNonQuery());
                 }
-                Assert.True(error.Class >= 20, "The second session must terminate the physical connection.");
+                AssertExpectedTeardownError(terminateError);
             }
             finally
             {
@@ -138,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Exception? readerError;
                 try
                 {
-                    Exception? consumeError = consumer is null
+                    consumeError = consumer is null
                         ? null
                         : await consumer.WaitAsync(TimeSpan.FromSeconds(65));
                     AssertExpectedTeardownError(consumeError);
@@ -151,7 +157,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AssertExpectedTeardownError(closeError);
                 AssertExpectedTeardownError(readerError);
             }
+
+            // Whichever session wins the race, one of them must report the fatal error.
+            Assert.True(
+                IsFatalError(terminateError) || IsFatalError(consumeError),
+                "A session must report the fatal error that terminated the physical connection. " +
+                $"Terminate error: {terminateError}; streaming error: {consumeError}");
         }
+
+        /// <summary>
+        /// Determines whether an exception reports an error that terminates the connection.
+        /// </summary>
+        /// <param name="exception">The observed application-side exception, if any.</param>
+        /// <returns><see langword="true"/> if the exception has severity 20 or higher.</returns>
+        private static bool IsFatalError(Exception? exception) =>
+            exception is SqlException { Class: >= 20 };
 
         /// <summary>
         /// Allows expected failures of commands on a broken connection, but rejects programming errors.

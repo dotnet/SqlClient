@@ -95,6 +95,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         private int _preLoginCount = 0;
 
+        protected int _login7Count = 0;
+
         private TDSServerEndPoint _endpoint;
 
         /// <summary>
@@ -137,6 +139,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public int PreLoginCount => _preLoginCount;
 
+        /// <summary>
+        /// Counts login requests, including injected login errors.
+        /// </summary>
+        public int Login7Count => Volatile.Read(ref _login7Count);
+
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         /// <summary>
@@ -155,9 +162,13 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 throw new InvalidOperationException("Server is already started");
             }
-            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            _endpoint.EndpointName = methodName;
-            _endpoint.EventLog = Arguments.Log;
+            _endpoint = new TDSServerEndPoint(this)
+            {
+                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
+                EndpointName = methodName,
+                EventLog = Arguments.Log,
+                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
+            };
             _endpoint.Start();
         }
 
@@ -252,6 +263,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
+            Interlocked.Increment(ref _login7Count);
+
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
@@ -1068,8 +1081,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public virtual void Dispose()
         {
-            _endpoint?.Dispose();
-            _endpoint = null;
+            Interlocked.Exchange(ref _endpoint, null)?.Dispose();
         }
     }
 }

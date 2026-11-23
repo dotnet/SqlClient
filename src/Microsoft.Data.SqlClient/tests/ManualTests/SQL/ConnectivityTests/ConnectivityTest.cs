@@ -393,6 +393,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
+        // CI: OpenAsync without retries took 2 seconds; the assertion requires less than 2 seconds.
+        [Trait("category", "flaky")]
         public static async Task ConnectionOpenAsyncDisableRetry()
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
