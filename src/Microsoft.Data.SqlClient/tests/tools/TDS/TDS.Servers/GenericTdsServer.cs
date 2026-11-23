@@ -506,6 +506,15 @@ namespace Microsoft.SqlServer.TDS.Servers
         }
 
         /// <summary>
+        /// It is called when RPC request arrives
+        /// </summary>
+        public virtual TDSMessageCollection OnRPCRequest(ITDSServerSession session, TDSMessage message)
+        {
+            // Delegate to the query engine
+            return Engine.ExecuteRPC(session, message);
+        }
+
+        /// <summary>
         /// It is called when attention arrives
         /// </summary>
         public virtual TDSMessageCollection OnAttention(ITDSServerSession session, TDSMessage message)
