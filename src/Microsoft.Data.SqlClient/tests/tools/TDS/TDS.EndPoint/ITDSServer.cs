@@ -68,6 +68,13 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message);
 
         /// <summary>
+        /// It is called when RPC request arrives
+        /// </summary>
+        /// <param name="message">TDS message received</param>
+        /// <returns>TDS message to respond with</returns>
+        TDSMessageCollection OnRPCRequest(ITDSServerSession session, TDSMessage message);
+
+        /// <summary>
         /// It is called when attention arrives
         /// </summary>
         /// <param name="message">TDS message received</param>
