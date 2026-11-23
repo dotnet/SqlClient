@@ -1319,7 +1319,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(server.PreLoginCount >= 1);
             Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
             if (LocalAppContextSwitches.UseManagedNetworking
-                || !SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+                || !SniNativeWrapper.IsCertValidationInfoExportMissing)
             {
                 Assert.Equal(SslProtocols.Tls12, ex.EncryptionInfo.NegotiatedEncryptionProtocol);
                 Assert.InRange(Assert.NotNull(ex.EncryptionInfo.NegotiatedCipherSuiteId), 1, 0xFFFF);
@@ -1368,7 +1368,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 AssertPresentedCertificate(info);
                 Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             }
-            else if (!SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+            else if (!SniNativeWrapper.IsCertValidationInfoExportMissing)
             {
                 Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
                 AssertNativeCertificate(info);
@@ -1406,7 +1406,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
                 Assert.NotEqual(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
             }
-            else if (!SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+            else if (!SniNativeWrapper.IsCertValidationInfoExportMissing)
             {
                 Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
                 Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
@@ -1433,7 +1433,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private void AssertNativeCertificate(SqlConnectionEncryptionInfo info)
         {
-            if (SniNativeCertificateCapture.Default.IsCertificateUnavailable)
+            if (SniNativeWrapper.IsServerCertificateExportMissing)
             {
                 Assert.Null(info.PresentedServerCertificateRawData);
             }
@@ -1508,7 +1508,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 // the certificate comes from the separate SNIGetServerCertificateWrapper export. A
                 // cipher suite therefore implies a certificate only when that export is present.
                 Assert.InRange(cipherSuite, 1, 0xFFFF);
-                if (!SniNativeCertificateCapture.Default.IsCertificateUnavailable)
+                if (!SniNativeWrapper.IsServerCertificateExportMissing)
                 {
                     Assert.NotNull(info.PresentedServerCertificateRawData);
                 }

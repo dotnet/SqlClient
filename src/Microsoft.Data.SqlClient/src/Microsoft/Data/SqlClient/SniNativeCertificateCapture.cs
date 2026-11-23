@@ -10,7 +10,6 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Connection;
-using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.NativeSni;
 
 #nullable enable
@@ -24,9 +23,10 @@ namespace Microsoft.Data.SqlClient
     /// <remarks>
     /// <para>
     /// The native exports used here (<c>SNIGetCertValidationInfoWrapper</c> and
-    /// <c>SNIGetServerCertificateWrapper</c>) are not present in older SNI libraries. The first call
-    /// that finds an export missing records that fact, and subsequent reads skip it, leaving the
-    /// corresponding values unavailable. Connections are never affected by a missing export.
+    /// <c>SNIGetServerCertificateWrapper</c>) are not present in older SNI libraries.
+    /// <see cref="SniNativeWrapper"/> detects a missing export once per process and then returns
+    /// <see cref="SniNativeWrapper.ErrorProcNotFound"/>, which this class treats like any other
+    /// error code: the corresponding values stay unavailable. Connections are never affected.
     /// </para>
     /// <para>
     /// A value is reported only when native SNI marked it as available; nothing is synthesized from
@@ -35,13 +35,25 @@ namespace Microsoft.Data.SqlClient
     /// </remarks>
     internal sealed class SniNativeCertificateCapture
     {
+        /// <summary>Win32 <c>ERROR_SUCCESS</c>: the query succeeded.</summary>
         internal const uint ERROR_SUCCESS = 0;
+
+        /// <summary>Win32 <c>ERROR_INVALID_PARAMETER</c>: returned for a missing handle.</summary>
         internal const uint ERROR_INVALID_PARAMETER = 87;
+
+        /// <summary>
+        /// Win32 <c>ERROR_INSUFFICIENT_BUFFER</c>: the certificate buffer is too small. The size
+        /// query (an empty buffer) returns this code together with the certificate size.
+        /// </summary>
         internal const uint ERROR_INSUFFICIENT_BUFFER = 122;
+
+        /// <summary>Win32 <c>ERROR_NOT_FOUND</c>: native SNI captured no certificate.</summary>
         internal const uint ERROR_NOT_FOUND = 1168;
 
         /// <summary>Queries <c>SNIGetCertValidationInfoWrapper</c>.</summary>
-        internal delegate uint CertValidationInfoQuery(SNIHandle? handle, ref SniCertValidationInfo info);
+        internal delegate uint CertValidationInfoQuery(
+            SNIHandle? handle,
+            ref SniCertValidationInfo info);
 
         /// <summary>
         /// Queries <c>SNIGetServerCertificateWrapper</c>. An empty <paramref name="certificate"/>
@@ -52,32 +64,28 @@ namespace Microsoft.Data.SqlClient
             Span<byte> certificate,
             out uint certificateSize);
 
-        /// <summary>
-        /// The instance used by <see cref="Parser.TdsParserStateObjectNative"/>, bound to the loaded
-        /// SNI library. A missing handle is rejected without calling native code.
-        /// </summary>
-        internal static SniNativeCertificateCapture Default { get; } = new SniNativeCertificateCapture(
-            static (SNIHandle? handle, ref SniCertValidationInfo info) =>
-                handle is null
-                    ? ERROR_INVALID_PARAMETER
-                    : SniNativeWrapper.SniGetCertValidationInfo(handle, ref info),
-            static (SNIHandle? handle, Span<byte> certificate, out uint certificateSize) =>
-            {
-                if (handle is null)
-                {
-                    certificateSize = 0;
-                    return ERROR_INVALID_PARAMETER;
-                }
-
-                return SniNativeWrapper.SniGetServerCertificate(handle, certificate, out certificateSize);
-            });
-
+        /// <summary>Reads the validation details; native SNI in production.</summary>
         private readonly CertValidationInfoQuery _validationInfoQuery;
+
+        /// <summary>Reads the presented certificate; native SNI in production.</summary>
         private readonly ServerCertificateQuery _certificateQuery;
 
-        private volatile bool _validationInfoUnavailable;
-        private volatile bool _certificateUnavailable;
+        /// <summary>
+        /// Creates an instance bound to the loaded SNI library through
+        /// <see cref="SniNativeWrapper"/>. A missing handle is rejected with
+        /// <see cref="ERROR_INVALID_PARAMETER"/> without calling native code.
+        /// </summary>
+        internal SniNativeCertificateCapture()
+            : this(QueryNativeValidationInfo, QueryNativeCertificate)
+        {
+        }
 
+        /// <summary>
+        /// Creates an instance that reads through the given delegates. Used by tests to substitute
+        /// native SNI.
+        /// </summary>
+        /// <param name="validationInfoQuery">Replaces <c>SNIGetCertValidationInfoWrapper</c>.</param>
+        /// <param name="certificateQuery">Replaces <c>SNIGetServerCertificateWrapper</c>.</param>
         internal SniNativeCertificateCapture(
             CertValidationInfoQuery validationInfoQuery,
             ServerCertificateQuery certificateQuery)
@@ -87,34 +95,34 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Gets a value indicating whether <c>SNIGetCertValidationInfoWrapper</c> was found to be
-        /// missing from the loaded SNI library.
-        /// </summary>
-        internal bool IsValidationInfoUnavailable => _validationInfoUnavailable;
-
-        /// <summary>
-        /// Gets a value indicating whether <c>SNIGetServerCertificateWrapper</c> was found to be
-        /// missing from the loaded SNI library.
-        /// </summary>
-        internal bool IsCertificateUnavailable => _certificateUnavailable;
-
-        /// <summary>
         /// Records what native SNI kept for the most recent TLS handshake on
         /// <paramref name="handle"/> into <paramref name="accumulator"/>.
         /// </summary>
         /// <remarks>
-        /// Native SNI is the single source of these values, so a usable report replaces all five of
-        /// them, including with <see langword="null"/>. When native SNI reports nothing usable, the
-        /// export is not available, or the query returns an error code, the accumulator is left
+        /// Native SNI is the single source of these values, so a successful query replaces all five
+        /// of them, including with <see langword="null"/>. When the validation details cannot be
+        /// read (the export is missing or the query returns an error code), the accumulator is left
         /// unchanged.
         /// </remarks>
         internal void Record(SNIHandle? handle, EncryptionInfoAccumulator? accumulator)
         {
-            if (accumulator is null || !TryQueryValidationInfo(handle, out SniCertValidationInfo info))
+            // Nothing to record into (a code path that does not track encryption info).
+            if (accumulator is null)
             {
                 return;
             }
 
+            // The validation details are the anchor: they say which values native SNI captured.
+            // Without them nothing is known, so keep whatever the accumulator already holds.
+            SniCertValidationInfo info = default;
+            if (_validationInfoQuery(handle, ref info) != ERROR_SUCCESS)
+            {
+                return;
+            }
+
+            // Read the certificate only when native SNI says it captured one, and only when its
+            // size is reportable. This is the single size check; it runs before any buffer is
+            // rented so an oversized certificate is never copied.
             if ((info.dwAvailable & (uint)SniCertInfoAvailability.Certificate) == 0
                 || !TryQueryCertificateSize(handle, out int size))
             {
@@ -125,6 +133,8 @@ namespace Microsoft.Data.SqlClient
             byte[] buffer = ArrayPool<byte>.Shared.Rent(size);
             try
             {
+                // The certificate is used only if it was read in full and its size did not change
+                // between the two calls; otherwise it is reported as unavailable.
                 uint result = _certificateQuery(handle, buffer.AsSpan(0, size), out uint written);
                 ReadOnlyMemory<byte>? derBytes = result == ERROR_SUCCESS && written == (uint)size
                     ? new ReadOnlyMemory<byte>(buffer, 0, size)
@@ -140,110 +150,55 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Queries <c>SNIGetCertValidationInfoWrapper</c>, caching a missing export.
-        /// </summary>
-        /// <returns><see langword="true"/> if the query succeeded and returned a valid structure.</returns>
-        private bool TryQueryValidationInfo(SNIHandle? handle, out SniCertValidationInfo info)
-        {
-            info = default;
-            if (_validationInfoUnavailable)
-            {
-                return false;
-            }
-
-            info = SniCertValidationInfo.Create();
-            uint result;
-            try
-            {
-                result = _validationInfoQuery(handle, ref info);
-            }
-            catch (EntryPointNotFoundException)
-            {
-                _validationInfoUnavailable = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                    "<sc.SniNativeCertificateCapture.Record|ADV> " +
-                    "SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; " +
-                    "handshake details are unavailable.");
-                return false;
-            }
-
-            return result == ERROR_SUCCESS && IsValid(info);
-        }
-
-        /// <summary>
-        /// Queries the size of the presented certificate, caching a missing export.
+        /// Queries the size of the presented certificate.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/> if native SNI reported a certificate whose size is within
-        /// <see cref="EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize"/>.
+        /// <see langword="true"/> if native SNI reported a certificate whose size is accepted by
+        /// <see cref="EncryptionInfoAccumulator.IsReportableServerCertificateSize"/>.
         /// </returns>
         private bool TryQueryCertificateSize(SNIHandle? handle, out int size)
         {
+            // An empty buffer is a size query; native SNI answers with ERROR_INSUFFICIENT_BUFFER and
+            // the size. Any other code (including a missing export) means there is no certificate.
             size = 0;
-            if (_certificateUnavailable)
+            uint result = _certificateQuery(handle, Span<byte>.Empty, out uint reported);
+            if (result != ERROR_INSUFFICIENT_BUFFER)
             {
                 return false;
             }
 
-            uint result;
-            uint reported;
-            try
-            {
-                result = _certificateQuery(handle, Span<byte>.Empty, out reported);
-            }
-            catch (EntryPointNotFoundException)
-            {
-                _certificateUnavailable = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                    "<sc.SniNativeCertificateCapture.Record|ADV> " +
-                    "SNIGetServerCertificateWrapper is not exported by the loaded SNI library; " +
-                    "the presented certificate is unavailable.");
-                return false;
-            }
-
-            if (result != ERROR_INSUFFICIENT_BUFFER
-                || reported > EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize
-                || !EncryptionInfoAccumulator.IsReportableServerCertificateSize((int)reported))
+            // A size above int.MaxValue becomes negative here and is rejected by the size check.
+            int candidate = unchecked((int)reported);
+            if (!EncryptionInfoAccumulator.IsReportableServerCertificateSize(candidate))
             {
                 return false;
             }
 
-            size = (int)reported;
+            size = candidate;
             return true;
         }
-
-        private static bool IsValid(SniCertValidationInfo info) =>
-            info.cbSize >= SniCertValidationInfo.Size && info.dwVersion >= SniCertValidationInfo.CurrentVersion;
 
         /// <summary>
         /// Records a native <see cref="SniCertValidationInfo"/> and the separately read presented
         /// certificate into <paramref name="accumulator"/>. Only values whose availability flag is
-        /// set are reported; all others are set to <see langword="null"/>. A malformed structure
-        /// leaves the accumulator unchanged.
+        /// set are reported; all others are set to <see langword="null"/>.
         /// </summary>
         /// <param name="info">The structure returned by native SNI.</param>
         /// <param name="derBytes">
-        /// The DER encoding read with <c>SNIGetServerCertificateWrapper</c>, or
-        /// <see langword="null"/>. Ignored unless <see cref="SniCertInfoAvailability.Certificate"/>
-        /// is set.
+        /// The DER encoding read by <see cref="Record"/>, which has already checked availability and
+        /// size, or <see langword="null"/> if no certificate is reported.
         /// </param>
         /// <param name="accumulator">The accumulator of the in-progress login attempt.</param>
-        internal static void Apply(
+        private static void Apply(
             SniCertValidationInfo info,
             ReadOnlyMemory<byte>? derBytes,
             EncryptionInfoAccumulator accumulator)
         {
-            if (!IsValid(info))
-            {
-                return;
-            }
-
             SniCertInfoAvailability available = (SniCertInfoAvailability)info.dwAvailable;
 
-            // The accumulator stores a copy only when the encoding is within its cap.
-            accumulator.ServerCertificateDerBytes = (available & SniCertInfoAvailability.Certificate) != 0
-                ? derBytes
-                : null;
+            // Record has already applied the availability and size checks. The accumulator still
+            // enforces its own cap, which is its contract for every transport.
+            accumulator.ServerCertificateDerBytes = derBytes;
 
             // Bit values are defined to be identical to the managed enums; unknown bits are preserved.
             accumulator.ValidationErrors = (available & SniCertInfoAvailability.ValidationErrors) != 0
@@ -269,9 +224,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Maps the cipher suite of a valid structure, or <see langword="null"/> if it is not
-        /// available, is the null cipher suite (TLS_NULL_WITH_NULL_NULL, 0), or is not a valid
-        /// IANA identifier.
+        /// Maps the cipher suite, or <see langword="null"/> if it is not available, is the null
+        /// cipher suite (TLS_NULL_WITH_NULL_NULL, 0), or is not a valid IANA identifier.
         /// </summary>
 #if NET
         private static TlsCipherSuite? MapCipherSuite(SniCertValidationInfo info)
@@ -279,6 +233,7 @@ namespace Microsoft.Data.SqlClient
         private static int? MapCipherSuite(SniCertValidationInfo info)
 #endif
         {
+            // IANA cipher suite identifiers are 16-bit; anything else is not a real suite.
             if ((info.dwAvailable & (uint)SniCertInfoAvailability.CipherSuite) == 0
                 || info.dwCipherSuite == 0
                 || info.dwCipherSuite > ushort.MaxValue)
@@ -291,6 +246,29 @@ namespace Microsoft.Data.SqlClient
 #else
             return (int)info.dwCipherSuite;
 #endif
+        }
+
+        /// <summary>Production validation info query; rejects a missing handle.</summary>
+        private static uint QueryNativeValidationInfo(
+            SNIHandle? handle,
+            ref SniCertValidationInfo info) =>
+            handle is null
+                ? ERROR_INVALID_PARAMETER
+                : SniNativeWrapper.SniGetCertValidationInfo(handle, ref info);
+
+        /// <summary>Production certificate query; rejects a missing handle.</summary>
+        private static uint QueryNativeCertificate(
+            SNIHandle? handle,
+            Span<byte> certificate,
+            out uint certificateSize)
+        {
+            if (handle is null)
+            {
+                certificateSize = 0;
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            return SniNativeWrapper.SniGetServerCertificate(handle, certificate, out certificateSize);
         }
     }
 }

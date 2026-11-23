@@ -5,36 +5,24 @@
 using System;
 using System.Runtime.InteropServices;
 
+#nullable enable
+
 namespace Interop.Windows.Sni
 {
     /// <summary>
     /// Managed mirror of the native <c>SNI_CERT_VALIDATION_INFO</c> structure filled by
-    /// <c>SNIGetCertValidationInfoWrapper</c>. Version 1 is 32 bytes of sequential, blittable
-    /// <c>DWORD</c> fields.
+    /// <c>SNIGetCertValidationInfoWrapper</c>: 24 bytes of sequential, blittable <c>DWORD</c>
+    /// fields. The layout is fixed; a different structure would be exposed through a new export.
     /// </summary>
     /// <remarks>
     /// A field is meaningful only when its corresponding <see cref="SniCertInfoAvailability"/> flag is
     /// set in <see cref="dwAvailable"/>. The presented certificate itself is not part of this
     /// structure; when <see cref="SniCertInfoAvailability.Certificate"/> is set it is read with
-    /// <c>SNIGetServerCertificateWrapper</c>. Earlier preview SNI libraries used a larger structure
-    /// and reject a <see cref="cbSize"/> of 32 with <c>ERROR_INVALID_PARAMETER</c>, so no data is
-    /// read from them.
+    /// <c>SNIGetServerCertificateWrapper</c>.
     /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
     internal struct SniCertValidationInfo
     {
-        /// <summary>Size, in bytes, of the structure requested by this client.</summary>
-        internal const int Size = 32;
-
-        /// <summary>Minimum structure version understood by this client.</summary>
-        internal const uint CurrentVersion = 1;
-
-        /// <summary>In: size of the caller's buffer (at least <see cref="Size"/>). Out: number of bytes written.</summary>
-        public uint cbSize;
-
-        /// <summary>Out: structure version.</summary>
-        public uint dwVersion;
-
         /// <summary>Out: <see cref="SniCertInfoAvailability"/> flags.</summary>
         public uint dwAvailable;
 
@@ -52,11 +40,6 @@ namespace Interop.Windows.Sni
 
         /// <summary>Out: IANA identifier of the negotiated TLS cipher suite.</summary>
         public uint dwCipherSuite;
-
-        /// <summary>
-        /// Creates an instance ready to be passed to native code, with <see cref="cbSize"/> set.
-        /// </summary>
-        internal static SniCertValidationInfo Create() => new SniCertValidationInfo { cbSize = Size };
     }
 
     /// <summary>

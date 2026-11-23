@@ -612,7 +612,9 @@ namespace Microsoft.Data.SqlClient.Parser
         /// that record it only once the handshake completes; <see langword="null"/> to record nothing.
         /// </param>
         /// <returns>The SNI error code.</returns>
-        internal abstract uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion, Connection.EncryptionInfoAccumulator encryptionInfo);
+#nullable enable
+        internal abstract uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion, Connection.EncryptionInfoAccumulator? encryptionInfo);
+#nullable restore
 
         internal abstract uint DisableSsl();
 

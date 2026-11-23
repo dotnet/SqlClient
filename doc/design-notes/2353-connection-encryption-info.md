@@ -413,16 +413,16 @@ fails (before the handle closes). It keeps no handshake state and builds no inte
 Native SNI is the single source of these values, so a usable report replaces all five of them
 (certificate, validation errors, chain status, protocol and cipher suite), setting `null` for
 any whose availability flag isn't set. Querying performs no validation or network work, never
-changes `SNIGetLastError`, and an error code, missing export or malformed structure leaves the
+changes `SNIGetLastError`, and an error code or missing export leaves the
 accumulator unchanged without changing the connection outcome or the thrown exception. A null
-handle is rejected before reaching native code.
+handle is rejected before reaching native code. Each native handle owns one
+`SniNativeCertificateCapture` instance that performs these queries.
 
-`SNI_CERT_VALIDATION_INFO` is a 32-byte blittable structure of `DWORD` fields (version 1):
-`cbSize` (0), `dwVersion` (4), `dwAvailable` (8), `dwValidationMode` (12), `dwProtocol` (16),
-`dwValidationErrors` (20), `dwChainStatus` (24) and `dwCipherSuite` (28). SqlClient passes
-`cbSize = 32`; SNI writes 32 bytes and sets `cbSize = 32` and `dwVersion = 1`. A field is used
-only when its `dwAvailable` flag is set; structures with `cbSize < 32` or `dwVersion < 1` are
-ignored, and trailing data from newer versions is ignored.
+`SNI_CERT_VALIDATION_INFO` is a fixed 24-byte blittable structure of `DWORD` fields:
+`dwAvailable` (0), `dwValidationMode` (4), `dwProtocol` (8), `dwValidationErrors` (12),
+`dwChainStatus` (16) and `dwCipherSuite` (20). It carries no size or version header: the layout
+never changes, and a different structure would be exposed through a new export. A field is used
+only when its `dwAvailable` flag is set.
 
 The certificate is read only when the `CERTIFICATE` flag (0x4) is set. SqlClient first queries
 its size with an empty buffer, which returns `ERROR_INSUFFICIENT_BUFFER` (122) and the size, and
@@ -445,11 +445,11 @@ successful handshake, after a deferred-validation failure, and best effort after
 `InitializeSecurityContext` failure. Native SNI resets all values at every handshake, and an
 observed value is kept on failure like the protocol.
 
-**Older `sni.dll`:** a missing export is detected once (`EntryPointNotFoundException`) and
-cached. Without `SNIGetCertValidationInfoWrapper`, the certificate fields and the cipher suite
-remain `null`, and the certificate isn't read. Without `SNIGetServerCertificateWrapper`, only
-the certificate is `null`. Earlier preview libraries that used a larger structure reject
-`cbSize = 32` with `ERROR_INVALID_PARAMETER`, so they report nothing.
+**Older `sni.dll`:** `SniNativeWrapper` detects a missing export once
+(`EntryPointNotFoundException`), caches that per process, and returns `ERROR_PROC_NOT_FOUND`
+(127) for later calls without calling native code. Without `SNIGetCertValidationInfoWrapper`,
+the certificate fields and the cipher suite remain `null`, and the certificate isn't read.
+Without `SNIGetServerCertificateWrapper`, only the certificate is `null`.
 
 **Deferred validation:** native SNI always defers server certificate validation until after
 Schannel has the presented certificate. There is no opt-in or opt-out switch. Deferral
@@ -461,7 +461,7 @@ certificate is accepted or rejected, or the resulting error codes. Fields are ne
 from HRESULTs or messages; a field whose availability flag isn't set stays `null`.
 
 **SNI dependency:** this behavior requires a `sni.dll` built with the certificate capture
-exports (`SNIGetCertValidationInfoWrapper` with the 32-byte structure and
+exports (`SNIGetCertValidationInfoWrapper` with the 24-byte structure and
 `SNIGetServerCertificateWrapper`), deferred validation (SNI commit `b9d842c`), and the
 host-name verdict fix (SNI commit `55d318d`). These are introduced by an upcoming native SNI
 package (SNI PR 8573). Until it ships, or with any older `sni.dll`, Native SNI reports no

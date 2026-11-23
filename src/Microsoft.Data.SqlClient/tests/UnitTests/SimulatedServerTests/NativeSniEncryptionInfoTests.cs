@@ -101,8 +101,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         private void AssertCertificateDetails(SqlConnectionEncryptionInfo info)
         {
-            SniNativeCertificateCapture capture = SniNativeCertificateCapture.Default;
-            if (capture.IsValidationInfoUnavailable)
+            if (SniNativeWrapper.IsCertValidationInfoExportMissing)
             {
                 // An sni.dll without the validation info export reports no certificate details.
                 Assert.Null(info.ValidationErrors);
@@ -117,7 +116,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True((chainStatus & X509ChainStatusFlags.UntrustedRoot) != 0);
 
             using X509Certificate2? presented = info.GetServerCertificate();
-            if (capture.IsCertificateUnavailable)
+            if (SniNativeWrapper.IsServerCertificateExportMissing)
             {
                 // An sni.dll without the certificate export keeps the other fields.
                 Assert.Null(presented);

@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.NativeSni;
 using Microsoft.Data.SqlClient.Utilities;
 
@@ -372,29 +373,110 @@ namespace Microsoft.Data.SqlClient
             return returnValue;
         }
 
+        #nullable enable
+
+        /// <summary>
+        /// Win32 <c>ERROR_PROC_NOT_FOUND</c>, returned instead of calling an export that the loaded
+        /// SNI library does not provide.
+        /// </summary>
+        internal const uint ErrorProcNotFound = 127;
+
+        // The SNI library is loaded once per process, so a missing export stays missing. Each flag
+        // is set the first time its P/Invoke throws EntryPointNotFoundException; later calls return
+        // ErrorProcNotFound directly instead of throwing and catching on every login.
+        private static volatile bool s_certValidationInfoExportMissing;
+        private static volatile bool s_serverCertificateExportMissing;
+
+        /// <summary>
+        /// Gets a value indicating whether <c>SNIGetCertValidationInfoWrapper</c> was found to be
+        /// missing from the loaded SNI library.
+        /// </summary>
+        internal static bool IsCertValidationInfoExportMissing => s_certValidationInfoExportMissing;
+
+        /// <summary>
+        /// Gets a value indicating whether <c>SNIGetServerCertificateWrapper</c> was found to be
+        /// missing from the loaded SNI library.
+        /// </summary>
+        internal static bool IsServerCertificateExportMissing => s_serverCertificateExportMissing;
+
         /// <summary>
         /// Queries native SNI for the certificate validation details of the most recent client TLS
-        /// handshake on <paramref name="pConn"/>. <paramref name="pInfo"/> must have its
-        /// <see cref="SniCertValidationInfo.cbSize"/> initialized.
+        /// handshake on <paramref name="pConn"/>.
         /// </summary>
-        /// <exception cref="EntryPointNotFoundException">The loaded SNI library does not export the function.</exception>
-        internal static uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo) =>
-            s_nativeMethods.SniGetCertValidationInfo(pConn, ref pInfo);
+        /// <param name="pConn">The SNI connection handle.</param>
+        /// <param name="pInfo">Receives the details. Fields are valid only when their availability flag is set.</param>
+        /// <returns>
+        /// <c>ERROR_SUCCESS</c> (0) if <paramref name="pInfo"/> was filled, a Win32 error code from
+        /// native SNI otherwise, or <see cref="ErrorProcNotFound"/> if the loaded SNI library does
+        /// not export the function.
+        /// </returns>
+        internal static uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo)
+        {
+            if (s_certValidationInfoExportMissing)
+            {
+                return ErrorProcNotFound;
+            }
+
+            try
+            {
+                return s_nativeMethods.SniGetCertValidationInfo(pConn, ref pInfo);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                s_certValidationInfoExportMissing = true;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    "<sc.SniNativeWrapper.SniGetCertValidationInfo|ADV> " +
+                    "SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; " +
+                    "handshake details are unavailable.");
+                return ErrorProcNotFound;
+            }
+        }
 
         /// <summary>
         /// Copies the DER encoding of the server certificate presented during the most recent client
-        /// TLS handshake on <paramref name="pConn"/> into <paramref name="certificate"/>. Pass an empty
-        /// buffer to query the size, which is returned in <paramref name="certificateSize"/>.
+        /// TLS handshake on <paramref name="pConn"/> into <paramref name="certificate"/>.
         /// </summary>
-        /// <exception cref="EntryPointNotFoundException">The loaded SNI library does not export the function.</exception>
+        /// <param name="pConn">The SNI connection handle.</param>
+        /// <param name="certificate">
+        /// The destination buffer. An empty buffer requests only the size.
+        /// </param>
+        /// <param name="certificateSize">Receives the size, in bytes, of the certificate.</param>
+        /// <returns>
+        /// <c>ERROR_SUCCESS</c> (0) if the certificate was copied,
+        /// <c>ERROR_INSUFFICIENT_BUFFER</c> (122) if <paramref name="certificate"/> is too small
+        /// (including the size query), <c>ERROR_NOT_FOUND</c> (1168) if no certificate was captured,
+        /// another Win32 error code from native SNI, or <see cref="ErrorProcNotFound"/> if the loaded
+        /// SNI library does not export the function.
+        /// </returns>
         internal static unsafe uint SniGetServerCertificate(SNIHandle pConn, Span<byte> certificate, out uint certificateSize)
         {
-            // An empty span pins to a null pointer, which native SNI treats as a size query.
-            fixed (byte* pCertificate = certificate)
+            certificateSize = 0;
+            if (s_serverCertificateExportMissing)
             {
-                return s_nativeMethods.SniGetServerCertificate(pConn, pCertificate, (uint)certificate.Length, out certificateSize);
+                return ErrorProcNotFound;
+            }
+
+            try
+            {
+                // An empty span pins to a null pointer, which native SNI treats as a size query.
+                fixed (byte* pCertificate = certificate)
+                {
+                    return s_nativeMethods.SniGetServerCertificate(pConn, pCertificate, (uint)certificate.Length, out certificateSize);
+                }
+            }
+            catch (EntryPointNotFoundException)
+            {
+                s_serverCertificateExportMissing = true;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    "<sc.SniNativeWrapper.SniGetServerCertificate|ADV> " +
+                    "SNIGetServerCertificateWrapper is not exported by the loaded SNI library; " +
+                    "the presented certificate is unavailable.");
+                certificateSize = 0;
+                return ErrorProcNotFound;
             }
         }
+
+        #nullable restore
 
         /// <summary>
         /// Maps native SNI <c>SP_PROT_*</c> protocol bits to <see cref="System.Security.Authentication.SslProtocols"/>.
