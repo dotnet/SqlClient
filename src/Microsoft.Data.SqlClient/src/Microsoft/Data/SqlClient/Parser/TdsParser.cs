@@ -953,7 +953,12 @@ namespace Microsoft.Data.SqlClient.Parser
 #if NETFRAMEWORK
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 #endif
-            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
+            EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+
+            // Managed SNI records the handshake into the accumulator from its certificate
+            // validation callback, before EnableSsl returns, so a failed handshake's login
+            // exception still carries what was observed.
+            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename, accumulator);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -994,7 +999,12 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            RecordNegotiatedProtocol(protocol);
+            // Transports that did not record the protocol during the handshake (native SNI) report
+            // it from the completed handshake instead.
+            if (accumulator?.Protocol is null)
+            {
+                RecordNegotiatedProtocol(protocol);
+            }
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();

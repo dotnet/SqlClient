@@ -552,7 +552,18 @@ namespace Microsoft.Data.SqlClient.Parser
             string hostNameInCertificate,
             string serverCertificateFilename);
 
-        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
+        /// <summary>
+        /// Performs the TLS handshake on the physical connection.
+        /// </summary>
+        /// <param name="info">The SNI SSL options; updated by the transport.</param>
+        /// <param name="tlsFirst"><see langword="true"/> for Strict (TDS 8).</param>
+        /// <param name="serverCertificateFilename">The <c>ServerCertificate</c> option, if any.</param>
+        /// <param name="encryptionInfo">
+        /// Receives what the handshake observed, including when it fails, from transports that can
+        /// observe it; <see langword="null"/> to record nothing.
+        /// </param>
+        /// <returns>The SNI error code.</returns>
+        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename, Connection.EncryptionInfoAccumulator encryptionInfo);
 
         internal abstract uint CheckConnection();
 
