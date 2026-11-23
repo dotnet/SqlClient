@@ -35,14 +35,13 @@
     //   "RunStrategy"    - "Throughput" (default) or "Monitoring". Use "Monitoring" when a
     //                      single operation takes seconds, to skip the harness-overhead
     //                      measurement that "Throughput" performs.
-    // Every runner supports ProcessIsolation ("PerRunner" default, or "PerCase") and
-    // AdditionalRttMilliseconds (default 0; Linux SQL-only loopback shaping when positive).
+    // Every runner supports ProcessIsolation ("PerRunner" default, or "PerCase").
+    // Other runners can opt into Linux SQL-only shaping via AdditionalRttMilliseconds.
     "Benchmarks": {
         "OpenAsyncBurstRunnerConfig": {
             "Enabled": true,
             "ProcessIsolation": "PerCase",
-            // Set 100 for a Linux SQL-loopback latency run; leave 0 on Windows.
-            "AdditionalRttMilliseconds": 0,
+            // This runner always adds 100 ms of SQL RTT on Linux and skips shaping elsewhere.
             // Extended uses the fixed per-state work counts defined by OpenAsyncBurstRunner.
             "SamplingProfile": "Burst",
             "LaunchCount": 1,

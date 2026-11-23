@@ -54,8 +54,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         ///
         public static Config Load()
         {
-            return Loader.FromJsonFile<Config>(
+            Config config = Loader.FromJsonFile<Config>(
                 "runnerconfig.jsonc", "RUNNER_CONFIG");
+
+            if (config.Benchmarks?.OpenAsyncBurstRunnerConfig is { } burst)
+            {
+                burst.AdditionalRttMilliseconds = OperatingSystem.IsLinux() ? 100 : 0;
+            }
+
+            return config;
         }
     }
 

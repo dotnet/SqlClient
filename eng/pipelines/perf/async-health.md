@@ -8,12 +8,15 @@ saturate the ThreadPool, amplified by recorder contention, without identifying b
 
 ## Execution and workload settings
 
-Every `RunnerJob` supports these settings, independently of diagnoser annotations:
+Execution settings are independent of diagnoser annotations:
 
 | Setting | Default | Behavior |
 | --- | --- | --- |
 | `ProcessIsolation` | `PerRunner` | Share one process per runner, or use `PerCase` for each selected method/parameter case. No `Auto` or annotation override. |
-| `AdditionalRttMilliseconds` | `0` | Additional SQL RTT; positive values require verified Linux loopback netem. Unsupported requests fail. |
+| `AdditionalRttMilliseconds` | `0` | Optional SQL RTT for runners other than `OpenAsyncBurst`. |
+
+`OpenAsyncBurst` uses a fixed 100 ms on Linux and 0 elsewhere, ignoring older config values.
+Positive RTT requires verified Linux loopback netem.
 
 Direct CLI and pipeline execution share the dispatcher. It verifies the child's selected-case
 fingerprint and keeps separate manifests/artifacts. BDN uses the in-process toolchain inside
@@ -42,13 +45,13 @@ without nesting another confirmation loop.
 
 Use the standard `runnerconfig.jsonc`, created from
 [`runnerconfig.default.jsonc`](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.default.jsonc)
-when absent. For a Linux latency run, set `OpenAsyncBurstRunnerConfig.SamplingProfile` to
-`Extended`, `AdditionalRttMilliseconds` to `100`, and `TimeoutMinutes` to `10`.
+when absent. For the extended Linux workload, set `OpenAsyncBurstRunnerConfig.SamplingProfile`
+to `Extended` and `TimeoutMinutes` to `10`. The 100 ms delay is automatic.
 Enable `UseConnectionPoolV2` and disable unrelated runner entries for a focused run.
 On a clean pipeline checkout, make those selections in `runnerconfig.default.jsonc`;
 queue-time behavior switches still override the file, so select `useConnectionPoolV2=true`.
-There is no separate profile file or `runnerProfile` selector. The defaults remain unshaped
-and cross-platform. `confirmationRuns=1` requests one matched pass without reducing BDN iterations.
+There is no separate profile file or `runnerProfile` selector.
+`confirmationRuns=1` requests one matched pass without reducing BDN iterations.
 
 Local 16-CPU Linux calibration against current/7.1.2 used one warmup, one timing iteration and
 the diagnostic extra iteration. These fixed counts produced:
@@ -65,7 +68,7 @@ three-repetition runtime was not calibrated. RTT also lengthens prewarming. This
 profile or a guarantee for other hosts; check the recorded sampling evidence. Sustained non-pooled
 work can exhaust TCP source ports: retain that failure rather than changing shared-host TCP settings.
 
-## Optional SQL-only latency
+## SQL-only latency
 
 The dispatcher installs netem before starting the child and removes only its owned rules after
 execution, including failure/cooperative cancellation. A 100ms RTT adds 50ms per direction;
@@ -73,8 +76,9 @@ odd milliseconds use exact half-delays in microseconds. Filters target the resol
 addresses and TCP port. Other clients using that endpoint are affected too: use an exclusive host.
 
 Positive RTT requires Linux loopback routing, Python 3, iproute2 and noninteractive `tc` permission.
-Remote endpoints, named-instance discovery and Windows shaping fail explicitly. Zero RTT needs
-none of those tools or privileges and does not mutate networking.
+Remote endpoints and named-instance discovery fail explicitly when shaping is requested.
+On Windows, the burst benchmark still runs with zero added RTT and needs no shaping tools
+or privileges. Its effective RTT is recorded in the process and diagnostic evidence.
 
 The helper serializes mutation, refuses foreign queues, persists ownership before installation,
 checks applied delay/settings, drains queued packets, and verifies matched traffic and no drops.

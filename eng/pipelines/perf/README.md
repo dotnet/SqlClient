@@ -21,20 +21,20 @@ using the current maximum dispatch p99. Missing current values are unknown.
 Relative deltas and their ordering are unchanged; ordinary performance
 statuses still use `regressionThreshold`. Coverage qualifications and raw provenance remain separate.
 
-All runner configs support explicit `ProcessIsolation` (`PerRunner` by default, or `PerCase`)
-and optional `AdditionalRttMilliseconds` (zero by default). These are independent of diagnoser
-annotations. The shared executable dispatcher handles direct CLI and pipeline runs, retains
-per-process artifacts, and verifies owned Linux SQL-only shaping when RTT is requested.
+All runner configs support explicit `ProcessIsolation` (`PerRunner` by default, or `PerCase`).
+`OpenAsyncBurst` always adds 100 ms of SQL RTT on Linux and skips shaping elsewhere; other runners
+can opt in via `AdditionalRttMilliseconds` (zero by default). These are independent of diagnoser
+annotations. The shared dispatcher verifies owned Linux SQL-only shaping and retains per-process
+artifacts for both direct CLI and pipeline runs.
 Execution conditions also participate in ordinary timing comparisons. See the
 [execution protocol and workload settings](async-health.md#execution-and-workload-settings).
 
 All runner settings live in the standard `runnerconfig.jsonc`, created from
 `runnerconfig.default.jsonc` on a clean checkout. There is no separate preset file or
-`runnerProfile` queue parameter. For a focused Linux 100ms run, configure the burst entry with
-`SamplingProfile=Extended`, `AdditionalRttMilliseconds=100`, and `TimeoutMinutes=10`,
-disable unrelated runner entries, and select `useConnectionPoolV2=true` at queue time.
-The benchmark itself defines the per-state work counts. Defaults remain unshaped; leave RTT
-at zero on Windows. `confirmationRuns=1` runs one matched pass without changing BDN iterations.
+`runnerProfile` queue parameter. For a focused Linux extended run, configure the burst entry with
+`SamplingProfile=Extended` and `TimeoutMinutes=10`, disable unrelated runner entries, and select
+`useConnectionPoolV2=true` at queue time. The benchmark defines the per-state work counts.
+`confirmationRuns=1` runs one matched pass without changing BDN iterations.
 
 ## Contents
 

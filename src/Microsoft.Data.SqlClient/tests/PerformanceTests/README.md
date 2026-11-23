@@ -14,16 +14,17 @@ short, censored or failed windows are not sufficient evidence of health.
 Schema-3 summaries contain the four report metrics and completeness fields; additional latency
 statistics can be derived from retained raw observations. Schema-2 reports remain readable.
 
-All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and
-`AdditionalRttMilliseconds` (default 0). The burst defaults select `PerCase`, one warmup,
-three timing iterations, one invocation per iteration and a five-minute timeout. Positive RTT
-requires supported Linux SQL-loopback netem; unsupported requests fail explicitly.
+All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`). The burst
+defaults select `PerCase`, one warmup, three timing iterations, one invocation per iteration
+and a five-minute timeout. The burst runner always adds 100 ms of SQL RTT on Linux and skips
+shaping on Windows and other platforms. Other runners can opt in via `AdditionalRttMilliseconds`
+(default 0). Positive RTT requires Linux SQL-loopback netem; unsupported requests fail explicitly.
 
 The default `Burst` profile performs one operation per worker. `Extended` keeps that cold
 wave for `Empty`, but uses 16 waves and benchmark-defined work counts for the other states:
 Warm=20, Oversubscribed=5, NonPooled=1 per worker. Work counts drive both execution and BDN
 normalization; first-worker records survive ordinary-record truncation.
-Configure RTT and sampling in the standard `runnerconfig.jsonc` (or its checked-in
+Configure sampling in the standard `runnerconfig.jsonc` (or its checked-in
 `runnerconfig.default.jsonc` template), not a separate profile file.
 See the [100ms settings and sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
 
