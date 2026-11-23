@@ -48,7 +48,6 @@
             "IterationCount": 3,
             "InvocationCount": 1,
             "WarmupCount": 1,
-            "RunStrategy": "Monitoring",
             "TimeoutMinutes": 5
         },
         "SqlConnectionRunnerConfig": {

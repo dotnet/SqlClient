@@ -23,9 +23,9 @@ fingerprint and keeps separate manifests/artifacts. BDN uses the in-process tool
 each child so process-wide pool/SNI/async switches apply. Compare pool versions in separate
 processes; requesting V2 fails if the driver cannot apply it. No experimental driver switch is added.
 
-The burst job defaults to `PerCase`, `Monitoring`, one launch/warmup/invocation, three timing
-iterations and a five-minute case timeout. Repeated launches/warmups/invocations are rejected
-to protect startup observations. Each case sets the worker minimum to 16 and restores it afterward.
+The burst job requires `Monitoring` and one launch/warmup/invocation to protect startup
+observations. Its template uses `PerCase`, three timing iterations and a five-minute case timeout.
+Each case sets the worker minimum to 16 and restores it afterward.
 Warm setup holds all 64 connections (16 for Oversubscribed) before returning them; Empty clears
 only its own pool. Query work keeps network waits and pool contention visible.
 
