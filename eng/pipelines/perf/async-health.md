@@ -123,6 +123,8 @@ and execution-failure records remain separate. Per-case cancellation and the sha
 leave ten minutes of `testTimeoutMinutes` for collection. Partial logs/reports under `results/runs`,
 per-unit timing JSON and process/network manifests survive normal timeouts, though externally
 killed VMs or hung setup can still prevent collection. Ordinary regression gates are unchanged.
+After a timing comparison fails its gate, the runners still generate the async-health report
+from collected evidence before returning failure. A report-generation failure also fails the run.
 
 ### Compact comparison
 

@@ -909,92 +909,96 @@ if (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     Set-Content -Path (Join-Path $ResultsDir "baseline-label.txt") -Value $BaselineLabel -Encoding ascii
 }
 
-if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
-    ####################################################################################################
-    # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
-    # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
-    # regression across N passes before it counts toward the gate.
-    ####################################################################################################
-    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
-        # Switch A/B measures one build against itself with a switch flipped, so building the same
-        # project twice would just burn several minutes producing identical bits.  Build once and
-        # point both variants at it; the orchestrator runs each variant in its own working directory
-        # (rep<N>/<variant>/<unit>), so a shared exe dir cannot cross-contaminate their artifacts.
-        $currentExeDir = Build-Variant "current" $PerfProject @()
-        $baselineExeDir = $currentExeDir
-    } else {
-        $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
-        $currentExeDir = Build-Variant "current" $PerfProject @()
-    }
+try {
+    if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
+        ####################################################################################################
+        # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
+        # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
+        # regression across N passes before it counts toward the gate.
+        ####################################################################################################
+        if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+            # Switch A/B measures one build against itself with a switch flipped, so building the same
+            # project twice would just burn several minutes producing identical bits.  Build once and
+            # point both variants at it; the orchestrator runs each variant in its own working directory
+            # (rep<N>/<variant>/<unit>), so a shared exe dir cannot cross-contaminate their artifacts.
+            $currentExeDir = Build-Variant "current" $PerfProject @()
+            $baselineExeDir = $currentExeDir
+        } else {
+            $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
+            $currentExeDir = Build-Variant "current" $PerfProject @()
+        }
 
-    Prepare-RunnerConfig
-
-    $interleaveArgs = @(
-        "--baseline-exe-dir", $baselineExeDir,
-        "--current-exe-dir", $currentExeDir,
-        "--assembly", "PerformanceTests.dll",
-        "--results-dir", $ResultsDir,
-        "--threshold", $RegressionThreshold,
-        "--reps", $ConfirmationRuns,
-        "--baseline-version", $BaselineLabel,
-        "--client-cpus", "$($env:PERF_CLIENT_CPUS)",
-        "--max-run-seconds", (Get-RemainingPerfSeconds)
-    )
-    # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
-    # switch off vs on), even though both are otherwise the same build/env; every other baseline
-    # flavour keeps sharing the single ambient RUNNER_CONFIG set above.
-    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
-        $interleaveArgs += @("--baseline-runner-config", $BaselineRunnerConfig, "--current-runner-config", $CurrentRunnerConfig)
-    }
-    if ($FailOnRegression) {
-        Write-Host "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> $RegressionThreshold%) will fail the run."
-        $interleaveArgs += "--fail-on-regression"
-    }
-    Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
-    Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
-
-} elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
-    # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
-    if ((-not [string]::IsNullOrEmpty($BaselineSourceRef)) -or (-not [string]::IsNullOrEmpty($SwitchUnderTest))) {
-        Build-CurrentDefaultOutput
         Prepare-RunnerConfig
-    }
-    # -SwitchUnderTest needs a different RUNNER_CONFIG per pass; every other baseline flavour
-    # keeps using the single ambient RUNNER_CONFIG set above (unchanged behaviour).
-    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $BaselineRunnerConfig }
-    Invoke-PerfPass "baseline" $BaselineProject $BaselineBuildArgs
-    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $CurrentRunnerConfig }
-    Invoke-PerfPass "current" $PerfProject @()
 
-    Write-Host "Comparing current branch against baseline $BaselineLabel ..."
-    $comparisonDir = Join-Path $ResultsDir "comparison"
-    New-Item -ItemType Directory -Force -Path $comparisonDir | Out-Null
-    $compareArgs = @(
-        "--baseline-dir", (Join-Path $ResultsDir "baseline"),
-        "--current-dir", (Join-Path $ResultsDir "current"),
-        "--baseline-version", $BaselineLabel,
-        "--threshold", $RegressionThreshold,
-        "--out-md", (Join-Path $comparisonDir "comparison.md"),
-        "--out-json", (Join-Path $comparisonDir "comparison.json")
-    )
-    # §3 gate: only a candidate-slower regression fails, and only when explicitly enabled.
-    if ($FailOnRegression) {
-        Write-Host "Regression gate ENABLED: a candidate-slower regression (> $RegressionThreshold%) will fail the run."
-        $compareArgs += "--fail-on-regression"
-    }
-    Invoke-Native { python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs } "Comparison failed"
-    # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
-    Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
+        $interleaveArgs = @(
+            "--baseline-exe-dir", $baselineExeDir,
+            "--current-exe-dir", $currentExeDir,
+            "--assembly", "PerformanceTests.dll",
+            "--results-dir", $ResultsDir,
+            "--threshold", $RegressionThreshold,
+            "--reps", $ConfirmationRuns,
+            "--baseline-version", $BaselineLabel,
+            "--client-cpus", "$($env:PERF_CLIENT_CPUS)",
+            "--max-run-seconds", (Get-RemainingPerfSeconds)
+        )
+        # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
+        # switch off vs on), even though both are otherwise the same build/env; every other baseline
+        # flavour keeps sharing the single ambient RUNNER_CONFIG set above.
+        if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+            $interleaveArgs += @("--baseline-runner-config", $BaselineRunnerConfig, "--current-runner-config", $CurrentRunnerConfig)
+        }
+        if ($FailOnRegression) {
+            Write-Host "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> $RegressionThreshold%) will fail the run."
+            $interleaveArgs += "--fail-on-regression"
+        }
+        Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
+        Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
 
-} else {
-    # --- No baseline: current-only run (no comparison) --------------------------------------------
-    Write-Host "Neither -BaselineVersion nor -BaselineSourceRef supplied; running current only (no comparison)."
-    Invoke-PerfPass "current" $PerfProject @()
+    } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
+        # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+        if ((-not [string]::IsNullOrEmpty($BaselineSourceRef)) -or (-not [string]::IsNullOrEmpty($SwitchUnderTest))) {
+            Build-CurrentDefaultOutput
+            Prepare-RunnerConfig
+        }
+        # -SwitchUnderTest needs a different RUNNER_CONFIG per pass; every other baseline flavour
+        # keeps using the single ambient RUNNER_CONFIG set above (unchanged behaviour).
+        if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $BaselineRunnerConfig }
+        Invoke-PerfPass "baseline" $BaselineProject $BaselineBuildArgs
+        if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $CurrentRunnerConfig }
+        Invoke-PerfPass "current" $PerfProject @()
+
+        Write-Host "Comparing current branch against baseline $BaselineLabel ..."
+        $comparisonDir = Join-Path $ResultsDir "comparison"
+        New-Item -ItemType Directory -Force -Path $comparisonDir | Out-Null
+        $compareArgs = @(
+            "--baseline-dir", (Join-Path $ResultsDir "baseline"),
+            "--current-dir", (Join-Path $ResultsDir "current"),
+            "--baseline-version", $BaselineLabel,
+            "--threshold", $RegressionThreshold,
+            "--out-md", (Join-Path $comparisonDir "comparison.md"),
+            "--out-json", (Join-Path $comparisonDir "comparison.json")
+        )
+        # §3 gate: only a candidate-slower regression fails, and only when explicitly enabled.
+        if ($FailOnRegression) {
+            Write-Host "Regression gate ENABLED: a candidate-slower regression (> $RegressionThreshold%) will fail the run."
+            $compareArgs += "--fail-on-regression"
+        }
+        Invoke-Native { python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs } "Comparison failed"
+        # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
+        Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
+
+    } else {
+        # --- No baseline: current-only run (no comparison) --------------------------------------------
+        Write-Host "Neither -BaselineVersion nor -BaselineSourceRef supplied; running current only (no comparison)."
+        Invoke-PerfPass "current" $PerfProject @()
+    }
+
+} finally {
+    # A timing gate must not prevent diagnostic reporting or become a successful run.
+    Invoke-Native {
+        python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir
+    } "Benchmark async-health reporting failed"
 }
-
-Invoke-Native {
-    python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir
-} "Benchmark async-health reporting failed"
 
 Write-Host "Collected results:"
 Get-ChildItem -Recurse -File $ResultsDir | ForEach-Object { $_.FullName } | Sort-Object

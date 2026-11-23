@@ -356,47 +356,148 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "metric"):
                 report.build_comparison(self.root)
 
-    def check_shell_report(self, shell):
-        """Execute each real shell's report invocation without a relative threshold argument."""
+    def run_shell_comparison(self, shell, mode, comparison_status):
+        """Run the real orchestration tail with fake benchmarks and the real health reporter."""
         executable = shutil.which(shell)
         if not executable:
             self.skipTest(f"{shell} unavailable")
-        self.write("current", window("current", dispatch=11))
+        wrapper = self.root / "python-command.py"
+        wrapper.write_text("""
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+script, *args = sys.argv[1:]
+name = Path(script).name
+if name == "benchmark_health_report.py":
+    sys.exit(subprocess.call([sys.executable, script, *args]))
+assert name in ("interleave_perf.py", "compare_perf.py"), name
+assert "--fail-on-regression" in args
+root = Path(os.environ["TEST_ROOT"])
+(root / "comparator.txt").write_text(name)
+output = root / "summary.md" if name == "interleave_perf.py" else Path(args[args.index("--out-md") + 1])
+output.parent.mkdir(parents=True, exist_ok=True)
+output.write_text("Timing comparison completed; gate result follows.")
+sys.exit(int(os.environ["TEST_COMPARISON_STATUS"]))
+""", encoding="utf-8")
         env = dict(os.environ, TEST_ROOT=self.root.as_posix(), TEST_SCRIPTS=SCRIPTS.as_posix(),
-                   TEST_PYTHON=Path(sys.executable).as_posix())
+                   TEST_PYTHON=Path(sys.executable).as_posix(), TEST_WRAPPER=wrapper.as_posix(),
+                   TEST_MODE=mode, TEST_COMPARISON_STATUS=str(comparison_status))
         if shell == "bash":
             text = (SCRIPTS / "run-perf-tests.sh").read_text()
-            start = text.index('python3 "${SCRIPT_DIR}/benchmark_health_report.py"')
-            invocation = text[start:text.index('\necho "Collected results:', start)]
-            script = ('SCRIPT_DIR="$TEST_SCRIPTS"\nRESULTS_DIR="$TEST_ROOT"\n'
-                      'python3() { "$TEST_PYTHON" "$@"; }\n') + invocation
-            command = [executable, "-c", script]
+            tail = text[text.index("# Record the resolved baseline label"):]
+            script = """
+set -eu
+SCRIPT_DIR="$TEST_SCRIPTS"
+RESULTS_DIR="$TEST_ROOT"
+REPO_ROOT="$TEST_ROOT"
+PERF_PROJECT=unused
+baselineLabel=7.1.2
+baselineProject=unused
+baselineBuildArgs=()
+baselineSourceRef=""
+switchUnderTest=""
+failOnRegression=true
+regressionThreshold=10
+confirmationRuns=1
+runMode="$TEST_MODE"
+build_variant() { :; }
+prepare_runner_config() { :; }
+run_pass() { :; }
+remaining_perf_seconds() { echo 60; }
+python3() { "$TEST_PYTHON" "$TEST_WRAPPER" "$@"; }
+""" + tail
+            command = [executable]
         else:
             text = (SCRIPTS / "run-perf-tests.ps1").read_text()
-            start = text.index('Invoke-Native {\n    python3 (Join-Path $ScriptDir '
-                               '"benchmark_health_report.py")')
-            invocation = text[start:text.index('\nWrite-Host "Collected results:', start)]
-            script = ("$ErrorActionPreference='Stop'\n$ScriptDir=$env:TEST_SCRIPTS\n"
-                      "$ResultsDir=$env:TEST_ROOT\n"
-                      "function python3 { & $env:TEST_PYTHON @args; "
-                      "if ($LASTEXITCODE) { throw 'report failed' } }\n"
-                      "function Invoke-Native($Command, $Message) { & $Command }\n") + invocation
-            command = [executable, "-NoProfile", "-Command", script]
+            native = text[text.index("function Invoke-Native {"):text.index("# Resolve paths")]
+            tail = text[text.index("# Record the resolved baseline label"):]
+            script = """
+$ErrorActionPreference='Stop'
+Set-StrictMode -Version Latest
+$ScriptDir=$env:TEST_SCRIPTS
+$ResultsDir=$env:TEST_ROOT
+$RepoRoot=$env:TEST_ROOT
+$PerfProject='unused'
+$BaselineLabel='7.1.2'
+$BaselineProject='unused'
+$BaselineBuildArgs=@()
+$BaselineSourceRef=''
+$SwitchUnderTest=''
+$FailOnRegression=$true
+$RegressionThreshold=10
+$ConfirmationRuns=1
+$RunMode=$env:TEST_MODE
+function Build-Variant { return $env:TEST_ROOT }
+function Prepare-RunnerConfig {}
+function Invoke-PerfPass {}
+function Get-RemainingPerfSeconds { return 60 }
+function python3 { & $env:TEST_PYTHON $env:TEST_WRAPPER @args }
+""" + native + tail
+            command = [executable, "-NoProfile", "-File"]
 
-        # Act
-        result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=30)
-        # Assert
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        markdown = (self.root / "benchmark-async-health.md").read_text(encoding="utf-8")
-        self.assertIn("**10ms**", markdown)
-        self.assertIn(report.STATUS_LABELS["unhealthy"], markdown)
-        self.assertNotIn("regression |", markdown)
+        path = self.root / ("runner.sh" if shell == "bash" else "runner.ps1")
+        path.write_text(script, encoding="utf-8", newline="\n")
+        comparator = self.root / "comparator.txt"
+        comparator.unlink(missing_ok=True)
+        result = subprocess.run(command + [path.as_posix()], env=env, capture_output=True,
+                                text=True, timeout=30)
+        self.assertEqual(comparator.read_text(),
+                         "interleave_perf.py" if mode == "interleaved" else "compare_perf.py")
+        return result
 
-    def test_bash_generates_report(self):
-        self.check_shell_report("bash")
+    def check_gated_report(self, shell, comparison_status):
+        """Both comparison modes must write health evidence without changing the timing gate."""
+        self.write("current", window("current", dispatch=11))
+        output = self.root / "benchmark-async-health.md"
+        for mode in ("interleaved", "sequential"):
+            with self.subTest(mode=mode):
+                output.unlink(missing_ok=True)
+                # Act
+                result = self.run_shell_comparison(shell, mode, comparison_status)
+                # Assert
+                self.assertEqual(result.returncode, comparison_status,
+                                 result.stdout + result.stderr)
+                self.assertTrue(output.exists(), result.stdout + result.stderr)
+                markdown = output.read_text(encoding="utf-8")
+                self.assertIn("**10ms**", markdown)
+                self.assertIn(report.STATUS_LABELS["unhealthy"], markdown)
+                if comparison_status:
+                    self.assertNotIn("Performance run complete.", result.stdout)
 
-    def test_powershell_generates_report(self):
-        self.check_shell_report("pwsh")
+    def test_bash_timing_gate_failure_retains_health_report(self):
+        for status in (1, 7):
+            with self.subTest(status=status):
+                self.check_gated_report("bash", status)
+
+    def test_powershell_timing_gate_failure_retains_health_report(self):
+        self.check_gated_report("pwsh", 1)
+
+    def test_windows_powershell_timing_gate_failure_retains_health_report(self):
+        self.check_gated_report("powershell", 1)
+
+    def test_bash_success_generates_health_report(self):
+        self.check_gated_report("bash", 0)
+
+    def test_powershell_success_generates_health_report(self):
+        self.check_gated_report("pwsh", 0)
+
+    def check_reporting_failure(self, shell):
+        """The real reporter must fail the run when diagnostic evidence is missing."""
+        for mode in ("interleaved", "sequential"):
+            for comparison_status in (0, 1):
+                with self.subTest(mode=mode, comparison_status=comparison_status):
+                    result = self.run_shell_comparison(shell, mode, comparison_status)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("No BDN", result.stdout + result.stderr)
+                    self.assertNotIn("Performance run complete.", result.stdout)
+
+    def test_bash_reporting_failure_remains_fatal(self):
+        self.check_reporting_failure("bash")
+
+    def test_powershell_reporting_failure_remains_fatal(self):
+        self.check_reporting_failure("pwsh")
 
 
 if __name__ == "__main__":

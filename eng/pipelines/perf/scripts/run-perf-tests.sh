@@ -867,6 +867,7 @@ if [[ -n "${baselineLabel}" ]]; then
     printf '%s\n' "${baselineLabel}" > "${RESULTS_DIR}/baseline-label.txt"
 fi
 
+comparisonStatus=0
 if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     ################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
@@ -915,7 +916,7 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         interleave_args+=(--fail-on-regression)
     fi
     echo "Running interleaved benchmarks (best-of-${confirmationRuns}) ..."
-    python3 "${SCRIPT_DIR}/interleave_perf.py" "${interleave_args[@]}"
+    python3 "${SCRIPT_DIR}/interleave_perf.py" "${interleave_args[@]}" || comparisonStatus=$?
 
 elif [[ -n "${baselineLabel}" ]]; then
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
@@ -949,7 +950,7 @@ elif [[ -n "${baselineLabel}" ]]; then
         echo "Regression gate ENABLED: a candidate-slower regression (> ${regressionThreshold}%) will fail the run."
         compare_args+=(--fail-on-regression)
     fi
-    python3 "${SCRIPT_DIR}/compare_perf.py" "${compare_args[@]}"
+    python3 "${SCRIPT_DIR}/compare_perf.py" "${compare_args[@]}" || comparisonStatus=$?
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results/*.md).
     cp "${RESULTS_DIR}/comparison/comparison.md" "${RESULTS_DIR}/summary.md"
 
@@ -960,6 +961,11 @@ else
 fi
 
 python3 "${SCRIPT_DIR}/benchmark_health_report.py" --results-dir "${RESULTS_DIR}"
+
+if [[ "${comparisonStatus}" -ne 0 ]]; then
+    echo "ERROR: Performance comparison failed (exit ${comparisonStatus}); async-health report retained." >&2
+    exit "${comparisonStatus}"
+fi
 
 echo "Collected results:"
 find "${RESULTS_DIR}" -type f | sort
