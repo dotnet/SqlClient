@@ -611,6 +611,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Assert
             Assert.True(fixture.Provider.Entered.Task.IsCompleted);
             Assert.False(operation.IsCompleted);
+            Assert.True((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.Throws<InvalidOperationException>(() => command.Connection = null);
+            // Record an API transaction locally; the simulated server has no transaction manager.
+            using (SqlTransaction transaction = new SqlTransaction(
+                inner, fixture.Connection, IsolationLevel.ReadCommitted, null))
+            {
+                inner.Parser.CurrentTransaction = transaction.InternalTransaction;
+                try
+                {
+                    Assert.Throws<InvalidOperationException>(() => command.Transaction = transaction);
+                }
+                finally
+                {
+                    transaction.InternalTransaction.Completed(TransactionState.Committed);
+                }
+            }
+            Assert.Throws<InvalidOperationException>(() => command.ExecuteReader());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => command.ExecuteReaderAsync());
             Assert.Equal(1, fixture.Provider.AsyncCalls);
             Assert.Equal(1, fixture.Provider.SyncCalls);
             Assert.Equal(cancellation.Token, fixture.Provider.Token);
@@ -624,6 +642,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.CompleteSessionOperation();
                 await await Task.WhenAny(fixture.Provider.RetryLookupEntered.Task, operation);
                 Assert.False(operation.IsCompleted);
+                Assert.True((bool)GetField(command, "_enclaveAttestationInProgress"));
+                Assert.Throws<InvalidOperationException>(() => command.Connection = null);
                 Assert.Equal(2, fixture.Provider.AsyncCalls);
                 Assert.Equal(cancellation.Token, fixture.Provider.Token);
             }

@@ -1848,6 +1848,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Prepares encryption and starts execution in either mode. Asynchronous execution owns
         /// the preparation guard until TDS write/setup finishes, including failure or cancellation.
+        /// A retryable first-attempt failure transfers the guard to the retry completion handler.
         /// </summary>
         private async Task<SqlDataReader> RunExecuteReaderWithEncryptionCore(
             CommandBehavior cmdBehavior,
@@ -1867,6 +1868,7 @@ namespace Microsoft.Data.SqlClient
             CancellationToken cancellationToken)
         {
             long preparationStart = ADP.TimerCurrent();
+            bool handoffToRetry = false;
             try
             {
                 // The connection can change independently of the guarded command.
@@ -1902,11 +1904,15 @@ namespace Microsoft.Data.SqlClient
             {
                 CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
+
+                // The first attempt's completion handler owns protection until its retry starts.
+                handoffToRetry = !isRetry && ShouldUseEnclaveBasedWorkflow &&
+                    e is EnclaveDelegate.RetryableEnclaveQueryExecutionException;
                 throw;
             }
             finally
             {
-                if (isAsync)
+                if (isAsync && !handoffToRetry)
                 {
                     _enclaveAttestationInProgress = false;
                 }

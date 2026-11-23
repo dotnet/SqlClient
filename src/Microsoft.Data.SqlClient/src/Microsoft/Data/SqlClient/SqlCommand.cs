@@ -222,7 +222,8 @@ namespace Microsoft.Data.SqlClient
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
         // The encryption coordinator holds this across async dispatch, preparation and TDS
-        // write/setup, before a cached async result can guard the command.
+        // write/setup, before a cached async result can guard the command. The retry completion
+        // handler also holds it while invalidating a failed enclave session.
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;
@@ -2492,7 +2493,19 @@ namespace Microsoft.Data.SqlClient
                         Task<object> retryTask = null;
                         try
                         {
-                            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+                            // Deferred package failures have no pending async result. Keep the
+                            // command guarded until retry setup can acquire its own protection.
+                            _enclaveAttestationInProgress = true;
+                            try
+                            {
+                                await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                // Internal retry validation must run without this guard.
+                                _enclaveAttestationInProgress = false;
+                            }
+
                             _internalEndExecuteInitiated = false;
                             _enclaveRetryConnection = retryConnection;
                             try
