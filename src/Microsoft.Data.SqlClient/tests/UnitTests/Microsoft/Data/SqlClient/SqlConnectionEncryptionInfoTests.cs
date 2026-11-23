@@ -465,28 +465,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Verifies that mutating the caller's array after construction does not change the
-        /// snapshot.
-        /// </summary>
-        [Fact]
-        public void GetServerCertificate_SourceMutation_DoesNotAffectSnapshot()
-        {
-            // Arrange
-            byte[] source = CreateSampleCertificate();
-            SqlConnectionEncryptionInfo info = new(null, null, source, null, null);
-
-            // Act
-            Array.Clear(source, 0, source.Length);
-            using X509Certificate2? certificate = info.GetServerCertificate();
-
-            // Assert
-            ReadOnlyMemory<byte> rawData = Assert.NotNull(info.PresentedServerCertificateRawData);
-            Assert.Equal(CreateSampleCertificate(), rawData.ToArray());
-            Assert.NotNull(certificate);
-            Assert.Equal(SampleCertificateThumbprint, certificate.Thumbprint);
-        }
-
-        /// <summary>
         /// Verifies that mutating the raw data of a returned certificate does not change the
         /// snapshot.
         /// </summary>

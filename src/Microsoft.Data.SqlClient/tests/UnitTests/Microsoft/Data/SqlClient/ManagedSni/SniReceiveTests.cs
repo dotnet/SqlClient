@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Parser;
 using Xunit;
@@ -496,7 +497,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 
             public override void Dispose() => throw new NotSupportedException();
 
-            public override uint EnableSsl(uint options, CancellationToken cancellationToken) => throw new NotSupportedException();
+            public override uint EnableSsl(
+                uint options,
+                EncryptionInfoAccumulator encryptionInfo,
+                CancellationToken cancellationToken) =>
+                throw new NotSupportedException();
 
             public override uint Receive(out SniPacket packet, int timeoutInMilliseconds)
                 => throw new NotSupportedException();

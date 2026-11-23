@@ -8,10 +8,12 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
@@ -72,14 +74,76 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(Guid connectionId, string targetServerName, string hostNameInCertificate, X509Certificate serverCert, string validationCertFileName, SslPolicyErrors policyErrors)
         {
+            ServerCertificateVerdict verdict = default;
+            return ValidateSslServerCertificate(
+                connectionId,
+                targetServerName,
+                hostNameInCertificate,
+                serverCert,
+                validationCertFileName,
+                policyErrors,
+                chain: null,
+                ref verdict);
+        }
+
+        /// <summary>
+        /// Validates the server certificate exactly as
+        /// <see cref="ValidateSslServerCertificate(Guid, string, string, X509Certificate, string, SslPolicyErrors)"/>
+        /// does, and additionally records SqlClient's effective verdict in <paramref name="verdict"/>.
+        /// </summary>
+        /// <remarks>
+        /// Recording never changes the trust decision, never performs additional validation or
+        /// network work, and never alters exception messages or trace text. <paramref name="verdict"/>
+        /// is written immediately before this method returns or throws its validation exception, so
+        /// it is observable by the caller in both cases. If validation is aborted for any other
+        /// reason (for example the <c>ServerCertificate</c> file cannot be loaded), the validation
+        /// errors are left unavailable because no comparison was completed. If the host name check
+        /// throws (for example for the "." named-pipe target), the errors already established before
+        /// it (such as <see cref="SqlServerCertificateValidationErrors.ChainError"/>) and the chain
+        /// status remain recorded; the exception itself is not caught or changed.
+        /// <para>
+        /// <see cref="ServerCertificateVerdict.ChainStatus"/> is the bitwise OR of the status flags
+        /// of the original <paramref name="chain"/> supplied to the TLS validation callback. It is
+        /// only recorded when that chain is consulted (no <c>ServerCertificate</c> pin and a
+        /// certificate was presented); it is <see langword="null"/> in pin mode, when no
+        /// certificate was presented, when no chain was supplied, or when chain errors were
+        /// reported but the chain carries no status flags.
+        /// </para>
+        /// </remarks>
+        internal static bool ValidateSslServerCertificate(
+            Guid connectionId,
+            string targetServerName,
+            string hostNameInCertificate,
+            X509Certificate serverCert,
+            string validationCertFileName,
+            SslPolicyErrors policyErrors,
+            X509Chain chain,
+            ref ServerCertificateVerdict verdict)
+        {
+            verdict = default;
+
             using (SqlClientSNIEventScope.Create(nameof(SniCommon)))
             {
                 bool hasHostNameInCertificate = !string.IsNullOrEmpty(hostNameInCertificate);
+                bool pinConfigured = !string.IsNullOrEmpty(validationCertFileName);
+
+                // The callback chain is only consulted when trust is decided by the platform chain,
+                // i.e. no ServerCertificate pin is configured and a certificate was presented.
+                X509ChainStatusFlags? callbackChainStatus = null;
+                if (!pinConfigured
+                    && serverCert is not null
+                    && !policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable)
+                    && chain is not null)
+                {
+                    callbackChainStatus = GetChainStatus(chain.ChainStatus, policyErrors);
+                }
+
                 if (!hasHostNameInCertificate
-                    && string.IsNullOrEmpty(validationCertFileName)
+                    && !pinConfigured
                     && policyErrors == SslPolicyErrors.None)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, targetServerName {1}, SSL Server certificate has no policy errors and no HostNameInCertificate or ServerCertificate was supplied; skipping certificate comparison.", args0: connectionId, args1: targetServerName);
+                    verdict = new ServerCertificateVerdict(SqlServerCertificateValidationErrors.None, callbackChainStatus);
                     return true;
                 }
 
@@ -93,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     serverNameToValidate = targetServerName;
                 }
 
-                if (!string.IsNullOrEmpty(validationCertFileName))
+                if (pinConfigured)
                 {
                     // There is no trustworthy certificate to compare against when the server
                     // presented none. SslStream reports that as RemoteCertificateNotAvailable, and
@@ -103,6 +167,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     if (serverCert is null || policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate was specified but the server presented no certificate. Certificate validation failed.", args0: connectionId);
+                        verdict = new ServerCertificateVerdict(SqlServerCertificateValidationErrors.ServerCertificateMissing, chainStatus: null);
                         throw ADP.SSLCertificateAuthenticationException(Strings.SQL_ServerCertificateNotAvailable);
                     }
 
@@ -111,38 +176,43 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     if (serverCert.GetRawCertData().AsSpan().SequenceEqual(validationCertificate.GetRawCertData().AsSpan()))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server. Certificate validation passed.", args0: connectionId);
+                        verdict = new ServerCertificateVerdict(SqlServerCertificateValidationErrors.None, chainStatus: null);
                         return true;
                     }
                     else
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate doesn't match the certificate provided by the server. Certificate validation failed.", args0: connectionId);
+                        verdict = new ServerCertificateVerdict(SqlServerCertificateValidationErrors.PinnedCertificateMismatch, chainStatus: null);
                         throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateDoesNotMatchServerCertificate);
                     }
                 }
 
+                SqlServerCertificateValidationErrors validationErrors = SqlServerCertificateValidationErrors.None;
                 StringBuilder messageBuilder = new();
                 if (serverCert is null ||
                     policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, targetServerName {1}, SSL Server certificate not validated as PolicyErrors set to RemoteCertificateNotAvailable.", args0: connectionId, args1: targetServerName);
                     messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNotAvailable);
+                    validationErrors |= SqlServerCertificateValidationErrors.ServerCertificateMissing;
                 }
 
                 if (serverCert is not null &&
                     policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
                 {
+                    validationErrors |= SqlServerCertificateValidationErrors.ChainError;
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, targetServerName {0}, SslPolicyError {1}, SSL Policy certificate chain has errors.", args0: connectionId, args1: targetServerName, args2: policyErrors);
 
                     // get the chain status from the certificate
                     X509Certificate2 cert2 = serverCert as X509Certificate2;
-                    X509Chain chain = new();
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
+                    X509Chain rebuiltChain = new();
+                    rebuiltChain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
                     StringBuilder chainStatusInformation = new();
-                    bool chainIsValid = chain.Build(cert2);
+                    bool chainIsValid = rebuiltChain.Build(cert2);
                     Debug.Assert(!chainIsValid, "RemoteCertificateChainError flag is detected, but certificate chain is valid.");
                     if (!chainIsValid)
                     {
-                        foreach (X509ChainStatus chainStatus in chain.ChainStatus)
+                        foreach (X509ChainStatus chainStatus in rebuiltChain.ChainStatus)
                         {
                             chainStatusInformation.Append($"{chainStatus.StatusInformation}, [Status: {chainStatus.Status}]");
                             chainStatusInformation.AppendLine();
@@ -157,13 +227,25 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     (hasHostNameInCertificate ||
                      policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch)))
                 {
+                    // The host name check can throw before the final verdict is recorded (for
+                    // example MatchesHostname rejects the "." target used by named pipes). Record
+                    // the errors already established so they survive that exception. A provisional
+                    // None is not recorded because it would report a validation that never passed.
+                    if (validationErrors != SqlServerCertificateValidationErrors.None)
+                    {
+                        verdict = new ServerCertificateVerdict(validationErrors, callbackChainStatus);
+                    }
+
                     X509Certificate2 cert2 = serverCert as X509Certificate2;
                     if (!cert2.MatchesHostname(serverNameToValidate))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name or HNIC does not match the Subject/SAN in Certificate.", args0: connectionId, args1: serverNameToValidate);
                         messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
+                        validationErrors |= SqlServerCertificateValidationErrors.HostNameMismatch;
                     }
                 }
+
+                verdict = new ServerCertificateVerdict(validationErrors, callbackChainStatus);
 
                 if (messageBuilder.Length > 0)
                 {
@@ -174,6 +256,80 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return true;
             }
         }
+
+#nullable enable
+        /// <summary>
+        /// Combines the status flags of the chain supplied to the TLS validation callback without
+        /// building or re-evaluating the chain.
+        /// </summary>
+        /// <param name="statuses">The status entries of the original callback chain.</param>
+        /// <param name="policyErrors">The policy errors supplied to the callback.</param>
+        /// <returns>
+        /// The bitwise OR of the status flags, <see cref="X509ChainStatusFlags.NoError"/> for a
+        /// clean chain, or <see langword="null"/> when chain errors were reported but the chain
+        /// carries no status flags that describe them.
+        /// </returns>
+        internal static X509ChainStatusFlags? GetChainStatus(
+            X509ChainStatus[] statuses,
+            SslPolicyErrors policyErrors)
+        {
+            X509ChainStatusFlags flags = X509ChainStatusFlags.NoError;
+            foreach (X509ChainStatus status in statuses)
+            {
+                flags |= status.Status;
+            }
+
+            if (flags == X509ChainStatusFlags.NoError
+                && policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
+            {
+                // A chain error was reported but the chain does not describe it; report the chain
+                // status as unavailable rather than as a clean chain.
+                return null;
+            }
+
+            return flags;
+        }
+
+        /// <summary>
+        /// Records what one TLS handshake observed from within the certificate validation
+        /// callback. SslStream agrees the protocol and cipher suite before it raises the callback,
+        /// so both are recorded even when the certificate is then rejected.
+        /// </summary>
+        /// <param name="encryptionInfo">The connection attempt's accumulator.</param>
+        /// <param name="sslStream">The stream raising the validation callback.</param>
+        /// <param name="serverCert">The certificate presented by the server, if any.</param>
+        /// <param name="verdict">The verdict recorded by validation; default when not evaluated.</param>
+        internal static void RecordTlsHandshake(
+            EncryptionInfoAccumulator encryptionInfo,
+            SslStream sslStream,
+            X509Certificate? serverCert,
+            in ServerCertificateVerdict verdict)
+        {
+            // Recorded as observed; the accumulator decides which values are reportable.
+            encryptionInfo.ServerCertificateDerBytes = null;
+            if (serverCert is not null)
+            {
+                try
+                {
+                    // RawDataMemory is read in place; the accumulator copies it only when it is
+                    // reportable, so an oversized certificate is never copied.
+                    encryptionInfo.ServerCertificateDerBytes = serverCert is X509Certificate2 cert2
+                        ? cert2.RawDataMemory
+                        : serverCert.GetRawCertData();
+                }
+                catch (CryptographicException)
+                {
+                    // Capture must never affect the handshake outcome; leave the certificate
+                    // unavailable.
+                }
+            }
+
+            encryptionInfo.ChainStatus = verdict.ChainStatus;
+            encryptionInfo.CipherSuite = sslStream.NegotiatedCipherSuite;
+            encryptionInfo.Protocol = sslStream.SslProtocol;
+            encryptionInfo.ValidationErrors = verdict.ValidationErrors;
+        }
+#nullable restore
 
         /// <summary>
         /// Loads the certificate specified by the <c>ServerCertificate</c> option, failing closed
@@ -265,6 +421,23 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             SniLoadHandle.LastError = error;
             return TdsEnums.SNI_ERROR;
         }
+    }
+
+    /// <summary>
+    /// SqlClient's effective server certificate validation verdict for one TLS validation callback.
+    /// Default values (all <see langword="null"/>) mean the certificate was not evaluated.
+    /// </summary>
+    internal readonly struct ServerCertificateVerdict
+    {
+        internal ServerCertificateVerdict(SqlServerCertificateValidationErrors? validationErrors, X509ChainStatusFlags? chainStatus)
+        {
+            ValidationErrors = validationErrors;
+            ChainStatus = chainStatus;
+        }
+
+        internal SqlServerCertificateValidationErrors? ValidationErrors { get; }
+
+        internal X509ChainStatusFlags? ChainStatus { get; }
     }
 }
 
