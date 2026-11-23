@@ -7,8 +7,9 @@
 Open/close-only bursts are excluded because tight synchronous checkout loops can themselves
 saturate the ThreadPool. Unrelated connection/churn benchmarks are unchanged.
 
-`EnableAsyncHealth` defaults to true. The diagnoser observes Startup/warmup and ExtraIteration,
-not normal timing iterations. Startup includes fixture setup; ExtraIteration excludes it.
+The `[AsyncHealthDiagnoser]` suite attribute attaches the diagnoser. It observes startup/warmup
+and the extra diagnostic iteration, not normal timing. Startup includes fixture setup; the extra
+iteration excludes it.
 Raw queue/open/outcome/probe/resource evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
 short, censored or failed windows are not sufficient evidence of health.
 Schema-3 summaries contain the four report metrics and completeness fields; additional latency
@@ -34,7 +35,7 @@ above 10ms; missing values are unknown. This does not replace sampling qualifica
 ordinary performance regression policy.
 
 Use separate process configurations to compare pool versions; the switch is cached.
-For local native/interactive profiling, set `EnableAsyncHealth=false`.
+For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]`.
 The [pipeline protocol](../../../../eng/pipelines/perf/async-health.md) documents lifecycle
 boundaries, BDN preview/JIT preparation, network ownership/cleanup, reporting and limitations.
 

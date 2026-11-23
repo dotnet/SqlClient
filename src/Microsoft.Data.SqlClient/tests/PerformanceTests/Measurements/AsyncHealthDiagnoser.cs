@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Analysers;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.EventProcessors;
@@ -25,26 +26,32 @@ using BenchmarkDotNet.Validators;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Opts a benchmark into startup/warmup and extra-iteration async-health observation.</summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true)]
-public sealed class AsyncHealthDiagnoserAttribute : Attribute;
+/// <summary>Attaches async-health observation to a benchmark suite.</summary>
+[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+public sealed class AsyncHealthDiagnoserAttribute : Attribute, IConfigSource
+{
+    public AsyncHealthDiagnoserAttribute()
+    {
+        var diagnoser = new AsyncHealthDiagnoser();
+        Config = ManualConfig.CreateEmpty().AddDiagnoser(diagnoser).AddEventProcessor(diagnoser);
+    }
+
+    public IConfig Config { get; }
+}
 
 /// <summary>
 /// Observes BDN startup/warmup and its extra iteration separately, not timing iterations.
 /// Startup includes fixture initialization; extra-iteration observation excludes fixture work.
 /// </summary>
-public sealed class AsyncHealthDiagnoser(
-    bool poolV2, bool managedSni, bool optimizedAsync,
-    string? outputDirectory = null, RunnerJob? job = null) : EventProcessor, IInProcessDiagnoser
+public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
 {
     private static readonly ConcurrentDictionary<string, AsyncHealthDiagnoser> s_active = new();
     private static AsyncHealthOperationRecorder? s_operations;
     private static int s_benchmarksStarted;
     private readonly string _handlerId = Guid.NewGuid().ToString("N");
     private readonly List<AsyncHealthSummary> _summaries = [];
-    private readonly string _outputDirectory =
-        outputDirectory ?? Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
-    private readonly RunnerJob _job = job ?? new RunnerJob();
+    private string _outputDirectory = Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
+    private (Config Suite, RunnerJob Job)? _settings;
     private BenchmarkCase? _case;
     private ThreadPoolHealthObserver? _observer;
     private AsyncHealthOperationRecorder? _operations;
@@ -62,13 +69,19 @@ public sealed class AsyncHealthDiagnoser(
     public IEnumerable<IExporter> Exporters => [];
     public IEnumerable<IAnalyser> Analysers => [];
 
-    internal static bool IsMarked(BenchmarkCase benchmark) =>
-        Attribute.IsDefined(benchmark.Descriptor.WorkloadMethod,
-            typeof(AsyncHealthDiagnoserAttribute), true) ||
-        Attribute.IsDefined(benchmark.Descriptor.Type, typeof(AsyncHealthDiagnoserAttribute), true);
+    internal void Configure(Config suite, RunnerJob job, string? outputDirectory = null)
+    {
+        if (suite.UseNativeMemoryAndETWProfiler || suite.WaitForProfiler)
+        {
+            throw new InvalidOperationException(
+                "Choose a suite without async health when using interactive or native profilers.");
+        }
 
-    public RunMode GetRunMode(BenchmarkCase benchmarkCase) =>
-        IsMarked(benchmarkCase) ? RunMode.ExtraIteration : RunMode.None;
+        _settings = (suite, job);
+        _outputDirectory = outputDirectory ?? _outputDirectory;
+    }
+
+    public RunMode GetRunMode(BenchmarkCase benchmarkCase) => RunMode.ExtraIteration;
 
     public override void OnStartRunBenchmark(BenchmarkCase benchmarkCase)
     {
@@ -77,22 +90,20 @@ public sealed class AsyncHealthDiagnoser(
         {
             throw new InvalidOperationException("Previous async-health benchmark failed.");
         }
-        if (!IsMarked(benchmarkCase))
-        {
-            return;
-        }
         if (_case != null)
         {
             throw new InvalidOperationException("Async-health benchmark already active.");
         }
 
+        Config suite = (_settings ??
+            throw new InvalidOperationException("Missing async-health run configuration.")).Suite;
         _case = benchmarkCase;
         _caseId = Guid.NewGuid().ToString("N");
         _windowCompleted = false;
         _startupCompleted = false;
         _operations = null;
         _phase = null;
-        if (poolV2 && !Equals(typeof(SqlConnection).Assembly
+        if (suite.UseConnectionPoolV2 && !Equals(typeof(SqlConnection).Assembly
             .GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches")
             ?.GetProperty("UseConnectionPoolV2",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -160,7 +171,7 @@ public sealed class AsyncHealthDiagnoser(
     }
 
     public InProcessDiagnoserHandlerData GetHandlerData(BenchmarkCase benchmarkCase) =>
-        IsMarked(benchmarkCase) ? new(typeof(Handler), _handlerId) : default;
+        new(typeof(Handler), _handlerId);
 
     public void DeserializeResults(BenchmarkCase benchmarkCase, string serializedResults) { }
     public IEnumerable<Metric> ProcessResults(DiagnoserResults results) => [];
@@ -182,7 +193,7 @@ public sealed class AsyncHealthDiagnoser(
         ValidationParameters validationParameters)
     {
         await Task.CompletedTask;
-        foreach (BenchmarkCase benchmark in validationParameters.Benchmarks.Where(IsMarked))
+        foreach (BenchmarkCase benchmark in validationParameters.Benchmarks)
         {
             if (benchmark.Job.Infrastructure.Toolchain is not InProcessEmitToolchain ||
                 benchmark.Job.Run.LaunchCount != 1 || benchmark.Job.Run.InvocationCount <= 0)
@@ -247,6 +258,8 @@ public sealed class AsyncHealthDiagnoser(
     {
         BenchmarkCase benchmark = _case ??
             throw new InvalidOperationException("Missing async-health benchmark context.");
+        var (suite, job) = _settings ??
+            throw new InvalidOperationException("Missing async-health run configuration.");
         AsyncHealthSummary? summary = measurement == null ? null :
             AsyncHealthSummary.Create(measurement, operations);
         if (summary != null)
@@ -255,7 +268,7 @@ public sealed class AsyncHealthDiagnoser(
         }
         ThreadPool.GetMinThreads(out int minimumWorkers, out _);
         ThreadPool.GetMaxThreads(out int maximumWorkers, out _);
-        BurstWorkload? workload = _job is OpenAsyncBurstRunnerJob burst ?
+        BurstWorkload? workload = job is OpenAsyncBurstRunnerJob burst ?
             OpenAsyncBurstRunner.GetWorkload(burst,
                 benchmark.Parameters.Items.Single(p => p.Name == "State").Value?.ToString() ??
                     throw new InvalidOperationException("Missing burst pool state.")) : null;
@@ -271,8 +284,10 @@ public sealed class AsyncHealthDiagnoser(
             CompletedInvocations = operations?.CompletedInvocations,
             Configuration = new
             {
-                UseConnectionPoolV2 = poolV2, UseManagedSni = managedSni,
-                UseOptimizedAsync = optimizedAsync, Runtime = Environment.Version.ToString(),
+                suite.UseConnectionPoolV2,
+                UseManagedSni = !OperatingSystem.IsWindows() || suite.UseManagedSniOnWindows,
+                UseOptimizedAsync = suite.UseOptimizedAsyncBehaviour,
+                Runtime = Environment.Version.ToString(),
                 OS = Environment.OSVersion.Platform.ToString(), Environment.ProcessorCount,
                 MinimumWorkerThreads = minimumWorkers, MaximumWorkerThreads = maximumWorkers,
                 Environment.ProcessId, DriverVersion = typeof(SqlConnection).Assembly.FullName,
@@ -280,11 +295,11 @@ public sealed class AsyncHealthDiagnoser(
                     File.ReadAllBytes(typeof(SqlConnection).Assembly.Location))),
                 DiagnosticRunMode = "StartupAndExtraIteration",
                 FirstBenchmarkInProcess = _firstBenchmarkInProcess,
-                RequestedProcessIsolation = _job.ProcessIsolation,
-                EffectiveProcessIsolation = _job.ProcessIsolation,
-                RequestedAdditionalRttMilliseconds = _job.AdditionalRttMilliseconds,
-                AppliedAdditionalRttMilliseconds = BenchmarkNetworkScope.ReadAppliedRtt(_job),
-                SamplingProfile = (_job as OpenAsyncBurstRunnerJob)?.SamplingProfile ?? "Default",
+                RequestedProcessIsolation = job.ProcessIsolation,
+                EffectiveProcessIsolation = job.ProcessIsolation,
+                RequestedAdditionalRttMilliseconds = job.AdditionalRttMilliseconds,
+                AppliedAdditionalRttMilliseconds = BenchmarkNetworkScope.ReadAppliedRtt(job),
+                SamplingProfile = (job as OpenAsyncBurstRunnerJob)?.SamplingProfile ?? "Default",
                 ConcurrentWorkers = workload == null ? (int?)null :
                     OpenAsyncBurstRunner.ConcurrentWorkers,
                 WorkloadWaves = workload?.Waves,

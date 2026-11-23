@@ -11,6 +11,7 @@ using Microsoft.Data.SqlClient.PerformanceTests;
 namespace Microsoft.Data.SqlClient.UnitTests.Utilities;
 
 /// <summary>SQL-free workloads verify the actual emitted BDN diagnoser and fixture boundaries.</summary>
+[AsyncHealthDiagnoser]
 public class AsyncHealthBenchmarkFixture
 {
     internal static AsyncHealthDiagnoser? Observer;
@@ -41,7 +42,6 @@ public class AsyncHealthBenchmarkFixture
 
     /// <summary>Completes real asynchronous work without using any SQL environment.</summary>
     [Benchmark]
-    [AsyncHealthDiagnoser]
     public async Task AsyncWait()
     {
         var invocation = AsyncHealthDiagnoser.BeginInvocation(1);
@@ -59,7 +59,6 @@ public class AsyncHealthBenchmarkFixture
 
     /// <summary>Fails inside the diagnostic window, after successful timing iterations.</summary>
     [Benchmark]
-    [AsyncHealthDiagnoser]
     public async Task DiagnosticFailure()
     {
         var invocation = AsyncHealthDiagnoser.BeginInvocation(1);
@@ -82,14 +81,18 @@ public class AsyncHealthBenchmarkFixture
             throw;
         }
     }
+}
 
-    /// <summary>An unmarked control must never activate the async-health observer.</summary>
+/// <summary>Provides a SQL-free control suite with no async-health attribute.</summary>
+public class UnobservedBenchmarkFixture
+{
+    /// <summary>Fails if an unannotated suite runs with an active operation recorder.</summary>
     [Benchmark]
-    public void Unmarked()
+    public void Ordinary()
     {
-        if (Observer!.IsObserving)
+        if (AsyncHealthDiagnoser.BeginInvocation(1) != null)
         {
-            throw new InvalidOperationException("Unmarked benchmark observed.");
+            throw new InvalidOperationException("Unannotated benchmark observed.");
         }
         Thread.Sleep(20);
     }

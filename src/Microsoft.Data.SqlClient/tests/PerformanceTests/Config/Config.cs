@@ -29,9 +29,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </summary>
         public bool UseConnectionPoolV2;
 
-        /// <summary>Observe BDN startup/warmup and extra iterations, outside normal timing samples.</summary>
-        public bool EnableAsyncHealth = true;
-
         public bool WaitForProfiler;
         public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;

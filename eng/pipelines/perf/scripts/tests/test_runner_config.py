@@ -33,7 +33,7 @@ class RunnerConfigTests(unittest.TestCase):
             (root / "results").mkdir()
             source = root / "runnerconfig.jsonc"
             # Include a local tuning value to prove we use the live config, not the default.
-            config = {"ConnectionString": "local", "Iterations": 17, "EnableAsyncHealth": False,
+            config = {"ConnectionString": "local", "Iterations": 17,
                       "Benchmarks": {"ExistingRunnerConfig": {"Enabled": True}},
                       **dict.fromkeys(SWITCHES, False)}
             burst_job = {"Enabled": True, "InvocationCount": 1, "IterationCount": 3,
@@ -139,7 +139,7 @@ prepare_runner_config || exit 6
             for variant in variants:
                 runtime = json.loads((root / f"perf-runnerconfig{variant}.json").read_text(encoding="utf-8-sig"))
                 redacted = json.loads((root / "results" / f"runnerconfig{variant}.json").read_text(encoding="utf-8-sig"))
-                expected = {**config, "UseManagedSniOnWindows": True, "EnableAsyncHealth": True,
+                expected = {**config, "UseManagedSniOnWindows": True,
                             "Benchmarks": {**config["Benchmarks"],
                                            "OpenAsyncBurstRunnerConfig": burst_job}}
                 if variant:

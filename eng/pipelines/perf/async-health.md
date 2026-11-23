@@ -119,12 +119,13 @@ The reader still accepts schema 2; missing raw resource metadata is reported as 
 
 ## Pipeline integration and artifacts
 
-Both entrypoints enable health and the burst unit, preserving existing tuning in private configs.
+Both entrypoints enable the burst unit, preserving existing tuning in private configs.
+The `[AsyncHealthDiagnoser]` attribute attaches health observation to that suite.
 The candidate-owned harness builds against both source/package drivers (`MdsSourceRoot` or
 `MdsPackageVersion`); old baselines need not already contain these benchmarks.
 The test-only BDN preview supplies lifecycle hooks. `JitTieringMode.Skip` avoids about 90 extra
 automatic preparation calls without disabling runtime tiering or reducing configured work.
-Use `EnableAsyncHealth=false` for local native/interactive profiling.
+For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]`.
 
 Failed benchmarks, missing windows, observer faults and incomplete work fail explicitly. Window
 and execution-failure records remain separate. Per-case cancellation and the shared run budget

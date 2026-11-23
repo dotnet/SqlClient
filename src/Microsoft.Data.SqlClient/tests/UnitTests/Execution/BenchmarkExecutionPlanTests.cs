@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Execution;
 /// <summary>Verifies explicit process boundaries and exact child selection against real BDN cases.</summary>
 public class BenchmarkExecutionPlanTests
 {
-    /// <summary>The default groups all selected cases, even when some have a diagnoser marker.</summary>
+    /// <summary>The default groups all selected cases even with async health attached.</summary>
     [Fact]
     public void Create_DefaultPolicy_KeepsRunnerTogether()
     {
@@ -25,12 +25,11 @@ public class BenchmarkExecutionPlanTests
         int[] indexes = Enumerable.Range(0, info.BenchmarksCases.Length).ToArray();
 
         // Act
-        var plan = BenchmarkExecutionPlan.Create("Mixed", info.BenchmarksCases, indexes, new());
+        var plan = BenchmarkExecutionPlan.Create("Observed", info.BenchmarksCases, indexes, new());
 
         // Assert
         Assert.Equal(4, Assert.Single(plan).Indexes.Length);
-        Assert.Contains(info.BenchmarksCases, AsyncHealthDiagnoser.IsMarked);
-        Assert.Contains(info.BenchmarksCases, benchmark => !AsyncHealthDiagnoser.IsMarked(benchmark));
+        Assert.Single(info.Config.GetDiagnosers().OfType<AsyncHealthDiagnoser>());
     }
 
     /// <summary>PerCase isolates every selected parameter combination without a marker requirement.</summary>

@@ -32,14 +32,11 @@ public class AsyncHealthDiagnoserTests : IDisposable
 {
     private readonly string _directory =
         Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-    private readonly AsyncHealthDiagnoser _diagnoser;
 
-    /// <summary>Each test owns its diagnoser, artifacts and static fixture counters.</summary>
+    /// <summary>Each test owns its artifacts and resets the shared fixture counters.</summary>
     public AsyncHealthDiagnoserTests()
     {
         Directory.CreateDirectory(_directory);
-        _diagnoser = new AsyncHealthDiagnoser(false, true, true, _directory);
-        AsyncHealthBenchmarkFixture.Observer = _diagnoser;
         AsyncHealthBenchmarkFixture.Observed = AsyncHealthBenchmarkFixture.Unobserved = 0;
         AsyncHealthBenchmarkFixture.Setups = AsyncHealthBenchmarkFixture.Cleanups = 0;
         AsyncHealthBenchmarkFixture.StartupObserved = AsyncHealthBenchmarkFixture.TimingInvocations = 0;
@@ -56,11 +53,15 @@ public class AsyncHealthDiagnoserTests : IDisposable
     [Fact]
     public void Run_MarkedBenchmark_SeparatesStartupAndExtraFromTiming()
     {
+        // Arrange
+        using BenchmarkRunInfo suite = Discover(typeof(AsyncHealthBenchmarkFixture));
+        var diagnoser = Assert.Single(suite.Config.GetDiagnosers().OfType<AsyncHealthDiagnoser>());
+
         // Act
-        Run(nameof(AsyncHealthBenchmarkFixture.AsyncWait));
+        Run(suite, nameof(AsyncHealthBenchmarkFixture.AsyncWait), diagnoser);
 
         // Assert
-        Assert.False(_diagnoser.HasFailed);
+        Assert.False(diagnoser.HasFailed);
         Assert.Equal(1, AsyncHealthBenchmarkFixture.Observed);
         Assert.True(AsyncHealthBenchmarkFixture.Unobserved > 0);
         Assert.True(AsyncHealthBenchmarkFixture.StartupObserved > 0);
@@ -103,29 +104,37 @@ public class AsyncHealthDiagnoserTests : IDisposable
     [Fact]
     public void Run_FailedDiagnosticIteration_PreservesFailure()
     {
+        // Arrange
+        using BenchmarkRunInfo suite = Discover(typeof(AsyncHealthBenchmarkFixture));
+        var diagnoser = Assert.Single(suite.Config.GetDiagnosers().OfType<AsyncHealthDiagnoser>());
+
         // Act
         Exception? error =
-            Record.Exception(() => Run(nameof(AsyncHealthBenchmarkFixture.DiagnosticFailure)));
+            Record.Exception(() => Run(suite, nameof(AsyncHealthBenchmarkFixture.DiagnosticFailure),
+                diagnoser));
 
         // Assert
-        Assert.True(_diagnoser.HasFailed);
+        Assert.True(diagnoser.HasFailed);
         Assert.NotNull(error);
         using JsonDocument window = ReadWindow("*-ExtraIteration-Failed.json");
         Assert.Equal(JsonValueKind.Object, window.RootElement.GetProperty("Measurement").ValueKind);
         Assert.Equal(1, window.RootElement.GetProperty("Operations")
             .GetProperty("Failed").GetInt64());
-        Assert.False(_diagnoser.IsObserving);
+        Assert.False(diagnoser.IsObserving);
     }
 
     /// <summary>Unmarked benchmarks run without observation or health artifacts.</summary>
     [Fact]
     public void Run_UnmarkedBenchmark_DoesNotObserve()
     {
+        // Arrange
+        using BenchmarkRunInfo suite = Discover(typeof(UnobservedBenchmarkFixture));
+
         // Act
-        Run(nameof(AsyncHealthBenchmarkFixture.Unmarked));
+        Run(suite, nameof(UnobservedBenchmarkFixture.Ordinary));
 
         // Assert
-        Assert.False(_diagnoser.HasFailed);
+        Assert.Empty(suite.Config.GetDiagnosers().OfType<AsyncHealthDiagnoser>());
         Assert.Empty(Directory.GetFiles(_directory, "*-Completed.json"));
         Assert.Empty(Directory.GetFiles(_directory, "*-Failed.json"));
     }
@@ -137,9 +146,10 @@ public class AsyncHealthDiagnoserTests : IDisposable
         JsonDocument.Parse(File.ReadAllText(
             Assert.Single(Directory.GetFiles(_directory, pattern))));
 
-    /// <summary>Runs a single fixture case with a bounded real in-process BDN executor.</summary>
-    /// <param name="method">Fixture method to execute.</param>
-    private void Run(string method)
+    /// <summary>Discovers a suite using only the ordinary shared job and diagnosers.</summary>
+    /// <param name="suite">Fixture suite to discover.</param>
+    /// <returns>The discovered suite, including any diagnoser declared on its type.</returns>
+    private BenchmarkRunInfo Discover(Type suite)
     {
         var config = ManualConfig.Create(DefaultConfig.Instance)
             .WithArtifactsPath(_directory)
@@ -147,13 +157,22 @@ public class AsyncHealthDiagnoserTests : IDisposable
             .AddJob(Job.Dry.WithToolchain(InProcessEmitToolchain.Default)
                 .WithLaunchCount(1).WithWarmupCount(1).WithIterationCount(1)
                 .WithInvocationCount(1).WithUnrollFactor(1).WithStrategy(RunStrategy.Monitoring))
-            .AddDiagnoser(MemoryDiagnoser.Default).AddDiagnoser(ThreadingDiagnoser.Default)
-            .AddDiagnoser(_diagnoser).AddEventProcessor(_diagnoser);
-        using BenchmarkRunInfo all = BenchmarkConverter.TypeToBenchmarks(
-            typeof(AsyncHealthBenchmarkFixture), config);
+            .AddDiagnoser(MemoryDiagnoser.Default).AddDiagnoser(ThreadingDiagnoser.Default);
+        return BenchmarkConverter.TypeToBenchmarks(suite, config);
+    }
+
+    /// <summary>Runs a single fixture case with a bounded real in-process BDN executor.</summary>
+    /// <param name="suite">Discovered fixture suite.</param>
+    /// <param name="method">Fixture method to execute.</param>
+    /// <param name="diagnoser">The suite's diagnoser, when attached.</param>
+    private void Run(BenchmarkRunInfo suite, string method, AsyncHealthDiagnoser? diagnoser = null)
+    {
+        diagnoser?.Configure(new Config(), new RunnerJob(), _directory);
+        AsyncHealthBenchmarkFixture.Observer = diagnoser;
+
         using var selected = new BenchmarkRunInfo(
-            all.BenchmarksCases.Where(b => b.Descriptor.WorkloadMethod.Name == method).ToArray(),
-            all.Type, all.Config, all.CompositeInProcessDiagnoser);
+            suite.BenchmarksCases.Where(b => b.Descriptor.WorkloadMethod.Name == method).ToArray(),
+            suite.Type, suite.Config, suite.CompositeInProcessDiagnoser);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         try
         {
@@ -168,7 +187,7 @@ public class AsyncHealthDiagnoserTests : IDisposable
         }
         finally
         {
-            _diagnoser.FinishRun();
+            diagnoser?.FinishRun();
         }
     }
 }

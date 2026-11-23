@@ -463,7 +463,6 @@ cfg = json.loads(text)
 # Pipeline diagnostics cannot depend on a pre-existing runnerconfig having the new defaults.
 with open(defaults_path, encoding="utf-8-sig") as fh:
     defaults = json.loads(re.sub(r'(?m)^\s*//.*$', '', fh.read()))
-cfg["EnableAsyncHealth"] = True
 cfg["Benchmarks"].setdefault(
     "OpenAsyncBurstRunnerConfig", defaults["Benchmarks"]["OpenAsyncBurstRunnerConfig"])["Enabled"] = True
 

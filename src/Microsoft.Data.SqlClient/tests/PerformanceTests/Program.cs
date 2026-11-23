@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 shutdown.Token.ThrowIfCancellationRequested();
                 RunnerJob job = unit.Selector(_config.Benchmarks);
-                var config = BenchmarkConfig.s_instance(job, _config);
+                var config = BenchmarkConfig.s_instance(job);
                 // Match across all enabled units before treating an empty selection as a failure.
                 // Keep the unit's job settings when executing the selected benchmarks.
                 using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
@@ -174,6 +174,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 {
                     commandJob.Validate();
                 }
+
+                AsyncHealthDiagnoser diagnoser = benchmarks.Config.GetDiagnosers()
+                    .OfType<AsyncHealthDiagnoser>().SingleOrDefault();
+                diagnoser?.Configure(_config, job);
                 if (childSelection == null)
                 {
                     foreach (BenchmarkProcessSelection selection in
@@ -196,8 +200,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 BenchmarkCase[] selectedCases = BenchmarkExecutionPlan.Select(
                     childSelection, unit.Name, cases, job);
                 _ = BenchmarkNetworkScope.ReadAppliedRtt(job);
-                if (job.ProcessIsolation == "PerRunner" && selectedCases.Length > 1 &&
-                    selectedCases.Any(AsyncHealthDiagnoser.IsMarked))
+                if (diagnoser != null && job.ProcessIsolation == "PerRunner" &&
+                    selectedCases.Length > 1)
                 {
                     Console.Error.WriteLine(
                         "Async health with PerRunner isolation: only the first case is process-cold.");
@@ -207,8 +211,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 var selectedBenchmarks = new BenchmarkRunInfo(
                     selectedCases, benchmarks.Type, benchmarks.Config,
                     benchmarks.CompositeInProcessDiagnoser);
-                AsyncHealthDiagnoser diagnoser = config.GetDiagnosers()
-                    .OfType<AsyncHealthDiagnoser>().SingleOrDefault();
                 using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
                     shutdown.Token);
                 config.GetEventProcessors().OfType<BenchmarkConfig.ExecutionTimeout>()

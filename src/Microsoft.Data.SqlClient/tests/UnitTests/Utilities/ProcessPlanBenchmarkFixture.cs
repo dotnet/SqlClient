@@ -7,7 +7,8 @@ using Microsoft.Data.SqlClient.PerformanceTests;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Utilities;
 
-/// <summary>Provides mixed marked/unmarked parameterized cases without SQL or global fixtures.</summary>
+/// <summary>Provides parameterized cases from a suite with an attached diagnoser.</summary>
+[AsyncHealthDiagnoser]
 public class ProcessPlanBenchmarkFixture
 {
     [Params(1, 2)]
@@ -17,7 +18,6 @@ public class ProcessPlanBenchmarkFixture
     public int Ordinary() => Value;
 
     [Benchmark]
-    [AsyncHealthDiagnoser]
     public int Observed() => Value;
 }
 #endif

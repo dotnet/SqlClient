@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 ? strategy
                 : RunStrategy.Throughput;
 
-        public static ManualConfig s_instance(RunnerJob runnerJob, Config? suiteConfig = null)
+        public static ManualConfig s_instance(RunnerJob runnerJob)
         {
             runnerJob.ValidateExecution();
 
@@ -72,19 +72,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     .WithEnvironmentVariable("COMPlus_gcServer", "1")
                 )
                 .WithOptions(ConfigOptions.JoinSummary);
-
-            if (suiteConfig?.EnableAsyncHealth == true)
-            {
-                if (suiteConfig.UseNativeMemoryAndETWProfiler || suiteConfig.WaitForProfiler)
-                {
-                    throw new InvalidOperationException(
-                        "Async health cannot be combined with interactive or native profilers.");
-                }
-                var diagnoser = new AsyncHealthDiagnoser(suiteConfig.UseConnectionPoolV2,
-                    !OperatingSystem.IsWindows() || suiteConfig.UseManagedSniOnWindows,
-                    suiteConfig.UseOptimizedAsyncBehaviour, null, runnerJob);
-                config.AddDiagnoser(diagnoser).AddEventProcessor(diagnoser);
-            }
 
 #if WINDOWS
             if (UseNativeMemoryAndEtwProfiler)

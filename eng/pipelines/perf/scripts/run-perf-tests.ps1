@@ -456,7 +456,6 @@ function Write-RunnerConfig {
     $defaultsText = ($defaultsText -split "`n" |
         ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
     $defaults = ConvertFrom-Json $defaultsText
-    $cfg | Add-Member -Force -NotePropertyName EnableAsyncHealth -NotePropertyValue $true
     if ($cfg.Benchmarks.PSObject.Properties.Name -notcontains "OpenAsyncBurstRunnerConfig") {
         $cfg.Benchmarks | Add-Member -NotePropertyName OpenAsyncBurstRunnerConfig `
             -NotePropertyValue $defaults.Benchmarks.OpenAsyncBurstRunnerConfig
