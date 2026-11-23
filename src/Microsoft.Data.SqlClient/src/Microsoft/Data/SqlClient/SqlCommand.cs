@@ -226,6 +226,9 @@ namespace Microsoft.Data.SqlClient
         // handler also holds it while invalidating a failed enclave session.
         private bool _enclaveAttestationInProgress;
 
+        // Covers asynchronous setup/write completion before the read stage publishes its result.
+        private bool _asyncReadStagePending;
+
         private SqlConnectionInternal _describeParameterEncryptionConnection;
         private SqlConnectionInternal _enclaveRetryConnection;
 
@@ -604,7 +607,8 @@ namespace Microsoft.Data.SqlClient
                 if (_activeConnection != value && _activeConnection != null)
                 {
                     // If new value...
-                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
+                    if (_asyncReadStagePending || _enclaveAttestationInProgress ||
+                        (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -764,7 +768,8 @@ namespace Microsoft.Data.SqlClient
                 if (_transaction != value && _activeConnection is not null)
                 {
                     // If new value...
-                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
+                    if (_asyncReadStagePending || _enclaveAttestationInProgress ||
+                        (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -2923,7 +2928,7 @@ namespace Microsoft.Data.SqlClient
 
         private void ValidateAsyncCommand()
         {
-            if (_enclaveAttestationInProgress)
+            if (_asyncReadStagePending || _enclaveAttestationInProgress)
             {
                 throw SQL.PendingBeginXXXExists();
             }

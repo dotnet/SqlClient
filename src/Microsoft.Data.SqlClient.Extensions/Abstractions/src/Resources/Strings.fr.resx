@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -23,5 +23,32 @@
   </data>
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>L'authentification '{0}' n'est pas prise en charge.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationProviderCollection" xml:space="preserve">
+    <value>The authentication configuration property 'providers' must be a ProviderSettingsCollection.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationBrokerValue" xml:space="preserve">
+    <value>Invalid authentication configuration value '{0}' for 'useWamBroker'; expected 'true' or 'false'.</value>
+  </data>
+  <data name="SQL_MissingAuthenticationConfigurationProperty" xml:space="preserve">
+    <value>The authentication configuration is missing property '{0}'.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationConfigurationPropertyType" xml:space="preserve">
+    <value>Authentication configuration property '{0}' must be a string.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationConfigurationHandler" xml:space="preserve">
+    <value>Authentication configuration section '{0}' must use handler '{1}'; found '{2}'.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationInitializerInstance" xml:space="preserve">
+    <value>The configured initializer must create a non-null SqlAuthenticationInitializer instance.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationProviderInstance" xml:space="preserve">
+    <value>The configured provider must create a non-null SqlAuthenticationProvider instance.</value>
+  </data>
+  <data name="SQL_CannotRegisterAuthProvider" xml:space="preserve">
+    <value>Configured authentication provider '{1}' could not be registered for method '{0}'.</value>
+  </data>
+  <data name="SQL_EmptyAccessToken" xml:space="preserve">
+    <value>AccessToken must not be null or empty.</value>
   </data>
 </root>

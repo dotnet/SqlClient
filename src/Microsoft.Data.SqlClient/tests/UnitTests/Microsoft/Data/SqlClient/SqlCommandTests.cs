@@ -5,23 +5,135 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
-/// Verifies batch command lookup for SQL errors and info messages, cancellation handling when
-/// asynchronous execution ends, and asynchronous query metadata cache dispatch.
+/// Verifies command execution guards, batch command lookup for SQL errors and info messages,
+/// cancellation handling when asynchronous execution ends, and asynchronous query metadata cache
+/// dispatch.
 /// </summary>
+[Collection(SimulatedServerTestCollection.Name)]
 public class SqlCommandTests
 {
     private const string CanceledExecutionConnectionString =
         "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled";
+
+    /// <summary>A pending parameter write must keep the original connection attached.</summary>
+    [Fact]
+    public Task Connection_PendingAsyncWrite_Throws() =>
+        AssertPendingWriteAsync(command =>
+        {
+            // Arrange
+            SqlConnection original = command.Connection;
+
+            // Act
+            Exception? error = Record.Exception(
+                () => command.Connection = null);
+            command.Connection = original;
+
+            // Assert
+            Assert.Equal(SQL.CannotModifyPropertyAsyncOperationInProgress("Connection").Message,
+                Assert.IsType<InvalidOperationException>(error).Message);
+            return Task.CompletedTask;
+        });
+
+    /// <summary>A pending parameter write must not accept a replacement transaction.</summary>
+    [Fact]
+    public Task Transaction_PendingAsyncWrite_Throws() =>
+        AssertPendingWriteAsync(command =>
+        {
+            // Arrange
+            SqlConnection connection = command.Connection;
+            // This unattached transaction has no server-side state to roll back.
+            SqlTransaction transaction = new(
+                (SqlConnectionInternal)connection.InnerConnection, connection,
+                IsolationLevel.ReadCommitted, null);
+
+            // Act
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => command.Transaction = transaction);
+
+            // Assert
+            Assert.Equal(SQL.CannotModifyPropertyAsyncOperationInProgress("Transaction").Message,
+                error.Message);
+            return Task.CompletedTask;
+        });
+
+    /// <summary>Sync execution must not reuse a command whose async write is pending.</summary>
+    [Fact]
+    public Task ExecuteReader_PendingAsyncWrite_Throws() =>
+        AssertPendingWriteAsync(command =>
+        {
+            // Act
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => command.ExecuteReader());
+
+            // Assert
+            Assert.Equal(SQL.PendingBeginXXXExists().Message, error.Message);
+            return Task.CompletedTask;
+        });
+
+    /// <summary>Another async execution must be rejected before it can disturb the first write.</summary>
+    [Fact]
+    public Task ExecuteReaderAsync_PendingAsyncWrite_Throws() =>
+        AssertPendingWriteAsync(async command =>
+        {
+            // Act
+            InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => command.ExecuteReaderAsync());
+
+            // Assert
+            Assert.Equal(SQL.PendingBeginXXXExists().Message, error.Message);
+        });
+
+    /// <summary>Exercises the public API while parameter streaming is deterministically suspended.</summary>
+    /// <param name="assertion">The operation and assertions to run during the pending write.</param>
+    /// <returns>Completion after the failed write has been observed and its guard released.</returns>
+    private static async Task AssertPendingWriteAsync(Func<SqlCommand, Task> assertion)
+    {
+        // Arrange
+        using TdsServer server = new();
+        server.Start();
+        using SqlConnection connection = new(new SqlConnectionStringBuilder
+        {
+            DataSource = $"localhost,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional,
+            Pooling = false
+        }.ConnectionString);
+        connection.Open();
+        using GatedReadStream stream = new();
+        using SqlCommand command = new("SELECT @value", connection);
+        command.Parameters.Add("@value", SqlDbType.VarBinary, -1).Value = stream;
+        Task<SqlDataReader> execution = command.ExecuteReaderAsync();
+        try
+        {
+            Assert.True(stream.ReadStarted);
+            Assert.False(execution.IsCompleted);
+            await assertion(command);
+        }
+        finally
+        {
+            // Cleanup
+            stream.Fail();
+            await Assert.ThrowsAsync<IOException>(() => execution);
+        }
+
+        // Assert
+        command.Connection = null;
+        Assert.Null(command.Connection);
+    }
 
     /// <summary>Errors after the final DONEPROC have no remaining command to attribute.</summary>
     [Theory]
