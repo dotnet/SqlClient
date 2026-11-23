@@ -95,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
+        [Trait("category", "flaky")]
         public void OpenningConnectionWithGoodCertificateTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -125,6 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
+        [Trait("category", "flaky")]
         public void OpeningConnectionWitHNICTest()
         {
             // Mandatory

@@ -59,7 +59,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Directory.CreateDirectory(s_fullPathToClientCert);
             }
 
-            RunPowershellScript(s_fullPathToPowershellScript);
+            // The certificate must remain untrusted for the negative validation cases.
+            // Clean up partial setup because xUnit does not call Dispose when construction fails.
+            try
+            {
+                RunPowershellScript(s_fullPathToPowershellScript);
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
         }
 
         private static bool IsLocalHost()
@@ -131,11 +141,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string userId = string.IsNullOrWhiteSpace(builder.UserID) ? "user" : builder.UserID;
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
+            using X509Certificate2 certificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet);
+            using (X509Chain chain = new())
+            {
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                Assert.False(chain.Build(certificate), "The simulated server certificate must remain untrusted.");
+                Assert.Contains(chain.ChainStatus, status => (status.Status & X509ChainStatusFlags.UntrustedRoot) != 0);
+            }
+
             using TdsServer server = new TdsServer(new TdsServerArguments
             {
-                EncryptionCertificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+                EncryptionCertificate = certificate,
                 EncryptionProtocols = connectionTestParameters.EncryptionProtocols,
                 Encryption = connectionTestParameters.TdsEncryptionType,
+                ExpectTlsHandshakeFailure = !connectionTestParameters.TestResult,
             });
 
             server.Start();
@@ -161,76 +180,73 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
+            if (connectionTestParameters.TestResult)
             {
                 connection.Open();
-                Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
+                Assert.Equal(ConnectionState.Open, connection.State);
             }
-            catch (Exception)
+            else
             {
-                Assert.False(connectionTestParameters.TestResult);
+                Assert.Throws<SqlException>(() => connection.Open());
             }
         }
 
         private static void RunPowershellScript(string script)
         {
             string currentDirectory = Directory.GetCurrentDirectory();
-            string powerShellCommand = "powershell.exe";
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            string powerShellCommand =
+              RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+              ? "powershell.exe"
+              : "pwsh";
+
+            if (! File.Exists(script))
             {
-                powerShellCommand = "pwsh";
+                throw new Exception($"Script {script} does not exist");
             }
 
-            if (File.Exists(script))
+            StringBuilder output = new();
+            Process proc = new()
             {
-                StringBuilder output = new();
-                Process proc = new()
+                StartInfo =
                 {
-                    StartInfo =
-                    {
-                        FileName = powerShellCommand,
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        Arguments = $"{script} -OutDir {currentDirectory} > result.txt",
-                        CreateNoWindow = false,
-                        Verb = "runas"
-                    }
-                };
-
-                proc.EnableRaisingEvents = true;
-
-                proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
-                {
-                    if (e.Data != null)
-                    {
-                        output.AppendLine(e.Data);
-                    }
-                });
-
-                proc.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
-                {
-                    if (e.Data != null)
-                    {
-                        output.AppendLine(e.Data);
-                    }
-                });
-
-                proc.Start();
-
-                proc.BeginOutputReadLine();
-                proc.BeginErrorReadLine();
-
-                if (!proc.WaitForExit(60000))
-                {
-                    proc.Kill();
-                    proc.WaitForExit(2000);
-                    throw new Exception($"Could not generate certificate. Error output: {output}");
+                    FileName = powerShellCommand,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    Arguments = $"\"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust",
+                    CreateNoWindow = false,
+                    Verb = "runas"
                 }
-            }
-            else
+            };
+
+            proc.EnableRaisingEvents = true;
+
+            proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
             {
-                throw new Exception($"Could not find makepfxcert.ps1");
+                if (e.Data != null)
+                {
+                    output.AppendLine($"[OUT] {e.Data}");
+                }
+            });
+
+            proc.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
+            {
+                if (e.Data != null)
+                {
+                    output.AppendLine($"[ERR] {e.Data}");
+                }
+            });
+
+            proc.Start();
+
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
+
+            if (!proc.WaitForExit(60000))
+            {
+                proc.Kill();
+                proc.WaitForExit(2000);
+                throw new Exception($"Could not generate certificate; script output: {output}");
             }
         }
 
@@ -252,18 +268,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RemoveCertificate()
         {
-            string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
-            using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
-            certStore.Open(OpenFlags.ReadWrite);
-            X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-            if (certCollection.Count > 0)
+            // Remove the generated certificate from My; setup deliberately does not install it in Root.
+            // File cleanup must still run if store removal fails.
+            try
             {
-                certStore.Remove(certCollection[0]);
+                if (File.Exists(s_fullPathTothumbprint))
+                {
+                    string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
+                    using X509Store certStore = new(StoreName.My, StoreLocation.LocalMachine);
+                    certStore.Open(OpenFlags.ReadWrite);
+                    X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                    if (certCollection.Count > 0)
+                    {
+                        certStore.Remove(certCollection[0]);
+                    }
+                    certStore.Close();
+                }
             }
-            certStore.Close();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: failed to remove certificate: {ex.Message}");
+            }
 
-            File.Delete(s_fullPathTothumbprint);
-            Directory.Delete(s_fullPathToClientCert, true);
+            TryCleanup(() => File.Delete(s_fullPathTothumbprint));
+            TryCleanup(() => Directory.Delete(s_fullPathToClientCert, true));
+        }
+
+        private static void TryCleanup(Action cleanupAction)
+        {
+            try
+            {
+                cleanupAction();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: cleanup step failed: {ex.Message}");
+            }
         }
 
         private static void RemoveForceEncryptionFromRegistryPath(string registryPath)

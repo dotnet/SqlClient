@@ -31,6 +31,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     // TODO Synapse: Fix these tests for Azure Synapse.
     public static class ConnectionPoolTest
     {
+        /// <summary>Supplies the existing MARS combinations.</summary>
+        public static TheoryData<string> ConnectionPoolData
+        {
+            get
+            {
+                TheoryData<string> data = new();
+                foreach (object[] arguments in new ConnectionPoolConnectionStringProvider())
+                {
+                    data.Add((string)arguments[0]);
+                }
+                return data;
+            }
+        }
+
         /// <summary>
         /// Tests that using the same connection string results in the same pool\internal connection and a different string results in a different pool\internal connection
         /// </summary>
@@ -171,12 +185,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Tests if, when max pool size is reached, Open() will block until a connection becomes available
         /// </summary>
-        // Assert.Equal: expected Running, actual WaitingToRun after the worker-start wait.
         [Trait("category", "flaky")]
+        [Trait("category", "probation")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        [MemberData(nameof(ConnectionPoolData))]
         public static void MaxPoolWaitForConnectionTest(string connectionString)
         {
+            // Arrange
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
@@ -185,20 +200,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection1);
             ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection1);
-            ManualResetEventSlim taskAllowedToSpeak = new ManualResetEventSlim(false);
+            using ManualResetEventSlim workerStarted = new(false);
+            using ManualResetEventSlim taskAllowedToSpeak = new(false);
 
-            Task waitTask = Task.Factory.StartNew(() => MaxPoolWaitForConnectionTask(newConnectionString, internalConnection, connectionPool, taskAllowedToSpeak));
-            int count = 5;
-            while (waitTask.Status == TaskStatus.WaitingToRun && count-- > 0)
+            // Act
+            Task waitTask = Task.Factory.StartNew(
+                () => MaxPoolWaitForConnectionTask(newConnectionString, internalConnection,
+                    connectionPool, workerStarted, taskAllowedToSpeak),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            try
             {
-                Thread.Sleep(200);
+                // Assert
+                Assert.True(workerStarted.Wait(TimeSpan.FromSeconds(30)), "Pool worker did not start.");
+                Assert.Equal(TaskStatus.Running, waitTask.Status);
             }
-            Assert.Equal(TaskStatus.Running, waitTask.Status);
-
-            connection1.Close();
-            taskAllowedToSpeak.Set();
-            waitTask.Wait();
+            finally
+            {
+                // Cleanup
+                connection1.Close();
+                taskAllowedToSpeak.Set();
+                waitTask.GetAwaiter().GetResult();
+            }
             Assert.Equal(TaskStatus.RanToCompletion, waitTask.Status);
+        }
+
+        /// <summary>Verifies checkout does not require a second worker on the caller's scheduler.</summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionPoolData))]
+        public static async Task MaxPoolWaitForConnectionTest_SingleWorkerScheduler_ReusesConnection(string connectionString)
+        {
+            // Arrange
+            ConcurrentExclusiveSchedulerPair schedulerPair = new(TaskScheduler.Default, maxConcurrencyLevel: 1);
+            try
+            {
+                // Act
+                Task checkout = Task.Factory.StartNew(
+                    () => MaxPoolWaitForConnectionTest(connectionString),
+                    CancellationToken.None, TaskCreationOptions.None, schedulerPair.ExclusiveScheduler);
+                await checkout;
+
+                // Assert
+                Assert.Equal(TaskStatus.RanToCompletion, checkout.Status);
+            }
+            finally
+            {
+                // Cleanup
+                schedulerPair.Complete();
+                await schedulerPair.Completion;
+            }
         }
 
         internal static InternalConnectionWrapper ReplacementConnectionUsesSemaphoreTask(string connectionString, Barrier syncBarrier)
@@ -231,9 +280,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return new InternalConnectionWrapper(connection);
         }
 
-        private static void MaxPoolWaitForConnectionTask(string connectionString, InternalConnectionWrapper internalConnection, ConnectionPoolWrapper connectionPool, ManualResetEventSlim waitToSpeak)
+        private static void MaxPoolWaitForConnectionTask(string connectionString,
+            InternalConnectionWrapper internalConnection, ConnectionPoolWrapper connectionPool,
+            ManualResetEventSlim workerStarted, ManualResetEventSlim waitToSpeak)
         {
             using SqlConnection connection = new SqlConnection(connectionString);
+            workerStarted.Set();
             connection.Open();
             waitToSpeak.Wait();
             Assert.True(internalConnection.IsInternalConnectionOf(connection), "Connection has wrong internal connection");

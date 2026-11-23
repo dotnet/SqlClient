@@ -641,6 +641,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        // Parallel MARS commands intermittently exceed their execution timeout in CI.
+        [Trait("category", "flaky")]
         public static void MarsConcurrencyTest()
         {
             var table = DataTestUtility.GenerateObjectName();

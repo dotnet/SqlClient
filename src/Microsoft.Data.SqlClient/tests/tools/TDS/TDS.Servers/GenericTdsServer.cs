@@ -153,7 +153,8 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
                 EndpointName = methodName,
-                EventLog = Arguments.Log
+                EventLog = Arguments.Log,
+                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
             };
             _endpoint.Start();
         }
@@ -971,8 +972,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public virtual void Dispose()
         {
-            _endpoint?.Dispose();
-            _endpoint = null;
+            Interlocked.Exchange(ref _endpoint, null)?.Dispose();
         }
     }
 }

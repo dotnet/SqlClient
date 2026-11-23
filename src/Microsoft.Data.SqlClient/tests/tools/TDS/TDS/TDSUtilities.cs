@@ -284,6 +284,12 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static TDSEncryptionType ResolveEncryption(TDSPreLoginTokenEncryptionType client, TDSPreLoginTokenEncryptionType server)
         {
+            // A deliberately omitted encryption option cannot negotiate TLS.
+            if (server == TDSPreLoginTokenEncryptionType.None)
+            {
+                return TDSEncryptionType.None;
+            }
+
             // Check each equivalence class
             if (client == TDSPreLoginTokenEncryptionType.NotSupported)
             {
