@@ -1190,6 +1190,7 @@ namespace Microsoft.Data.SqlClient
                         isRetry,
                         method,
                         usedCache ? cachedMetadata : null,
+                        completion,
                         cancellationToken);
                 }
                 catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
@@ -1205,14 +1206,6 @@ namespace Microsoft.Data.SqlClient
                     // First invalidate the entry from the cache, so that we refresh our encryption
                     // metadata.
                     SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                    if (isAsync)
-                    {
-                        executeTask = RetryEnclaveCommandAsync(
-                            cmdBehavior, runBehavior, returnStream, completion,
-                            timeout, firstAttemptStart, asyncWrite, method, cancellationToken);
-                        return null;
-                    }
-
                     InvalidateEnclaveSession();
 
                     return RunExecuteReader(
@@ -1257,14 +1250,6 @@ namespace Microsoft.Data.SqlClient
                     // First invalidate the entry from the cache, so that we refresh our encryption
                     // metadata.
                     SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                    if (isAsync)
-                    {
-                        executeTask = RetryEnclaveCommandAsync(
-                            cmdBehavior, runBehavior, returnStream, completion,
-                            timeout, firstAttemptStart, asyncWrite, method, cancellationToken);
-                        return null;
-                    }
-
                     InvalidateEnclaveSession();
 
                     return RunExecuteReader(
@@ -1294,28 +1279,6 @@ namespace Microsoft.Data.SqlClient
                     isRetry);
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
-        }
-
-        private async Task RetryEnclaveCommandAsync(
-            CommandBehavior behavior,
-            RunBehavior runBehavior,
-            bool returnStream,
-            TaskCompletionSource<object> completion,
-            int timeout,
-            long firstAttemptStart,
-            bool asyncWrite,
-            string method,
-            CancellationToken cancellationToken)
-        {
-            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
-            RunExecuteReader(
-                behavior, runBehavior, returnStream, completion,
-                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
-                out Task task, out _, asyncWrite, isRetry: true, method, cancellationToken);
-            if (task is not null)
-            {
-                await task.ConfigureAwait(false);
-            }
         }
 
         // @TODO: This method *needs* to be broken up into separate ones for each type of execution
@@ -1814,41 +1777,32 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             string method,
             SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
+            TaskCompletionSource<object> completion,
             CancellationToken cancellationToken)
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
 
             SqlDataReader reader = returnStream ? new SqlDataReader(this, cmdBehavior) : null;
-            SqlConnection connection = _activeConnection;
-            int closeCount = connection.CloseCount;
-            string database = connection.Database;
-            SqlConnectionInternal retryConnection = _enclaveRetryConnection;
 
             if (isAsync)
             {
-                Debug.Assert(!_enclaveAttestationInProgress, "Encryption execution already in progress.");
-
-                // Acquire before dispatch, including when preparation has no asynchronous work.
-                // The shared sequence releases the guard after TDS write/setup or on failure.
-                _enclaveAttestationInProgress = true;
-                task = Task.Run(() => RunExecuteReaderWithEncryptionCore(
+                task = RunExecuteReaderWithEncryptionCore(
                     cmdBehavior, runBehavior, returnStream, isAsync, timeout, asyncWrite,
-                    isRetry, method, cachedMetadata, reader, connection, closeCount,
-                    database, retryConnection, cancellationToken));
+                    isRetry, method, cachedMetadata, reader, completion, cancellationToken);
                 return reader;
             }
 
             task = null;
             return RunExecuteReaderWithEncryptionCore(
                 cmdBehavior, runBehavior, returnStream, isAsync, timeout, asyncWrite,
-                isRetry, method, cachedMetadata, reader, connection, closeCount,
-                database, retryConnection, CancellationToken.None).GetAwaiter().GetResult();
+                isRetry, method, cachedMetadata, reader, completion,
+                CancellationToken.None).GetAwaiter().GetResult();
         }
 
         /// <summary>
         /// Prepares encryption and starts execution in either mode. Asynchronous execution owns
         /// the preparation guard until TDS write/setup finishes, including failure or cancellation.
-        /// A retryable first-attempt failure transfers the guard to the retry completion handler.
+        /// Setup-stage retries retain protection while invalidating the failed enclave session.
         /// </summary>
         private async Task<SqlDataReader> RunExecuteReaderWithEncryptionCore(
             CommandBehavior cmdBehavior,
@@ -1861,58 +1815,102 @@ namespace Microsoft.Data.SqlClient
             string method,
             SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
             SqlDataReader reader,
-            SqlConnection connection,
-            int closeCount,
-            string database,
-            SqlConnectionInternal retryConnection,
+            TaskCompletionSource<object> completion,
             CancellationToken cancellationToken)
         {
             long preparationStart = ADP.TimerCurrent();
-            bool handoffToRetry = false;
+            SqlConnection connection = _activeConnection;
+            int closeCount = connection.CloseCount;
+            string database = connection.Database;
+            SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+
+            if (isAsync)
+            {
+                Debug.Assert(!_enclaveAttestationInProgress, "Encryption execution already in progress.");
+                _enclaveAttestationInProgress = true;
+            }
+
             try
             {
-                // The connection can change independently of the guarded command.
-                if (isAsync)
+                try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ValidateConnectionLifetime(connection, closeCount, database, method);
+
+                    await PrepareForTransparentEncryption(
+                        cachedMetadata, retryConnection, timeout, asyncWrite, isRetry,
+                        method, isAsync, cancellationToken).ConfigureAwait(false);
+
+                    if (isAsync)
+                    {
+                        ValidateConnectionLifetime(connection, closeCount, database, method);
+                        ValidateConnectionForEnclaveExecution(retryConnection);
+                    }
+
+                    if (isAsync && keysToBeSentToEnclave is not null && !keysToBeSentToEnclave.IsEmpty)
+                    {
+                        // Package generation still calls synchronous enclave/key providers.
+                        await Task.Run(() =>
+                        {
+                            ValidateConnectionLifetime(connection, closeCount, database, method);
+                            ValidateConnectionForEnclaveExecution(retryConnection);
+                            GenerateEnclavePackage();
+                        }).ConfigureAwait(false);
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                        ValidateConnectionLifetime(connection, closeCount, database, method);
+                        ValidateConnectionForEnclaveExecution(retryConnection);
+                    }
+                    else
+                    {
+                        GenerateEnclavePackage();
+                    }
+
+                    reader = RunExecuteReaderTds(
+                        cmdBehavior, runBehavior, returnStream, isAsync,
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, preparationStart),
+                        out Task writeTask, asyncWrite, isRetry, reader);
+                    if (writeTask is not null)
+                    {
+                        await writeTask.ConfigureAwait(false);
+                    }
+
+                    return reader;
                 }
-
-                await PrepareForTransparentEncryption(
-                    cachedMetadata, retryConnection, timeout, asyncWrite, isRetry,
-                    method, isAsync, cancellationToken).ConfigureAwait(false);
-
-                if (isAsync)
+                catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
+                    when (isAsync && !isRetry)
                 {
+                    CachedAsyncState?.ResetAsyncState();
+                    ReliablePutStateObject();
+                    SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
+
+                    await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
                     ValidateConnectionLifetime(connection, closeCount, database, method);
-                    ValidateConnectionForEnclaveExecution(retryConnection);
-                }
 
-                GenerateEnclavePackage();
-                reader = RunExecuteReaderTds(
-                    cmdBehavior, runBehavior, returnStream, isAsync,
-                    TdsParserStaticMethods.GetRemainingTimeout(timeout, preparationStart),
-                    out Task writeTask, asyncWrite, isRetry, reader);
-                if (writeTask is not null)
-                {
-                    await writeTask.ConfigureAwait(false);
-                }
+                    // Retry validation must run without the first attempt's preparation guard.
+                    _enclaveAttestationInProgress = false;
+                    reader = RunExecuteReader(
+                        cmdBehavior, runBehavior, returnStream, completion,
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, preparationStart),
+                        out Task retryTask, out _, asyncWrite, isRetry: true, method,
+                        cancellationToken);
+                    if (retryTask is not null)
+                    {
+                        await retryTask.ConfigureAwait(false);
+                    }
 
-                return reader;
+                    return reader;
+                }
             }
             catch (Exception e) when (isAsync && ADP.IsCatchableExceptionType(e))
             {
                 CachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
-
-                // The first attempt's completion handler owns protection until its retry starts.
-                handoffToRetry = !isRetry && ShouldUseEnclaveBasedWorkflow &&
-                    e is EnclaveDelegate.RetryableEnclaveQueryExecutionException;
                 throw;
             }
             finally
             {
-                if (isAsync && !handoffToRetry)
+                if (isAsync)
                 {
                     _enclaveAttestationInProgress = false;
                 }

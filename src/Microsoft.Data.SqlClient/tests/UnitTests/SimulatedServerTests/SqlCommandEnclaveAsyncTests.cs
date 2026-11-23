@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, second.Connection.State);
         }
 
-        /// <summary>Dispatched no-work preparation reserves the connection before waiting for its response.</summary>
+        /// <summary>No-work preparation reserves the connection before waiting for its response.</summary>
         [Fact]
         public async Task ExecuteReaderAsync_NonEnclaveWithoutParameters_ReservesConnection()
         {
@@ -587,20 +587,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             // Arrange
             using Fixture fixture = new Fixture();
-            using SqlCommand command = fixture.CreateCommand();
+            using SqlCommand command = fixture.CreateCommandWithExpiredEnclaveSession();
             using CancellationTokenSource cancellation = new CancellationTokenSource();
-            command.SetBatchRPCMode(true, 1);
-            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
-            command.SetBatchRPCModeReadyToExecute();
-            fixture.Provider.CacheHit = true;
-            fixture.Provider.OnCacheHit = () =>
-            {
-                // Simulate cached key metadata whose session disappears before package generation.
-                command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
-                Assert.True(command.keysToBeSentToEnclave.TryAdd(0, new SqlTceCipherInfoEntry()));
-                SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
-            };
             SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
 
             // Act
@@ -680,6 +668,71 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Async execution moves the remaining synchronous package provider call off the caller,
+        /// without dispatching the preceding async preparation.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_SynchronousPackageProvider_RunsOffCaller()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommandWithExpiredEnclaveSession();
+            int callerThread = Environment.CurrentManagedThreadId;
+            bool invoking = true;
+            bool ranInline = false;
+            fixture.Provider.OnSyncLookup = () =>
+                ranInline = invoking && Environment.CurrentManagedThreadId == callerThread;
+
+            // Act
+            Task<SqlDataReader> operation;
+            try
+            {
+                operation = command.ExecuteReaderAsync();
+            }
+            finally
+            {
+                invoking = false;
+            }
+            await Task.WhenAny(fixture.Provider.Entered.Task, operation);
+            Assert.True(fixture.Provider.Entered.Task.IsCompleted);
+            fixture.Provider.FailSessionOperation();
+
+            // Assert
+            Assert.Same(fixture.Provider.Error,
+                await Assert.ThrowsAsync<InvalidOperationException>(() => operation));
+            Assert.Equal(1, fixture.Provider.SyncCalls);
+            Assert.False(ranInline);
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+        }
+
+        /// <summary>
+        /// A package failure during the setup retry ends the operation instead of being retried
+        /// again by the separate read-stage completion handler.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_RetryPackageFailure_DoesNotRetryAgain()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommandWithExpiredEnclaveSession();
+
+            // Act
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+            await Task.WhenAny(fixture.Provider.Entered.Task, operation);
+            Assert.True(fixture.Provider.Entered.Task.IsCompleted);
+            fixture.Provider.CompleteSessionOperation();
+
+            // Assert
+            await Assert.ThrowsAsync<EnclaveDelegate.RetryableEnclaveQueryExecutionException>(
+                () => operation);
+            Assert.Equal(2, fixture.Provider.AsyncCalls);
+            Assert.Equal(2, fixture.Provider.SyncCalls);
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+            command.Connection = null;
+        }
+
+        /// <summary>
         /// XML Begin/End observes the retry's outcome when dispatched package generation fails,
         /// rather than ending the failed first attempt while the retry is still preparing.
         /// </summary>
@@ -688,19 +741,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             // Arrange
             using Fixture fixture = new Fixture();
-            using SqlCommand command = fixture.CreateCommand();
-            command.SetBatchRPCMode(true, 1);
-            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
-            command.SetBatchRPCModeReadyToExecute();
-            fixture.Provider.CacheHit = true;
-            fixture.Provider.OnCacheHit = () =>
-            {
-                command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
-                command.keysToBeSentToEnclave[0] = new SqlTceCipherInfoEntry();
-                SetField(command, "enclavePackage",
-                    new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
-            };
+            using SqlCommand command = fixture.CreateCommandWithExpiredEnclaveSession();
 
             // Act
             IAsyncResult operation = command.BeginExecuteXmlReader();
@@ -1011,6 +1052,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             internal SqlCommand CreateCommand() =>
                 new SqlCommand("SELECT 1", _connection, null, SqlCommandColumnEncryptionSetting.Enabled);
 
+            /// <summary>
+            /// Seeds a parameterless batch whose cached enclave session fails at package generation,
+            /// so retries can be exercised without sending unsupported RPCs to the simulated server.
+            /// </summary>
+            /// <returns>A command that fails when its enclave package is generated.</returns>
+            internal SqlCommand CreateCommandWithExpiredEnclaveSession()
+            {
+                SqlCommand command = CreateCommand();
+                command.SetBatchRPCMode(true, 1);
+                command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+                command.SetBatchRPCModeReadyToExecute();
+                Provider.CacheHit = true;
+                Provider.OnCacheHit = () =>
+                {
+                    command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                    command.keysToBeSentToEnclave[0] = new SqlTceCipherInfoEntry();
+                    SetField(command, "enclavePackage",
+                        new EnclavePackage(Array.Empty<byte>(), Provider.Session));
+                };
+                return command;
+            }
+
             public void Dispose()
             {
                 _connection.Dispose();
@@ -1032,6 +1096,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             internal bool SessionOperation;
             internal bool CacheHit;
             internal Action OnCacheHit;
+            internal Action OnSyncLookup;
             internal readonly SqlEnclaveSession Session = new SqlEnclaveSession(new byte[32], 42);
             internal readonly byte[] CustomData = { 2, 3 };
             internal CancellationToken Token;
@@ -1136,6 +1201,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 bool isRetry, out SqlEnclaveSession session, out long counter, out byte[] customData, out int customDataLength)
             {
                 SyncCalls++;
+                OnSyncLookup?.Invoke();
                 throw Error;
             }
 

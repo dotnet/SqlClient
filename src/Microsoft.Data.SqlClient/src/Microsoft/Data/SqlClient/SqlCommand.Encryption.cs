@@ -522,7 +522,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <remarks>
         /// Both execution modes use the same cache completion and stale-entry fallback.
-        /// The execution coordinator owns dispatch and the in-progress guard.
+        /// The execution coordinator owns the in-progress guard.
         /// </remarks>
         private async Task PrepareForTransparentEncryption(
             SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,

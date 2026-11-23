@@ -28,11 +28,57 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public sealed class SqlCommandQueryMetadataCacheAsyncTests
     {
         /// <summary>
-        /// Even an immediately canceled key operation runs off the caller and releases the guard
-        /// through the same coordinator as genuinely pending preparation.
+        /// Immediately available cached keys use the async provider inline, and execution still
+        /// revalidates a competing reader opened during that provider call.
         /// </summary>
         [Fact]
-        public async Task ExecuteReaderAsync_ImmediateKeyCancellation_DispatchesAndReleasesGuard()
+        public async Task ExecuteReaderAsync_ImmediateCacheHit_PreparesInlineAndRevalidatesConnection()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+            using SqlCommand other = new("/* competing reader */", fixture.Connection);
+            SqlDataReader? competingReader = null;
+            int callerThread = Environment.CurrentManagedThreadId;
+            bool invoking = true;
+            bool ranInline = false;
+            fixture.Provider.DecryptAsyncCallback = _ =>
+            {
+                ranInline = invoking && Environment.CurrentManagedThreadId == callerThread;
+                competingReader = other.ExecuteReader();
+                return Task.FromResult(fixture.Provider.PlaintextKey);
+            };
+
+            try
+            {
+                // Act
+                Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+                invoking = false;
+
+                // Assert
+                await Assert.ThrowsAsync<InvalidOperationException>(() => Bounded(operation));
+                Assert.True(ranInline);
+                Assert.Equal(1, fixture.Provider.DecryptAsyncCallCount);
+                Assert.Equal(0, fixture.Provider.DecryptCallCount);
+                Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
+                Assert.NotNull(competingReader);
+                Assert.False(competingReader.IsClosed);
+                Assert.False(IsInProgress(command));
+                Assert.Equal(0, fixture.AsyncCount);
+            }
+            finally
+            {
+                // Cleanup
+                competingReader?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// An immediately canceled key operation runs inline and releases the guard through the
+        /// same coordinator as genuinely pending preparation, without a thread-pool dispatch.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_ImmediateKeyCancellation_CompletesInlineAndReleasesGuard()
         {
             // Arrange
             using Fixture fixture = new();
@@ -61,7 +107,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Bounded(operation));
-            Assert.False(ranInline);
+            Assert.True(ranInline);
             Assert.False(IsInProgress(command));
             Assert.Equal(0, fixture.AsyncCount);
             command.Connection = null;
