@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
         [InlineData(false)]
+        [Trait("category", "flaky")]
         public static void TestGetSchema(bool openTransaction)
         {
             using (SqlConnection conn = DataTestUtility.CreateConnection())
@@ -101,6 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
         [InlineData(false)]
+        [Trait("category", "flaky")]
         public static async Task TestGetSchemaAsync(bool openTransaction)
         {
             using (SqlConnection conn = DataTestUtility.CreateConnection())

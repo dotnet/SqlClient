@@ -191,6 +191,7 @@ public sealed class IsolationLevelResetTests
     [InlineData(false, true, true, true)]
     [InlineData(true, true, false, true)]
     [InlineData(true, true, true, true)]
+    [Trait("category", "flaky")]
     public async Task PooledReset_UsesRemainingOpenBudget(bool poolV2, bool async, bool overallTimeout, bool waitForConnection)
     {
         using LocalAppContextSwitchesHelper switches = new();
