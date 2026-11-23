@@ -256,7 +256,7 @@ public sealed class AsyncHealthDiagnoser(
         ThreadPool.GetMinThreads(out int minimumWorkers, out _);
         ThreadPool.GetMaxThreads(out int maximumWorkers, out _);
         BurstWorkload? workload = _job is OpenAsyncBurstRunnerJob burst ?
-            burst.GetWorkload(benchmark.Descriptor.WorkloadMethod.Name,
+            OpenAsyncBurstRunner.GetWorkload(burst,
                 benchmark.Parameters.Items.Single(p => p.Name == "State").Value?.ToString() ??
                     throw new InvalidOperationException("Missing burst pool state.")) : null;
 
@@ -286,7 +286,7 @@ public sealed class AsyncHealthDiagnoser(
                 AppliedAdditionalRttMilliseconds = BenchmarkNetworkScope.ReadAppliedRtt(_job),
                 SamplingProfile = (_job as OpenAsyncBurstRunnerJob)?.SamplingProfile ?? "Default",
                 ConcurrentWorkers = workload == null ? (int?)null :
-                    OpenAsyncBurstRunnerJob.ConcurrentWorkers,
+                    OpenAsyncBurstRunner.ConcurrentWorkers,
                 WorkloadWaves = workload?.Waves,
                 SteadyOperationsPerWorker = workload?.OperationsPerWorker,
                 ThreadPoolHealthObserver.ProbeIntervalMilliseconds,

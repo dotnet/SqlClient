@@ -48,14 +48,6 @@ parameters:
     values:
       - net10.0
 
-  - name: runnerProfile
-    displayName: Runner profile (100ms profile is Linux burst-only)
-    type: string
-    default: default
-    values:
-      - default
-      - openasync-extended-100ms
-
   # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
   # Slightly higher than the nightly pipeline's default because the baseline side is BUILT FROM
   # SOURCE here (two full driver builds) instead of restored as a package.
@@ -156,10 +148,10 @@ variables:
   # defaults match runnerconfig.default.jsonc), so they live in the common chunk.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
-      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -RunnerProfile ${{ parameters.runnerProfile }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }} -TestTimeoutMinutes ${{ parameters.testTimeoutMinutes }}'
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }} -TestTimeoutMinutes ${{ parameters.testTimeoutMinutes }}'
   - ${{ else }}:
     - name: PerfArgsCommon
-      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --runner-profile ${{ parameters.runnerProfile }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }} --test-timeout-minutes ${{ parameters.testTimeoutMinutes }}'
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }} --test-timeout-minutes ${{ parameters.testTimeoutMinutes }}'
 
   # Source-baseline flags, omitted entirely when no baseline is requested: on bash an empty value
   # would let arg parsing consume the following flag as the baseline ref and corrupt every

@@ -20,11 +20,12 @@ three timing iterations, one invocation per iteration and a five-minute timeout.
 requires supported Linux SQL-loopback netem; unsupported requests fail explicitly.
 
 The default `Burst` profile performs one operation per worker. `Extended` keeps that cold
-wave for `Empty`, but uses 16 waves and fixed `SteadyOperationsPerWorker` counts for the other
-states. Work counts drive both execution and BDN normalization; first-worker records survive
-ordinary-record truncation. Remove retired `OpenClose/...` entries from older private profiles.
-See the [opt-in 100ms profile](profiles/openasync-extended-100ms.jsonc) and its
-[measured sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
+wave for `Empty`, but uses 16 waves and benchmark-defined work counts for the other states:
+Warm=20, Oversubscribed=5, NonPooled=1 per worker. Work counts drive both execution and BDN
+normalization; first-worker records survive ordinary-record truncation.
+Configure RTT and sampling in the standard `runnerconfig.jsonc` (or its checked-in
+`runnerconfig.default.jsonc` template), not a separate profile file.
+See the [100ms settings and sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
 
 The compact report preserves baseline/current deltas, phase coverage and raw provenance.
 Its current dispatch-p99 indicator is green below 1ms, yellow from 1-10ms inclusive, and red

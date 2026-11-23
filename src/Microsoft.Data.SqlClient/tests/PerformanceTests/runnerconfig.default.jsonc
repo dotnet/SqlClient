@@ -41,7 +41,9 @@
         "OpenAsyncBurstRunnerConfig": {
             "Enabled": true,
             "ProcessIsolation": "PerCase",
+            // Set 100 for a Linux SQL-loopback latency run; leave 0 on Windows.
             "AdditionalRttMilliseconds": 0,
+            // Extended uses the fixed per-state work counts defined by OpenAsyncBurstRunner.
             "SamplingProfile": "Burst",
             "LaunchCount": 1,
             "IterationCount": 3,

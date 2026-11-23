@@ -26,17 +26,15 @@ and optional `AdditionalRttMilliseconds` (zero by default). These are independen
 annotations. The shared executable dispatcher handles direct CLI and pipeline runs, retains
 per-process artifacts, and verifies owned Linux SQL-only shaping when RTT is requested.
 Execution conditions also participate in ordinary timing comparisons. See the
-[execution protocol and calibrated opt-in profile](async-health.md#execution-and-workload-settings).
+[execution protocol and workload settings](async-health.md#execution-and-workload-settings).
 
-To queue the calibrated latency workload, select `platform=linux` and
-`runnerProfile=openasync-extended-100ms`. This loads the checked-in burst-only profile instead
-of merging it into the full suite. Set `useConnectionPoolV2=true` to retain the calibrated V2
-configuration; queue-time behaviour switches still take precedence over profile values.
-`confirmationRuns=1` runs one matched baseline/current pass without additional confirmation
-passes, preserving the profile's warmup and timing iteration counts.
-The default `runnerProfile=default` retains the existing live `runnerconfig.jsonc`.
-Both entrypoints accept the corresponding `--runner-profile` / `-RunnerProfile` option;
-the Windows entrypoint rejects the Linux-only 100ms profile before setup.
+All runner settings live in the standard `runnerconfig.jsonc`, created from
+`runnerconfig.default.jsonc` on a clean checkout. There is no separate preset file or
+`runnerProfile` queue parameter. For a focused Linux 100ms run, configure the burst entry with
+`SamplingProfile=Extended`, `AdditionalRttMilliseconds=100`, and `TimeoutMinutes=10`,
+disable unrelated runner entries, and select `useConnectionPoolV2=true` at queue time.
+The benchmark itself defines the per-state work counts. Defaults remain unshaped; leave RTT
+at zero on Windows. `confirmationRuns=1` runs one matched pass without changing BDN iterations.
 
 ## Contents
 

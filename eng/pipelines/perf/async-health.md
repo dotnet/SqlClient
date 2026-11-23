@@ -29,22 +29,26 @@ only its own pool. Query work keeps network waits and pool contention visible.
 | `SamplingProfile` | Work per invocation |
 | --- | --- |
 | `Burst` (default) | One wave of 64 workers, one operation each. |
-| `Extended` | Empty remains one cold wave. Other states use 16 waves (1,024 worker starts), with fixed `SteadyOperationsPerWorker` counts. |
+| `Extended` | Empty remains one cold wave. Other states use 16 waves (1,024 worker starts), with work counts defined on `OpenAsyncBurstRunner`. |
 
-Extended counts are required for `OpenQueryClose/Warm`, `OpenQueryClose/Oversubscribed` and
-`OpenQueryClose/NonPooled`; remove retired `OpenClose/...` entries from private configs.
-Invalid/missing counts fail rather than being auto-calibrated. The complete work count drives
+The benchmark defines 20 operations per worker for Warm, 5 for Oversubscribed, and 1 for
+NonPooled. These are not configuration settings; remove old `SteadyOperationsPerWorker` entries.
+The complete work count drives
 BDN normalization: 16 waves of 64 workers doing 20 operations means 20,480, not 64.
 Both sides use identical counts. Extended jobs use all configured interleaved repetitions,
 without nesting another confirmation loop.
 
 ### Calibrated 100ms example
 
-Select `platform=linux`, `runnerProfile=openasync-extended-100ms`, and `useConnectionPoolV2=true`
-to use the [checked-in profile](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/profiles/openasync-extended-100ms.jsonc).
-It replaces the full-suite config; private credential injection/redaction and queue-time switch
-overrides still apply. The normal `default` profile stays unshaped. `confirmationRuns=1` requests
-one matched pass without reducing BDN iterations.
+Use the standard `runnerconfig.jsonc`, created from
+[`runnerconfig.default.jsonc`](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.default.jsonc)
+when absent. For a Linux latency run, set `OpenAsyncBurstRunnerConfig.SamplingProfile` to
+`Extended`, `AdditionalRttMilliseconds` to `100`, and `TimeoutMinutes` to `10`.
+Enable `UseConnectionPoolV2` and disable unrelated runner entries for a focused run.
+On a clean pipeline checkout, make those selections in `runnerconfig.default.jsonc`;
+queue-time behavior switches still override the file, so select `useConnectionPoolV2=true`.
+There is no separate profile file or `runnerProfile` selector. The defaults remain unshaped
+and cross-platform. `confirmationRuns=1` requests one matched pass without reducing BDN iterations.
 
 Local 16-CPU Linux calibration against current/7.1.2 used one warmup, one timing iteration and
 the diagnostic extra iteration. These fixed counts produced:
@@ -56,8 +60,8 @@ the diagnostic extra iteration. These fixed counts produced:
 | NonPooled | 1 | 52.6s / 52.5s |
 
 Each window retained 1,312-2,104 dispatch probes, 1,024 first-worker starts and no missing probes.
-The profile keeps three timing iterations and a ten-minute timeout; its full three-repetition
-runtime was not calibrated. RTT also lengthens prewarming. This is not a calibrated zero-RTT
+The latency configuration keeps three timing iterations and a ten-minute timeout; its full
+three-repetition runtime was not calibrated. RTT also lengthens prewarming. This is not a calibrated zero-RTT
 profile or a guarantee for other hosts; check the recorded sampling evidence. Sustained non-pooled
 work can exhaust TCP source ports: retain that failure rather than changing shared-host TCP settings.
 

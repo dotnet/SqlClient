@@ -60,7 +60,6 @@ failOnRegression="false"
 runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
-runnerProfile="default"
 # Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
 # default untouched".  These are written into the runner config the benchmarks run against AND, via
 # the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
@@ -86,7 +85,6 @@ usage() {
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
-         "[--runner-profile default|openasync-extended-100ms]" \
          "[--test-timeout-minutes <11..1440>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
@@ -105,7 +103,6 @@ while [[ $# -gt 0 ]]; do
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
-        --runner-profile) runnerProfile="$2"; shift 2 ;;
         --test-timeout-minutes) testTimeoutMinutes="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
@@ -138,11 +135,6 @@ case "${runMode}" in
     interleaved|sequential) ;;
     *) echo "ERROR: --run-mode must be 'interleaved' or 'sequential' (got '${runMode}')." >&2
        usage; exit 2 ;;
-esac
-case "${runnerProfile}" in
-    default|openasync-extended-100ms) ;;
-    *) echo "ERROR: --runner-profile must be default or openasync-extended-100ms." >&2
-       exit 2 ;;
 esac
 # The three baseline selectors describe different builds/configs of the same "baseline" pass, so
 # requesting more than one is always a mistake; fail fast rather than silently honouring one of them.
@@ -428,10 +420,6 @@ RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
 RESULTS_RUNNER_CONFIG="${RESULTS_DIR}/runnerconfig.json"
 SOURCE_RUNNER_CONFIG="${PERF_DIR}/runnerconfig.jsonc"
-if [[ "${runnerProfile}" != "default" ]]; then
-    SOURCE_RUNNER_CONFIG="${PERF_DIR}/profiles/${runnerProfile}.jsonc"
-fi
-echo "Runner profile: ${runnerProfile}"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty

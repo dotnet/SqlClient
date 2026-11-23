@@ -163,8 +163,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         BenchmarkCase benchmark = cases[index];
                         string state = benchmark.Parameters.Items.Single(p => p.Name == "State")
                             .Value.ToString();
-                        int operations = burst.GetWorkload(
-                            benchmark.Descriptor.WorkloadMethod.Name, state).OperationsPerInvoke;
+                        int operations = OpenAsyncBurstRunner.GetWorkload(burst, state)
+                            .OperationsPerInvoke;
                         cases[index] = BenchmarkExecutionPlan.WithOperationsPerInvoke(
                             benchmark, operations);
                     }
