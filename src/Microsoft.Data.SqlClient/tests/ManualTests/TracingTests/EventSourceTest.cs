@@ -10,6 +10,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("Set", "3")]
     public class EventSourceTest
     {
+        // InvalidOperationException: Collection was modified while enumerating listener event IDs.
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventSourceTestAll()
         {

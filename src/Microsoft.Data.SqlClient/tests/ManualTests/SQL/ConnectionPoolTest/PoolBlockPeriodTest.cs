@@ -26,6 +26,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This uses deliberately nonexistent Azure hostnames to test client-side pool blocking; it
         // never connects to the configured Managed Instance.
+        // Build 184441 failed its timing assertion, then passed the same case/job on rerun.
+        [Trait("category", "flaky")]
         [OuterLoop()]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.windows.net)", new object[] { AzureEndpointSample })]

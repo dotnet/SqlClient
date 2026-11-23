@@ -82,17 +82,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-
-        // Flaky under CI load only (never reproduces locally): the simulated transient error
-        // occasionally surfaces on the retry login as well, so the async open propagates the
-        // SqlException instead of succeeding. This is the transient-fault retry timing behavior
-        // this test guards, not a harness race, so it cannot be made deterministic here.
-        //
-        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.TransientFault_RetryEnabled_ShouldSucceed_Async(errorCode: 40613)
-        //   Microsoft.Data.SqlClient.SqlException :
-        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
-        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
-        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
+        /// <summary>
+        /// Retries one login SQL error on the same server without sharing a pool with another case.
+        /// </summary>
         [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
@@ -109,7 +101,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                ConnectRetryInterval = 1,
                 Encrypt = SqlConnectionEncryptOption.Optional,
 #if NETFRAMEWORK
                 #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
@@ -118,10 +111,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
@@ -140,14 +134,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                ConnectRetryInterval = 1,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
@@ -166,12 +162,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Equal((int)errorCode, e.Number);
@@ -179,6 +176,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        /// <summary>
+        /// Propagates the configured login error when connect retry is disabled.
+        /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -194,12 +195,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
             Assert.Equal((int)errorCode, e.Number);
@@ -207,51 +209,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        // Flaky under CI load only (never reproduces locally): the retry login can exhaust
-        // the connect-timeout budget on a slow agent and surface a post-login Connection
-        // Timeout (observed pre-login handshake ~4.4s), so the async open propagates a
-        // SqlException instead of succeeding. Same CI-load post-login timing family as the
-        // already-quarantined sibling TransientFault_RetryEnabled_ShouldSucceed_Async; not a
-        // driver defect.
-        //
-        //     [xUnit.net 00:00:11.76]     Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(multiSubnetFailoverEnabled: True) [FAIL]
-        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(multiSubnetFailoverEnabled: True) [5 s]
-        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  ... The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=4393; [Login] initialization=0; authentication=0; [Post-Login] complete=1014;
-        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out.
-        //     Stack Trace:
-        //          at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-        //        at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning(Boolean callerHasConnectionLock, Boolean asyncClose)
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniError(TdsParserStateObject stateObj, UInt32 error)
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniSyncOverAsync()
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadNetworkPacket()
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadByte(Byte& value)
-        //        at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionOptions connectionOptions, SqlCredential credential, TimeoutTimer timeout)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionOptions connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
-        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
-        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
-        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
+        /// <summary>
+        /// Opens after a blocked pre-login response is released, with either MultiSubnetFailover setting.
+        /// </summary>
         [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled)
         {
-            using TransientDelayTdsServer server = new(
-                new TransientDelayTdsServerArguments()
-                {
-                    IsEnabledTransientDelay = true,
-                    DelayDuration = TimeSpan.FromMilliseconds(1000),
-                });
+            using GatedTdsServer server = new(new TdsServerArguments());
             server.Start();
+            server.WithholdPreLoginResponses();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5,
+                ConnectTimeout = 30,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
@@ -261,17 +235,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-            await connection.OpenAsync();
+            Task open = connection.OpenAsync();
+            try
+            {
+                Assert.Same(server.PreLoginBlocked, await Task.WhenAny(
+                    server.PreLoginBlocked, open, Task.Delay(TimeSpan.FromSeconds(30))));
+                Assert.False(open.IsCompleted);
+            }
+            finally
+            {
+                server.ReleasePreLoginResponses();
+            }
+            await open;
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            // The transient delay (1s) is shorter than the connect timeout (5s), so the
-            // connection succeeds. With MultiSubnetFailover the driver may fan out parallel
-            // attempts across the dual-stack resolution of localhost, but the exact number
-            // is a DNS/timing-dependent implementation detail, so we only assert that at
-            // least one completed pre-login occurred.
-            Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1,
-                "Expected at least one completed pre-login.");
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, server.Login7Count);
         }
 
         [Theory]
@@ -289,8 +269,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
-                ConnectTimeout = 5,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                ConnectTimeout = 30,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -301,6 +281,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
@@ -308,20 +289,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
 
-            if (multiSubnetFailoverEnabled)
-            {
-                // With MultiSubnetFailover the driver may fan out parallel attempts across
-                // the dual-stack resolution of localhost; the exact count is a DNS/timing-
-                // dependent implementation detail, so only assert a completed pre-login.
-                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1,
-                    "Expected at least one completed pre-login.");
-            }
-            else
-            {
-                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
-            }
+            Assert.Equal(1, server.Login7Count);
         }
 
         [Theory]
@@ -339,10 +309,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5,
+                ConnectTimeout = 30,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
@@ -351,6 +321,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
@@ -358,20 +329,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
 
-            if (multiSubnetFailoverEnabled)
-            {
-                // With MultiSubnetFailover the driver may fan out parallel attempts across
-                // the dual-stack resolution of localhost; the exact count is a DNS/timing-
-                // dependent implementation detail, so only assert a completed pre-login.
-                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1,
-                    "Expected at least one completed pre-login.");
-            }
-            else
-            {
-                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
-            }
+            Assert.Equal(1, server.Login7Count);
         }
 
         [Fact]
