@@ -6,11 +6,9 @@ using System;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Configures and validates the benchmark's BDN settings.</summary>
+/// <summary>Validates the benchmark's BDN settings.</summary>
 public sealed class OpenAsyncBurstRunnerJob : RunnerJob
 {
-    public OpenAsyncBurstRunnerJob() => RunStrategy = "Monitoring";
-
     public override void ValidateExecution()
     {
         base.ValidateExecution();

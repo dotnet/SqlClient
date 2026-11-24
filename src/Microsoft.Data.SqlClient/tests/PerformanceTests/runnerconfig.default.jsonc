@@ -39,6 +39,7 @@
             "Enabled": true,
             "ProcessIsolation": "PerCase",
             "AdditionalRttMilliseconds": 100,
+            "RunStrategy": "Monitoring",
             "LaunchCount": 1,
             "IterationCount": 3,
             "InvocationCount": 1,
