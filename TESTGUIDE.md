@@ -44,6 +44,9 @@ authentication failure during TLS negotiation. Missing certificates/private keys
 protocol handlers still fail disposal; the default remains strict. I/O exceptions are tolerated only
 when identified at the physical transport boundary, not merely by their exception type. Handler and
 log-writer I/O failures (including failures while logging another error) are reported during disposal.
+Connection-close logging failures are recorded even after the session leaves the active collection.
+Disposal retains the endpoint until workers drain; concurrent disposal does not detach it from
+an in-flight handler requesting an abort.
 Derived simulators can call `AbortConnection(session)` from a pre-login handler and return an empty
 response to reset only that physical socket. This does not join the worker or stop the listener;
 normal session cleanup still runs, and unexpected handler failures after the abort remain errors.
@@ -63,6 +66,9 @@ The manual `CertificateTestWithTdsServer` matrix requires an untrusted self-sign
 Its setup and cleanup scripts use `-SkipTrust` to leave root trust stores unchanged, and the test
 asserts `UntrustedRoot` before connecting. Installing that certificate as trusted invalidates
 the negative cases; explicit certificate pinning and `TrustServerCertificate` provide the success controls.
+Certificate generation rejects failing PowerShell and native-command exit codes. Constructor-failure
+cleanup removes only simulator-owned certificates/files, never SQL Server registry settings or
+services, and preserves the setup failure if cleanup also fails.
 
 ## CI Platform Coverage
 

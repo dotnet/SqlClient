@@ -326,7 +326,14 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 }
                 // Remove the existing connection from the list
                 Connections.Remove(connection);
-                Log($"{GetType().Name} {EndpointName} Connection Closed");
+                try
+                {
+                    Log($"{GetType().Name} {EndpointName} Connection Closed");
+                }
+                catch (Exception ex)
+                {
+                    _errors.Add(ex);
+                }
             }
         }
 
