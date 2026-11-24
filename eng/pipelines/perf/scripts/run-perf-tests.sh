@@ -821,7 +821,7 @@ if [[ -n "${baselineLabel}" ]]; then
     printf '%s\n' "${baselineLabel}" > "${RESULTS_DIR}/baseline-label.txt"
 fi
 
-comparisonScript=""
+comparisonStatus=0
 if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     ################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
@@ -845,8 +845,7 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
 
     prepare_runner_config
 
-    comparisonScript="interleave_perf.py"
-    comparisonArgs=(
+    interleave_args=(
         --baseline-exe-dir "${baselineExeDir}"
         --current-exe-dir "${currentExeDir}"
         --assembly "PerformanceTests.dll"
@@ -860,16 +859,17 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     # switch off vs on), even though both are otherwise the same build/env; every other baseline
     # flavour keeps sharing the single ambient RUNNER_CONFIG set above.
     if [[ -n "${switchUnderTest}" ]]; then
-        comparisonArgs+=(
+        interleave_args+=(
             --baseline-runner-config "${BASELINE_RUNNER_CONFIG}"
             --current-runner-config "${CURRENT_RUNNER_CONFIG}"
         )
     fi
     if [[ "${failOnRegression}" == "true" ]]; then
         echo "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> ${regressionThreshold}%) will fail the run."
-        comparisonArgs+=(--fail-on-regression)
+        interleave_args+=(--fail-on-regression)
     fi
     echo "Running interleaved benchmarks (best-of-${confirmationRuns}) ..."
+    python3 "${SCRIPT_DIR}/interleave_perf.py" "${interleave_args[@]}" || comparisonStatus=$?
 
 elif [[ -n "${baselineLabel}" ]]; then
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
@@ -890,8 +890,7 @@ elif [[ -n "${baselineLabel}" ]]; then
 
     echo "Comparing current branch against baseline ${baselineLabel} ..."
     mkdir -p "${RESULTS_DIR}/comparison"
-    comparisonScript="compare_perf.py"
-    comparisonArgs=(
+    compare_args=(
         --baseline-dir "${RESULTS_DIR}/baseline"
         --current-dir "${RESULTS_DIR}/current"
         --baseline-version "${baselineLabel}"
@@ -902,8 +901,11 @@ elif [[ -n "${baselineLabel}" ]]; then
     # §3 gate: only a candidate-slower regression fails, and only when explicitly enabled.
     if [[ "${failOnRegression}" == "true" ]]; then
         echo "Regression gate ENABLED: a candidate-slower regression (> ${regressionThreshold}%) will fail the run."
-        comparisonArgs+=(--fail-on-regression)
+        compare_args+=(--fail-on-regression)
     fi
+    python3 "${SCRIPT_DIR}/compare_perf.py" "${compare_args[@]}" || comparisonStatus=$?
+    # Surface the comparison as the top-level run summary (collect-results.yml attaches results/*.md).
+    cp "${RESULTS_DIR}/comparison/comparison.md" "${RESULTS_DIR}/summary.md"
 
 else
     # --- No baseline: current-only run (no comparison) --------------------------------------------
@@ -911,26 +913,11 @@ else
     run_pass "current" "${PERF_PROJECT}"
 fi
 
-# Run both reports before propagating a failure; the interleaver also collects its artifacts.
-comparisonStatus=0
-if [[ -n "${comparisonScript}" ]]; then
-    python3 "${SCRIPT_DIR}/${comparisonScript}" "${comparisonArgs[@]}" || comparisonStatus=$?
-fi
-healthStatus=0
-python3 "${SCRIPT_DIR}/benchmark_health_report.py" --results-dir "${RESULTS_DIR}" || healthStatus=$?
-
-if [[ "${comparisonScript}" == "compare_perf.py" ]] &&
-        [[ "${comparisonStatus}" -eq 0 || -f "${RESULTS_DIR}/comparison/comparison.md" ]]; then
-    cp "${RESULTS_DIR}/comparison/comparison.md" "${RESULTS_DIR}/summary.md"
-fi
+python3 "${SCRIPT_DIR}/benchmark_health_report.py" --results-dir "${RESULTS_DIR}"
 
 if [[ "${comparisonStatus}" -ne 0 ]]; then
-    echo "ERROR: Performance comparison failed (exit ${comparisonStatus}); async-health reporting exit: ${healthStatus}." >&2
+    echo "ERROR: Performance comparison failed (exit ${comparisonStatus}); async-health report retained." >&2
     exit "${comparisonStatus}"
-fi
-if [[ "${healthStatus}" -ne 0 ]]; then
-    echo "ERROR: Benchmark async-health reporting failed (exit ${healthStatus})." >&2
-    exit "${healthStatus}"
 fi
 
 echo "Collected results:"
