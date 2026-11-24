@@ -55,7 +55,7 @@ public class BenchmarkExecutionPlanTests
 
     /// <summary>A changed discovery result must fail rather than execute a different child case.</summary>
     [Fact]
-    public void Select_ChangedWorkload_Throws()
+    public void Select_ChangedCaseAtSelectedIndex_Throws()
     {
         // Arrange
         using BenchmarkRunInfo info = BenchmarkConverter.TypeToBenchmarks(
@@ -64,32 +64,14 @@ public class BenchmarkExecutionPlanTests
         var selection = Assert.Single(
             BenchmarkExecutionPlan.Create("Mixed", info.BenchmarksCases, [0], job));
         var changed = info.BenchmarksCases.ToArray();
-        changed[0] = BenchmarkExecutionPlan.WithOperationsPerInvoke(changed[0], 1024);
-
-        // Act / Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            BenchmarkExecutionPlan.Select(selection, "Mixed", changed, job));
-        Assert.Throws<InvalidOperationException>(() =>
-            BenchmarkExecutionPlan.Select(selection, "Different", info.BenchmarksCases, job));
-    }
-
-    /// <summary>Changing normalization preserves the benchmark, parameters, job and lifecycle methods.</summary>
-    [Fact]
-    public void WithOperationsPerInvoke_ExpandedBatch_PreservesCase()
-    {
-        // Arrange
-        using BenchmarkRunInfo info = BenchmarkConverter.TypeToBenchmarks(
-            typeof(ProcessPlanBenchmarkFixture), DefaultConfig.Instance);
-        BenchmarkCase original = info.BenchmarksCases[0];
+        (changed[0], changed[1]) = (changed[1], changed[0]);
 
         // Act
-        BenchmarkCase updated = BenchmarkExecutionPlan.WithOperationsPerInvoke(original, 20480);
+        Exception? error = Record.Exception(() =>
+            BenchmarkExecutionPlan.Select(selection, "Mixed", changed, job));
 
         // Assert
-        Assert.Equal(20480, updated.Descriptor.OperationsPerInvoke);
-        Assert.Same(original.Descriptor.WorkloadMethod, updated.Descriptor.WorkloadMethod);
-        Assert.Same(original.Parameters, updated.Parameters);
-        Assert.Equal(original.Job, updated.Job);
+        Assert.IsType<InvalidOperationException>(error);
     }
 }
 #endif

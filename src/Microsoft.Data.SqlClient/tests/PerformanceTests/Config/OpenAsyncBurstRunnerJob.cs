@@ -3,9 +3,7 @@
 
 #nullable enable
 using System;
-using System.Linq;
 using System.Text.Json.Serialization;
-using BenchmarkDotNet.Running;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
@@ -30,13 +28,6 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
 
     private void ApplyNetworkPolicy() =>
         AdditionalRttMilliseconds = OperatingSystem.IsLinux() ? 100 : 0;
-
-    internal override int GetOperationsPerInvoke(BenchmarkCase benchmark)
-    {
-        var state = (OpenAsyncBurstRunner.PoolState)benchmark.Parameters.Items
-            .Single(p => p.Name == nameof(OpenAsyncBurstRunner.State)).Value!;
-        return OpenAsyncBurstRunner.GetWorkload(this, state).OperationsPerInvoke;
-    }
 
     public override void ValidateExecution()
     {

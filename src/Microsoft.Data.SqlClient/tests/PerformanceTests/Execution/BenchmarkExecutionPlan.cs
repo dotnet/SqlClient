@@ -68,15 +68,4 @@ internal static class BenchmarkExecutionPlan
         }));
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
     }
-
-    internal static BenchmarkCase WithOperationsPerInvoke(BenchmarkCase benchmark, int operations)
-    {
-        Descriptor old = benchmark.Descriptor;
-        var descriptor = new Descriptor(old.Type, old.WorkloadMethod,
-            old.GlobalSetupMethod, old.GlobalCleanupMethod,
-            old.IterationSetupMethod, old.IterationCleanupMethod,
-            old.WorkloadMethodDisplayInfo, old.Baseline, old.Categories,
-            operations, old.MethodIndex);
-        return BenchmarkCase.Create(descriptor, benchmark.Job, benchmark.Parameters, benchmark.Config);
-    }
 }

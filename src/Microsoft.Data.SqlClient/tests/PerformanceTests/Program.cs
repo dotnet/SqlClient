@@ -141,16 +141,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         .Select(item => item.index).ToArray();
                 if (selectedIndexes.Length == 0) continue;
                 BenchmarkExecutionPlan.ValidateIndexes(cases, selectedIndexes);
-                foreach (int index in selectedIndexes)
-                {
-                    BenchmarkCase benchmark = cases[index];
-                    int operations = job.GetOperationsPerInvoke(benchmark);
-                    if (operations != benchmark.Descriptor.OperationsPerInvoke)
-                    {
-                        cases[index] = BenchmarkExecutionPlan.WithOperationsPerInvoke(
-                            benchmark, operations);
-                    }
-                }
                 matched = true;
                 if (job is CommandRunnerJob commandJob)
                 {

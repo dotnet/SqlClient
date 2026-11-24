@@ -6,6 +6,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Filters;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
@@ -14,12 +16,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests;
 /// waiter wakeup and non-pooled login. Startup observations retain first-open effects.
 /// </summary>
 [AsyncHealthDiagnoser]
+[ConfigAttribute(typeof(OpenAsyncBurstRunner.WorkloadConfig))]
 public class OpenAsyncBurstRunner
 {
     public enum PoolState { Empty, Warm, Oversubscribed, NonPooled }
 
-    internal const int ConcurrentWorkers = 64;
+    private const int ConcurrentWorkers = 64;
     private const int ExtendedWaves = 16;
+    private const int WarmOperationsPerWorker = 20;
+    private const int OversubscribedOperationsPerWorker = 5;
+    private const int NonPooledOperationsPerWorker = 1;
 
     [Params(PoolState.Empty, PoolState.Warm, PoolState.Oversubscribed, PoolState.NonPooled)]
     public PoolState State { get; set; }
@@ -27,15 +33,12 @@ public class OpenAsyncBurstRunner
     private readonly Config _config = Config.Load();
     // BenchmarkDotNet runs GlobalSetup before executing the workload.
     private string _connectionString = null!;
-    private BurstWorkload _openQueryClose = null!;
     private int _originalMinimumWorkers;
     private int _originalMinimumIo;
 
     [GlobalSetup]
     public void SetupOpenQueryClose()
     {
-        _openQueryClose = GetWorkload(_config.Benchmarks.OpenAsyncBurstRunnerConfig, State);
-
         ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
         if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))
         {
@@ -102,28 +105,49 @@ public class OpenAsyncBurstRunner
         SqlConnection.ClearPool(connection);
     }
 
-    internal static BurstWorkload GetWorkload(OpenAsyncBurstRunnerJob job, PoolState state)
+    /// <summary>Selects one benchmark method per pool state for the configured profile.</summary>
+    public sealed class WorkloadConfig : ManualConfig
     {
-        job.ValidateExecution();
-        // Fixed per-worker work from the 100ms calibration; Empty remains one cold burst.
-        int operations = state switch
+        public WorkloadConfig()
         {
-            PoolState.Empty or PoolState.NonPooled => 1,
-            PoolState.Warm => 20,
-            PoolState.Oversubscribed => 5,
-            _ => throw new ArgumentException("Unknown burst pool state.", nameof(state))
-        };
-        return job.SamplingProfile == "Extended" && state != PoolState.Empty
-            ? new BurstWorkload(ExtendedWaves, operations)
-            : new BurstWorkload(1, 1);
+            bool extended = Config.Load().Benchmarks.OpenAsyncBurstRunnerConfig
+                .SamplingProfile == "Extended";
+            AddFilter(new SimpleFilter(benchmark =>
+            {
+                string workload = (extended, benchmark.Parameters[nameof(State)]) switch
+                {
+                    (true, PoolState.Warm) => nameof(OpenQueryCloseWarmExtended),
+                    (true, PoolState.Oversubscribed) => nameof(OpenQueryCloseOversubscribedExtended),
+                    (true, PoolState.NonPooled) => nameof(OpenQueryCloseNonPooledExtended),
+                    _ => nameof(OpenQueryClose)
+                };
+                return benchmark.Descriptor.WorkloadMethod.Name == workload;
+            }));
+        }
     }
 
     [Benchmark(OperationsPerInvoke = ConcurrentWorkers)]
-    public async Task OpenQueryClose()
+    public Task OpenQueryClose() => RunOpenQueryClose(1, 1);
+
+    [Benchmark(OperationsPerInvoke = ConcurrentWorkers * ExtendedWaves * WarmOperationsPerWorker)]
+    public Task OpenQueryCloseWarmExtended() =>
+        RunOpenQueryClose(ExtendedWaves, WarmOperationsPerWorker);
+
+    [Benchmark(OperationsPerInvoke =
+        ConcurrentWorkers * ExtendedWaves * OversubscribedOperationsPerWorker)]
+    public Task OpenQueryCloseOversubscribedExtended() =>
+        RunOpenQueryClose(ExtendedWaves, OversubscribedOperationsPerWorker);
+
+    [Benchmark(OperationsPerInvoke =
+        ConcurrentWorkers * ExtendedWaves * NonPooledOperationsPerWorker)]
+    public Task OpenQueryCloseNonPooledExtended() =>
+        RunOpenQueryClose(ExtendedWaves, NonPooledOperationsPerWorker);
+
+    private async Task RunOpenQueryClose(int waves, int operationsPerWorker)
     {
         var invocation = AsyncHealthDiagnoser.BeginInvocation(
-            _openQueryClose.WorkerStarts, trackConnectionOpens: true);
-        for (int wave = 0; wave < _openQueryClose.Waves; wave++)
+            ConcurrentWorkers * waves, trackConnectionOpens: true);
+        for (int wave = 0; wave < waves; wave++)
         {
             var tasks = new Task[ConcurrentWorkers];
             for (int i = 0; i < tasks.Length; i++)
@@ -132,8 +156,7 @@ public class OpenAsyncBurstRunner
                 var first = invocation?.Offer(worker);
                 tasks[i] = Task.Run(async () =>
                 {
-                    for (int operationIndex = 0;
-                        operationIndex < _openQueryClose.OperationsPerWorker; operationIndex++)
+                    for (int operationIndex = 0; operationIndex < operationsPerWorker; operationIndex++)
                     {
                         var operation = operationIndex == 0 ? first : invocation?.Offer(worker);
                         operation?.Start();
@@ -165,11 +188,4 @@ public class OpenAsyncBurstRunner
         }
         invocation?.Complete();
     }
-}
-
-/// <summary>One benchmark-owned work definition drives execution and BDN normalization.</summary>
-public sealed record BurstWorkload(int Waves, int OperationsPerWorker)
-{
-    public int WorkerStarts => checked(OpenAsyncBurstRunner.ConcurrentWorkers * Waves);
-    public int OperationsPerInvoke => checked(WorkerStarts * OperationsPerWorker);
 }

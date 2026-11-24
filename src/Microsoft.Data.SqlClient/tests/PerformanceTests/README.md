@@ -35,7 +35,9 @@ them; Empty clears only its own pool.
 
 `Burst` (default) performs one operation per worker. `Extended` keeps that cold wave for `Empty`.
 Other states use 16 waves of 64 workers, with 20/5/1 operations per worker for
-Warm/Oversubscribed/NonPooled. Those counts drive both execution and BDN normalization.
+Warm/Oversubscribed/NonPooled. Each extended workload declares its own
+`[Benchmark(OperationsPerInvoke = ...)]` count for BDN normalization. The single-wave cases share
+`OpenQueryClose` and its operation count.
 
 For a focused Linux run, set `SamplingProfile=Extended` and `TimeoutMinutes=10` in the standard
 runner config, disable unrelated runners, and select `useConnectionPoolV2=true` at queue time.
