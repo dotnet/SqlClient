@@ -278,7 +278,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         private sealed class RetryCertificateFixture : CertificateFixtureBase
         {
             public X509Certificate2 CreateServerCertificate()
-                => CreateCertificate("localhost", new[] { "localhost" }, new[] { "127.0.0.1" });
+                => CreateCertificate("localhost", new[] { "localhost" }, new[] { "127.0.0.1" },
+                    keyStorageFlags: X509KeyStorageFlags.Exportable);
         }
 
         [Theory]

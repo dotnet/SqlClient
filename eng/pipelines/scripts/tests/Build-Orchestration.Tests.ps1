@@ -177,6 +177,6 @@ Describe 'PowerShell module restore wiring' {
         $certificate = Get-Content `
             (Join-Path $repoRoot 'src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1') -Raw
         $certificate | Should -Not -Match 'Install-(Module|PSResource)'
-        $certificate | Should -Match 'openssl version'
+        $certificate | Should -Match 'Invoke-CertificateNativeCommand openssl @\("version"\)'
     }
 }
