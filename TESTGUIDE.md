@@ -21,6 +21,9 @@ certificates, missing keys, and protocol-handler failures still fail disposal.
 I/O exceptions are tolerated only when identified at the physical transport boundary, not merely
 by their exception type. Handler and log-writer I/O failures, including failures while logging
 another error, are reported during disposal.
+Connection-close logging failures are recorded even after the session leaves the active collection.
+Disposal retains the endpoint until workers drain; concurrent disposal does not detach it from
+an in-flight handler requesting an abort.
 Derived simulators can call `AbortConnection(session)` from a pre-login handler and return an empty
 response to reset only that physical socket. This does not join the worker or stop the listener;
 normal session cleanup still runs, and unexpected handler failures after the abort remain errors.
@@ -33,3 +36,6 @@ and verify actual pool-wait admission before release; elapsed time or transport 
 not evidence of successful pool waiting.
 `CertificateTestWithTdsServer` uses `makepfxcert.ps1 -SkipTrust` and corresponding cleanup to
 leave root trust stores unchanged; certificates must remain untrusted for rejection cases.
+Certificate generation rejects failing PowerShell and native-command exit codes. Constructor-failure
+cleanup removes only simulator-owned certificates/files, never SQL Server registry settings or
+services, and preserves the setup failure if cleanup also fails.
