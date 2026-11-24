@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -184,6 +185,13 @@ namespace Microsoft.SqlServer.TDS.Servers
         public virtual void CloseSession(ITDSServerSession session)
         {
             // Do nothing
+        }
+
+        /// <summary>
+        /// Called before the server starts the TLS handshake on a connection.
+        /// </summary>
+        public virtual void OnTlsHandshakeStarting(ITDSServerSession session, Stream transport)
+        {
         }
 
         /// <summary>
@@ -968,6 +976,19 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             return left.SequenceEqual<byte>(right);
+        }
+
+        /// <summary>
+        /// Deliberately reset one active session's transport without stopping the listener or joining its worker.
+        /// A protocol handler should return an empty response after requesting the abort.
+        /// </summary>
+        protected void AbortConnection(ITDSServerSession session)
+        {
+            if (_endpoint == null)
+            {
+                throw new InvalidOperationException("Server is not started.");
+            }
+            _endpoint.AbortConnection(session);
         }
 
         public virtual void Dispose()

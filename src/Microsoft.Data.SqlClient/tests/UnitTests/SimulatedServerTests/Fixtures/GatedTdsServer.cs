@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
+
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
@@ -18,12 +21,18 @@ internal sealed class GatedTdsServer : TdsServer
 {
     private readonly ManualResetEventSlim _release = new(true);
     private readonly TaskCompletionSource<bool> _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly bool _abortFirstConnection;
+    private ITDSServerSession? _abortedSession;
+    private ITDSServerSession? _blockedSession;
     private int _disposed;
 
     public Task PreLoginBlocked => _entered.Task;
+    public uint? AbortedSessionId => Volatile.Read(ref _abortedSession)?.SessionID;
+    public uint? BlockedSessionId => Volatile.Read(ref _blockedSession)?.SessionID;
 
-    public GatedTdsServer(TdsServerArguments arguments) : base(arguments)
+    public GatedTdsServer(TdsServerArguments arguments, bool abortFirstConnection = false) : base(arguments)
     {
+        _abortFirstConnection = abortFirstConnection;
     }
 
     /// <summary>
@@ -39,12 +48,31 @@ internal sealed class GatedTdsServer : TdsServer
     protected override TDSMessageCollection OnPreLoginRequestCore(ITDSServerSession session, TDSMessage request)
     {
         TDSMessageCollection response = base.OnPreLoginRequestCore(session, request);
+        if (_abortFirstConnection && Interlocked.CompareExchange(ref _abortedSession, session, null) is null)
+        {
+            return response;
+        }
         if (!_release.IsSet)
         {
+            Interlocked.CompareExchange(ref _blockedSession, session, null);
             _entered.TrySetResult(true);
             _release.Wait();
         }
         return response;
+    }
+
+    public override void OnTlsHandshakeStarting(ITDSServerSession session, Stream transport)
+    {
+        base.OnTlsHandshakeStarting(session, transport);
+        if (ReferenceEquals(Volatile.Read(ref _abortedSession), session))
+        {
+            // Wait for ClientHello so the reset cannot discard an unread pre-login response.
+            if (transport.ReadByte() < 0)
+            {
+                throw new EndOfStreamException("The client closed before starting TLS.");
+            }
+            AbortConnection(session);
+        }
     }
 
     /// <summary>
