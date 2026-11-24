@@ -32,6 +32,7 @@ import uuid
 
 
 def nonnegative(value):
+    """Parse an RTT in whole milliseconds, raising ArgumentTypeError for invalid input."""
     if not re.fullmatch(r"[0-9]+", str(value)):
         raise argparse.ArgumentTypeError("RTT must be nonnegative integer milliseconds")
     return int(value)
@@ -67,10 +68,17 @@ class NetworkDelay:
     """Install, verify, and remove only the queues owned by this run."""
 
     def __init__(self, state_path):
+        """Use state_path (a pathlib.Path) to share ownership between start and stop."""
         self.state_path = state_path
         self.attempted_setup = False
 
     def command(self, *args, privileged=False):
+        """Run an iproute2 command and return its stdout as text.
+
+        The first argument is the executable name. Set privileged for queue mutations;
+        non-root users then run the command through noninteractive sudo. Missing tools,
+        nonzero exit codes, and timeouts are propagated to the caller.
+        """
         prefix = ["sudo", "-n"] if privileged and os.geteuid() != 0 else []
         executable = shutil.which(args[0])
         if executable is None and args[0] in ("tc", "ip"):
@@ -83,10 +91,16 @@ class NetworkDelay:
                               timeout=10).stdout
 
     def queues(self):
+        """Return the parsed tc queue records for lo, including packet and drop counts."""
         return json.loads(self.command("tc", "-s", "-j", "qdisc", "show", "dev", "lo"))
 
     def setup(self, rtt, server, port):
-        """Check that the endpoint routes through loopback before installing the delay."""
+        """Install and verify added RTT in milliseconds for server and TCP port.
+
+        A zero RTT leaves queues unchanged. For a positive RTT, every address resolved
+        from server must route through lo. Refuse an existing root queue or unrecovered state.
+        Call with the loopback lock held.
+        """
         if self.state_path.exists():
             previous = json.loads(self.state_path.read_text(encoding="utf-8"))
             if previous.get("RootHandle") and not previous.get("CleanupSucceeded"):
@@ -147,7 +161,12 @@ class NetworkDelay:
         print(f"Netem applied: {rtt}ms added RTT for SQL TCP/{port} on lo.", flush=True)
 
     def cleanup(self, require_traffic=True):
-        """Drain and verify the owned queues, then remove them even if verification fails."""
+        """Check that the owned queues drained, kept their settings, and dropped no packets.
+
+        Set require_traffic to False when rolling back setup before any SQL traffic can flow.
+        Report failed checks after attempting to remove the queues. With no ownership record
+        or an already completed cleanup, return without touching lo. Call with the lock held.
+        """
         if not self.state_path.exists():
             return
         data = json.loads(self.state_path.read_text(encoding="utf-8"))
@@ -199,10 +218,15 @@ class NetworkDelay:
 
 
 def interrupted(signum, frame):
+    """Raise InterruptedError so SIGINT or SIGTERM can unwind through setup rollback."""
     raise InterruptedError("Netem operation interrupted")
 
 
 def main(argv=None):
+    """Run start or stop using argv, or the process arguments when argv is None.
+
+    Return 0 on success and 1 for a networking or state error. Argparse handles usage errors.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("start", "stop"))
     parser.add_argument("--state", type=Path, required=True)
