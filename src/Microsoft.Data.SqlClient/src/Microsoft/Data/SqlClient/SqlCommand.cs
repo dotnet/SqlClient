@@ -2525,7 +2525,7 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
-                            // End releases the retry's reservation, not the original attempt's.
+                            // The retry holds its own reservation for End, so release the original one.
                             retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }

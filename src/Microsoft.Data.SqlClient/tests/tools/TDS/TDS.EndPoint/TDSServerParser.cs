@@ -122,6 +122,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                             responseMessages = Server.OnSQLBatchRequest(Session, MessageBeingReceived);
                             break;
                         }
+                    case TDSMessageType.RPC:
+                        {
+                            // Call into the subscriber to process the packet
+                            responseMessages = Server.OnRPCRequest(Session, MessageBeingReceived);
+                            break;
+                        }
                     case TDSMessageType.Attention:
                         {
                             // Call into the subscriber to process the packet

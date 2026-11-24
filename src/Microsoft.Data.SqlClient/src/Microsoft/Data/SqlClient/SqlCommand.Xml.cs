@@ -323,7 +323,8 @@ namespace Microsoft.Data.SqlClient
                     globalCompletion = localCompletion;
                 }
 
-                // Add callback after work is done to avoid overlapping Begin/End methods
+                // Add callback after work is done to avoid overlapping Begin/End methods.
+                // Callers must observe the retry's outcome, not a retried first attempt.
                 if (callback is not null)
                 {
                     globalCompletion.Task.ContinueWith(
