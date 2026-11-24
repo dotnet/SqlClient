@@ -139,6 +139,8 @@ def _report_files(root):
 
 def _copy_artifact(path, root, dest):
     relative = os.path.relpath(path, root)
+    # BenchmarkDotNet names reports by suite, so flattening per-case directories would
+    # silently overwrite same-named reports and drop timing results from the comparison.
     target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
                           else os.path.basename(path))
     os.makedirs(os.path.dirname(target), exist_ok=True)
