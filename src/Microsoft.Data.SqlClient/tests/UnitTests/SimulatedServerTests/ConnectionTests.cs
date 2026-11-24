@@ -210,15 +210,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Opens after a blocked pre-login response is released, with either MultiSubnetFailover setting.
+        /// Retries an aborted physical connection before the next pre-login response is released.
         /// </summary>
         [Trait("category", "flaky")]
+        [Trait("category", "probation")]
         [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled)
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task NetworkError_ConfigurableRetry_ShouldSucceed(bool multiSubnetFailoverEnabled, bool useAsync)
         {
-            using GatedTdsServer server = new(new TdsServerArguments());
+            using GatedTdsServer server = new(new TdsServerArguments(), abortFirstConnection: true);
             server.Start();
             server.WithholdPreLoginResponses();
             SqlConnectionStringBuilder builder = new()
@@ -226,6 +229,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "127.0.0.1," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 30,
+                ConnectRetryCount = 0,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
@@ -237,18 +241,36 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-            Task open = connection.OpenAsync();
+            // ConnectRetryCount does not retry pre-login resets; use an explicit network-error policy.
+            connection.RetryLogicProvider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(new SqlRetryLogicOption
+            {
+                NumberOfTries = 2,
+                DeltaTime = TimeSpan.FromMilliseconds(10),
+                TransientErrors = new[] { 0, 64, 233, 10053, 10054 }
+            });
+            int retries = 0;
+            connection.RetryLogicProvider.Retrying += (_, _) => Interlocked.Increment(ref retries);
+            Task open = useAsync
+                ? connection.OpenAsync()
+                : Task.Factory.StartNew(() => connection.Open(),
+                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             try
             {
                 Assert.Same(server.PreLoginBlocked, await Task.WhenAny(
                     server.PreLoginBlocked, open, Task.Delay(TimeSpan.FromSeconds(30))));
                 Assert.False(open.IsCompleted);
+                Assert.NotNull(server.AbortedSessionId);
+                Assert.NotNull(server.BlockedSessionId);
+                Assert.NotEqual(server.AbortedSessionId, server.BlockedSessionId);
+                Assert.Equal(2, server.PreLoginCount);
+                Assert.Equal(0, server.Login7Count);
+                Assert.Equal(1, Volatile.Read(ref retries));
             }
             finally
             {
                 server.ReleasePreLoginResponses();
+                await open;
             }
-            await open;
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, server.Login7Count);

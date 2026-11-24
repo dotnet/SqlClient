@@ -497,6 +497,243 @@ public class ServerLifecycleTests
         }
     }
 
+    /// <summary>
+    /// Handler I/O failures must not be mistaken for transport disconnects, even during shutdown.
+    /// </summary>
+    [Fact]
+    public void Dispose_HandlerIOException_ReportsWorkerFailure()
+    {
+        // Arrange
+        IOException failure = new("Intentional handler I/O failure.");
+        using IoFailureServer server = new(failure);
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        using TDSStream transport = new(peer.GetStream(), false) { PacketSize = 4096 };
+
+        // Act
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(transport);
+        Assert.True(server.FailureTriggered.Wait(TimeSpan.FromSeconds(30)),
+            "The protocol worker did not reach the injected failure.");
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+
+        // Assert
+        Assert.Contains(failure, error.Flatten().InnerExceptions);
+    }
+
+    /// <summary>
+    /// Socket exceptions raised by handlers are failures, not evidence that the peer disconnected.
+    /// </summary>
+    [Fact]
+    public void Dispose_HandlerSocketException_ReportsWorkerFailure()
+    {
+        // Arrange
+        SocketException failure = new((int)SocketError.ConnectionReset);
+        using IoFailureServer server = new(failure);
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        using TDSStream transport = new(peer.GetStream(), false) { PacketSize = 4096 };
+
+        // Act
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(transport);
+        Assert.True(server.FailureTriggered.Wait(TimeSpan.FromSeconds(30)));
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+
+        // Assert
+        Assert.Contains(failure, error.Flatten().InnerExceptions);
+    }
+
+    /// <summary>
+    /// Protocol logging and a subsequent diagnostic logging failure must both survive teardown.
+    /// </summary>
+    [Fact]
+    public void Dispose_LogIOException_ReportsOriginalAndDiagnosticFailures()
+    {
+        // Arrange
+        using FailingWriter log = new();
+        using TdsServer server = new(new TdsServerArguments { Log = log });
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        using TDSStream transport = new(peer.GetStream(), false) { PacketSize = 4096 };
+
+        // Act
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(transport);
+        Assert.True(log.FailureTriggered.Wait(TimeSpan.FromSeconds(30)));
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+
+        // Assert
+        Assert.Contains(log.ProtocolFailure, error.Flatten().InnerExceptions);
+        Assert.Contains(log.DiagnosticFailure, error.Flatten().InnerExceptions);
+    }
+
+    /// <summary>
+    /// A handler may reset its own socket without joining itself or disconnecting another active peer.
+    /// </summary>
+    [Fact]
+    public void AbortConnection_SelectedPreLogin_ResetsOnlySelectedPeer()
+    {
+        // Arrange
+        using AbortFirstServer server = new();
+        server.Start();
+        using TcpClient first = new();
+        first.Connect("127.0.0.1", server.EndPoint.Port);
+        using TcpClient second = new();
+        second.Connect("127.0.0.1", server.EndPoint.Port);
+        Assert.True(SpinWait.SpinUntil(() => server.ActiveSessions == 2, TimeSpan.FromSeconds(30)));
+        using NetworkStream firstRaw = first.GetStream();
+        using NetworkStream secondRaw = second.GetStream();
+        firstRaw.ReadTimeout = secondRaw.ReadTimeout = 5000;
+        using TDSStream firstTransport = new(firstRaw, true) { PacketSize = 4096 };
+        using TDSStream secondTransport = new(secondRaw, true) { PacketSize = 4096 };
+
+        // Act
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(firstTransport);
+        Assert.True(server.FirstClosed.Wait(TimeSpan.FromSeconds(30)), "Abort did not finish the selected worker.");
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(secondTransport);
+
+        // Assert
+        int firstByte = 0;
+        Exception? disconnect = Record.Exception(() => firstByte = firstRaw.ReadByte());
+        if (disconnect == null)
+        {
+            Assert.Equal(-1, firstByte);
+        }
+        else
+        {
+            IOException reset = Assert.IsType<IOException>(disconnect);
+            SocketException socketError = Assert.IsType<SocketException>(reset.InnerException);
+            Assert.Equal(SocketError.ConnectionReset, socketError.SocketErrorCode);
+        }
+        Assert.NotEqual(-1, secondRaw.ReadByte());
+        Assert.NotEqual(server.FirstSessionId, server.SecondSessionId);
+        Assert.Equal(1, server.ActiveSessions);
+        server.Dispose();
+        Assert.Equal(0, server.ActiveSessions);
+    }
+
+    /// <summary>
+    /// Deliberate transport shutdown must not hide a handler failure raised after resetting the socket.
+    /// </summary>
+    [Fact]
+    public void AbortConnection_HandlerFailsAfterAbort_ReportsFailure()
+    {
+        // Arrange
+        using ThrowingAfterAbortServer server = new();
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        using TDSStream transport = new(peer.GetStream(), false) { PacketSize = 4096 };
+
+        // Act
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(transport);
+        Assert.True(server.FirstClosed.Wait(TimeSpan.FromSeconds(30)));
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+
+        // Assert
+        Assert.Contains(server.Failure, error.Flatten().InnerExceptions);
+        Assert.Equal(0, server.ActiveSessions);
+    }
+
+    /// <summary>Resets the first pre-login session while observing normal session cleanup.</summary>
+    private class AbortFirstServer : TdsServer
+    {
+        private int _activeSessions;
+        private int _requests;
+        private readonly TaskCompletionSource<bool> _firstClosed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int ActiveSessions => Volatile.Read(ref _activeSessions);
+        public Task FirstClosed => _firstClosed.Task;
+        public uint FirstSessionId { get; private set; }
+        public uint SecondSessionId { get; private set; }
+
+        public override ITDSServerSession OpenSession()
+        {
+            Interlocked.Increment(ref _activeSessions);
+            return base.OpenSession();
+        }
+
+        public override void CloseSession(ITDSServerSession session)
+        {
+            base.CloseSession(session);
+            Interlocked.Decrement(ref _activeSessions);
+            if (session.SessionID == FirstSessionId)
+            {
+                _firstClosed.TrySetResult(true);
+            }
+        }
+
+        public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        {
+            if (Interlocked.Increment(ref _requests) == 1)
+            {
+                FirstSessionId = session.SessionID;
+                AbortConnection(session);
+                return new TDSMessageCollection();
+            }
+            SecondSessionId = session.SessionID;
+            return base.OnPreLoginRequest(session, request);
+        }
+    }
+
+    /// <summary>Raises an unexpected I/O failure after a deliberate transport abort.</summary>
+    private sealed class ThrowingAfterAbortServer : AbortFirstServer
+    {
+        public IOException Failure { get; } = new("Intentional failure after transport abort.");
+
+        public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        {
+            base.OnPreLoginRequest(session, request);
+            throw Failure;
+        }
+    }
+
+    private sealed class IoFailureServer : TdsServer
+    {
+        private readonly Exception _failure;
+        private readonly TaskCompletionSource<bool> _failureTriggered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Task FailureTriggered => _failureTriggered.Task;
+
+        public IoFailureServer(Exception failure)
+            : base(new TdsServerArguments { ExpectTlsHandshakeFailure = true })
+            => _failure = failure;
+
+        public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        {
+            _failureTriggered.TrySetResult(true);
+            throw _failure;
+        }
+    }
+
+    private sealed class FailingWriter : TextWriter
+    {
+        private readonly TaskCompletionSource<bool> _failureTriggered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Task FailureTriggered => _failureTriggered.Task;
+        public IOException ProtocolFailure { get; } = new("Intentional protocol log failure.");
+        public IOException DiagnosticFailure { get; } = new("Intentional diagnostic log failure.");
+        public override Encoding Encoding => Encoding.UTF8;
+
+        public override void WriteLine(string? value)
+        {
+            _failureTriggered.TrySetResult(true);
+            throw ProtocolFailure;
+        }
+
+        public override void WriteLine(string format, params object?[] arg)
+        {
+            if (format.Contains(ProtocolFailure.Message))
+            {
+                throw DiagnosticFailure;
+            }
+        }
+    }
+
     private sealed class GatedWriter : TextWriter
     {
         private int _writes;

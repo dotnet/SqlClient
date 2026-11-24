@@ -1089,6 +1089,19 @@ namespace Microsoft.SqlServer.TDS.Servers
             return left.SequenceEqual<byte>(right);
         }
 
+        /// <summary>
+        /// Deliberately reset one active session's transport without stopping the listener or joining its worker.
+        /// A protocol handler should return an empty response after requesting the abort.
+        /// </summary>
+        protected void AbortConnection(ITDSServerSession session)
+        {
+            if (_endpoint == null)
+            {
+                throw new InvalidOperationException("Server is not started.");
+            }
+            _endpoint.AbortConnection(session);
+        }
+
         public virtual void Dispose()
         {
             Interlocked.Exchange(ref _endpoint, null)?.Dispose();
