@@ -67,7 +67,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     "Default coverage requires an unset AppContext switch.");
             }
             switches.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
+            #if NET
             switches.UseManagedNetworking = false;
+            #endif
             Assembly driver = typeof(SqlConnection).Assembly;
             string information = driver.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
                 ?? throw new InvalidOperationException("The loaded driver has no informational version.");
