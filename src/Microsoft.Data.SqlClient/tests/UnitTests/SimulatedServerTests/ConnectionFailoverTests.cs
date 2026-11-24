@@ -924,105 +924,82 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Reproduces #5029's login-error decision: error 976 bypasses connect retries and
-        /// default/true permits partner alternation while explicit false rejects the login,
-        /// independently of pooling and async use.
-        /// This simulates protocol responses, not a real Basic AG; the successful partner
-        /// advertises mirroring information required by the driver's partner validation.
+        /// Error 976 permits synchronous partner alternation with the default or enabled switch.
         /// </summary>
         [Theory]
-        [InlineData(null, false, false)]
-        [InlineData(null, false, true)]
-        [InlineData(null, true, false)]
-        [InlineData(null, true, true)]
-        [InlineData(false, false, false)]
-        [InlineData(false, false, true)]
-        [InlineData(false, true, false)]
-        [InlineData(false, true, true)]
-        [InlineData(true, false, false)]
-        [InlineData(true, false, true)]
-        [InlineData(true, true, false)]
-        [InlineData(true, true, true)]
-        public async Task AvailabilityDatabaseLoginError_WithUserProvidedPartner_RespectsLegacySwitch(
-            bool? useLegacySwitch, bool pooling, bool useAsync)
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void Open_AvailabilityDatabaseLoginErrorWithLegacySwitch_AlternatesToPartner(
+            bool? useLegacySwitch, bool pooling)
         {
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
+            // Arrange
+            using FailoverLoginScenario scenario = new(976, useLegacySwitch, pooling, 1);
 
-            TdsServerArguments partnerArguments = new();
-            using TdsServer failoverServer = new(partnerArguments);
-            failoverServer.Start();
-            string partnerDataSource = $"localhost,{failoverServer.EndPoint.Port}";
+            // Act
+            scenario.Connection.Open();
 
-            const string errorMessage = "The target database, 'test', is participating in an availability group " +
-                "and is currently not accessible for queries. Either data movement is suspended or " +
-                "the availability replica is not enabled for read access.";
-            using TransientTdsErrorTdsServer server = new(
-                new TransientTdsErrorTdsServerArguments
-                {
-                    IsEnabledTransientError = true,
-                    Number = 976,
-                    ErrorClass = 14,
-                    Message = errorMessage,
-                    RepeatCount = int.MaxValue,
-                });
-            server.Start();
-            string primaryDataSource = $"localhost,{server.EndPoint.Port}";
-            partnerArguments.FailoverPartner = primaryDataSource;
+            // Assert
+            scenario.AssertPartnerConnection();
+        }
 
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = primaryDataSource,
-                InitialCatalog = "test",
-                FailoverPartner = partnerDataSource,
-                ConnectTimeout = 5,
-                ConnectRetryCount = 1,
-                ConnectRetryInterval = 1,
-                Encrypt = SqlConnectionEncryptOption.Optional,
-                Pooling = pooling,
-            };
-            using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                if (useLegacySwitch != false)
-                {
-                    if (useAsync)
-                    {
-                        await connection.OpenAsync();
-                    }
-                    else
-                    {
-                        connection.Open();
-                    }
+        /// <summary>
+        /// Error 976 permits asynchronous partner alternation with the default or enabled switch.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task OpenAsync_AvailabilityDatabaseLoginErrorWithLegacySwitch_AlternatesToPartner(
+            bool? useLegacySwitch, bool pooling)
+        {
+            // Arrange
+            using FailoverLoginScenario scenario = new(976, useLegacySwitch, pooling, 1);
 
-                    Assert.Equal(ConnectionState.Open, connection.State);
-                    Assert.Equal(partnerDataSource, connection.DataSource);
-                }
-                else
-                {
-                    SqlException exception = useAsync
-                        ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
-                        : Assert.Throws<SqlException>(() => connection.Open());
+            // Act
+            await scenario.Connection.OpenAsync();
 
-                    Assert.Equal(976, exception.Number);
-                    Assert.Equal((byte)14, exception.Class);
-                    Assert.Contains(errorMessage, exception.Message);
-                    Assert.Equal(ConnectionState.Closed, connection.State);
-                }
+            // Assert
+            scenario.AssertPartnerConnection();
+        }
 
-                Assert.Equal(1, server.Login7Count);
-                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
-                Assert.Equal(useLegacySwitch != false ? 1 : 0, failoverServer.Login7Count);
-                Assert.Equal(useLegacySwitch != false ? 1 : 0,
-                    failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
-            }
-            finally
-            {
-                if (pooling)
-                {
-                    SqlConnection.ClearPool(connection);
-                }
-            }
+        /// <summary>
+        /// Explicit false rejects error 976 synchronously without contacting the partner.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Open_AvailabilityDatabaseLoginErrorWithLegacySwitchDisabled_RejectsLogin(bool pooling)
+        {
+            // Arrange
+            using FailoverLoginScenario scenario = new(976, false, pooling, 1);
+
+            // Act
+            SqlException error = Assert.Throws<SqlException>(() => scenario.Connection.Open());
+
+            // Assert
+            scenario.AssertRejectedLogin(error);
+        }
+
+        /// <summary>
+        /// Explicit false rejects error 976 asynchronously without contacting the partner.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task OpenAsync_AvailabilityDatabaseLoginErrorWithLegacySwitchDisabled_RejectsLogin(
+            bool pooling)
+        {
+            // Arrange
+            using FailoverLoginScenario scenario = new(976, false, pooling, 1);
+
+            // Act
+            SqlException error = await Assert.ThrowsAsync<SqlException>(() => scenario.Connection.OpenAsync());
+
+            // Assert
+            scenario.AssertRejectedLogin(error);
         }
 
         /// <summary>
@@ -1133,48 +1110,139 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Authentication rejection must stop partner alternation regardless of the compatibility setting.
+        /// Authentication rejection stops synchronous partner alternation for every switch setting.
         /// </summary>
         [Theory]
-        [InlineData(null, false)]
-        [InlineData(null, true)]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
-        [InlineData(true, false)]
-        [InlineData(true, true)]
-        public async Task LoginFailed_WithUserProvidedPartner_ShouldNotAlternate(bool? useLegacySwitch, bool useAsync)
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Open_LoginFailedWithUserProvidedPartner_DoesNotAlternate(bool? useLegacySwitch)
         {
-            using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
-            using TdsServer partner = new(new TdsServerArguments());
-            partner.Start();
-            using TransientTdsErrorTdsServer server = new(new TransientTdsErrorTdsServerArguments
+            // Arrange
+            using FailoverLoginScenario scenario = new(18456, useLegacySwitch, false, 0);
+
+            // Act
+            SqlException error = Assert.Throws<SqlException>(() => scenario.Connection.Open());
+
+            // Assert
+            scenario.AssertRejectedLogin(error);
+        }
+
+        /// <summary>
+        /// Authentication rejection stops asynchronous partner alternation for every switch setting.
+        /// </summary>
+        [Theory]
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task OpenAsync_LoginFailedWithUserProvidedPartner_DoesNotAlternate(bool? useLegacySwitch)
+        {
+            // Arrange
+            using FailoverLoginScenario scenario = new(18456, useLegacySwitch, false, 0);
+
+            // Act
+            SqlException error = await Assert.ThrowsAsync<SqlException>(() => scenario.Connection.OpenAsync());
+
+            // Assert
+            scenario.AssertRejectedLogin(error);
+        }
+
+        /// <summary>
+        /// Owns isolated simulator endpoints and switch/pool state without choosing a test's open path.
+        /// </summary>
+        private sealed class FailoverLoginScenario : IDisposable
+        {
+            private readonly LocalAppContextSwitchesHelper _switches = new();
+            private readonly TdsServer _partner;
+            private readonly TransientTdsErrorTdsServer _server;
+            private readonly SimulatedServerPoolScope _pool;
+            private readonly int _errorNumber;
+            private readonly string _partnerDataSource;
+            private readonly string _errorMessage;
+
+            public SqlConnection Connection { get; }
+
+            /// <summary>
+            /// Creates a persistent login rejection and a valid partner with a unique pool key.
+            /// </summary>
+            public FailoverLoginScenario(int errorNumber, bool? useLegacySwitch, bool pooling, int retryCount)
             {
-                IsEnabledTransientError = true,
-                Number = 18456,
-                ErrorClass = 14,
-                RepeatCount = int.MaxValue,
-            });
-            server.Start();
-            SqlConnectionStringBuilder options = new()
+                _errorNumber = errorNumber;
+                _errorMessage = errorNumber == 976
+                    ? "The target database, 'test', is participating in an availability group " +
+                        "and is currently not accessible for queries. Either data movement is suspended or " +
+                        "the availability replica is not enabled for read access."
+                    : "Login failed.";
+                _switches.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
+                TdsServerArguments partnerArguments = new();
+                _partner = new TdsServer(partnerArguments);
+                _partner.Start();
+                _partnerDataSource = $"localhost,{_partner.EndPoint.Port}";
+                _server = new TransientTdsErrorTdsServer(new TransientTdsErrorTdsServerArguments
+                {
+                    IsEnabledTransientError = true,
+                    Number = (uint)errorNumber,
+                    ErrorClass = 14,
+                    Message = _errorMessage,
+                    RepeatCount = int.MaxValue,
+                });
+                _server.Start();
+                string primaryDataSource = $"localhost,{_server.EndPoint.Port}";
+                partnerArguments.FailoverPartner = primaryDataSource;
+                SqlConnectionStringBuilder options = new()
+                {
+                    DataSource = primaryDataSource,
+                    InitialCatalog = "test",
+                    FailoverPartner = _partnerDataSource,
+                    Encrypt = SqlConnectionEncryptOption.Optional,
+                    Pooling = pooling,
+                    ConnectRetryCount = retryCount,
+                    ConnectRetryInterval = 1,
+                    ConnectTimeout = 5,
+                };
+                _pool = new SimulatedServerPoolScope(options);
+                Connection = new SqlConnection(options.ConnectionString);
+            }
+
+            /// <summary>
+            /// Checks actual partner selection and one login attempt at each endpoint.
+            /// </summary>
+            public void AssertPartnerConnection()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}",
-                InitialCatalog = "test",
-                FailoverPartner = $"localhost,{partner.EndPoint.Port}",
-                Encrypt = SqlConnectionEncryptOption.Optional,
-                Pooling = false,
-                ConnectRetryCount = 0,
-                ConnectTimeout = 5,
-            };
-            using SqlConnection connection = new(options.ConnectionString);
-            SqlException error = useAsync
-                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
-                : Assert.Throws<SqlException>(() => connection.Open());
-            Assert.Equal(18456, error.Number);
-            Assert.Equal(ConnectionState.Closed, connection.State);
-            Assert.Equal(1, server.Login7Count);
-            Assert.Equal(0, partner.PreLoginCount);
-            Assert.Equal(0, partner.Login7Count);
+                Assert.Equal(ConnectionState.Open, Connection.State);
+                Assert.Equal(_partnerDataSource, Connection.DataSource);
+                Assert.Equal(1, _server.Login7Count);
+                Assert.Equal(1, _server.PreLoginCount - _server.AbandonedPreLoginCount);
+                Assert.Equal(1, _partner.Login7Count);
+                Assert.Equal(1, _partner.PreLoginCount - _partner.AbandonedPreLoginCount);
+            }
+
+            /// <summary>
+            /// Checks the server's rejection and that the partner was never contacted.
+            /// </summary>
+            public void AssertRejectedLogin(SqlException error)
+            {
+                Assert.Equal(_errorNumber, error.Number);
+                Assert.Equal((byte)14, error.Class);
+                Assert.Contains(_errorMessage, error.Message);
+                Assert.Equal(ConnectionState.Closed, Connection.State);
+                Assert.Equal(1, _server.Login7Count);
+                Assert.Equal(1, _server.PreLoginCount - _server.AbandonedPreLoginCount);
+                Assert.Equal(0, _partner.PreLoginCount);
+                Assert.Equal(0, _partner.Login7Count);
+            }
+
+            /// <summary>
+            /// Returns the connection before clearing its unique pool and disposing the endpoints.
+            /// </summary>
+            public void Dispose()
+            {
+                Connection.Dispose();
+                _pool.Dispose();
+                _server.Dispose();
+                _partner.Dispose();
+                _switches.Dispose();
+            }
         }
     }
 }
