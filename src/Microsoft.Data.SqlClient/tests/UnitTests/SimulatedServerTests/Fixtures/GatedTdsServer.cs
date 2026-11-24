@@ -18,12 +18,18 @@ internal sealed class GatedTdsServer : TdsServer
 {
     private readonly ManualResetEventSlim _release = new(true);
     private readonly TaskCompletionSource<bool> _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly bool _abortFirstConnection;
+    private ITDSServerSession? _abortedSession;
+    private ITDSServerSession? _blockedSession;
     private int _disposed;
 
     public Task PreLoginBlocked => _entered.Task;
+    public uint? AbortedSessionId => Volatile.Read(ref _abortedSession)?.SessionID;
+    public uint? BlockedSessionId => Volatile.Read(ref _blockedSession)?.SessionID;
 
-    public GatedTdsServer(TdsServerArguments arguments) : base(arguments)
+    public GatedTdsServer(TdsServerArguments arguments, bool abortFirstConnection = false) : base(arguments)
     {
+        _abortFirstConnection = abortFirstConnection;
     }
 
     /// <summary>
@@ -39,8 +45,14 @@ internal sealed class GatedTdsServer : TdsServer
     public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
     {
         TDSMessageCollection response = base.OnPreLoginRequest(session, request);
+        if (_abortFirstConnection && Interlocked.CompareExchange(ref _abortedSession, session, null) is null)
+        {
+            AbortConnection(session);
+            return new TDSMessageCollection();
+        }
         if (!_release.IsSet)
         {
+            Interlocked.CompareExchange(ref _blockedSession, session, null);
             _entered.TrySetResult(true);
             _release.Wait();
         }

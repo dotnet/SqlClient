@@ -152,6 +152,25 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public abstract void ProcessData(Stream rawStream);
 
+        /// <summary>
+        /// Intentionally reset this physical connection without waiting on its worker.
+        /// Safe to call from a protocol handler; normal worker cleanup still closes the session.
+        /// </summary>
+        internal void Abort()
+        {
+            lock (_connectionLock)
+            {
+                if (_stopRequested)
+                {
+                    return;
+                }
+
+                _stopRequested = true;
+                Connection.Client.LingerState = new LingerOption(true, 0);
+                Connection.Client.Dispose();
+            }
+        }
+
         public void Dispose()
         {
             // Signal the processor loop to stop.
@@ -188,6 +207,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             {
                 Socket socket;
                 NetworkStream rawStream;
+                Stream transport;
                 // TcpClient.GetStream and Close are not safe to run concurrently, including
                 // on Framework where Close can clear the socket during stream construction.
                 lock (_connectionLock)
@@ -198,8 +218,9 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     }
 
                     socket = connection.Client;
-                    rawStream = connection.GetStream();
-                    PrepareForProcessingData(rawStream);
+                    rawStream = TransportStream.Execute(() => connection.GetStream());
+                    transport = new TransportStream(rawStream);
+                    PrepareForProcessingData(transport);
                 }
 
                 // Process the packet sequence until the peer disconnects or the
@@ -207,12 +228,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 while (!_stopRequested && connection.Connected)
                 {
                     // Check incoming buffer
-                    if (rawStream.DataAvailable)
+                    if (TransportStream.Execute(() => rawStream.DataAvailable))
                     {
-                        ProcessData(rawStream);
+                        ProcessData(transport);
                     }
-                    else if (socket.Poll(100_000 /* 100 ms */, SelectMode.SelectRead)
-                        && !rawStream.DataAvailable)
+                    else if (TransportStream.Execute(() => socket.Poll(100_000 /* 100 ms */, SelectMode.SelectRead))
+                        && !TransportStream.Execute(() => rawStream.DataAvailable))
                     {
                         // Poll reports readable with no data available when the
                         // peer has closed the connection.
@@ -220,21 +241,35 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     }
                 }
             }
-            catch (Exception ex) when (ex is IOException || ex is SocketException ||
-                (_stopRequested && ex is ObjectDisposedException))
+            catch (Exception ex) when (TransportFailureException.IsExpected(ex, _stopRequested) ||
+                ex is ExpectedTlsHandshakeFailureException)
             {
                 // A socket close during Dispose is an expected part of teardown, so only log
                 // when a stop was not requested. This keeps real failures visible in CI logs
                 // without the teardown noise.
                 if (!_stopRequested)
                 {
-                    Log(ex.ToString());
+                    try
+                    {
+                        Log(ex.ToString());
+                    }
+                    catch (Exception logException)
+                    {
+                        ProcessingException = logException;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 ProcessingException = ex;
-                Log(ex.ToString());
+                try
+                {
+                    Log(ex.ToString());
+                }
+                catch (Exception logException)
+                {
+                    ProcessingException = new AggregateException(ex, logException);
+                }
             }
             finally
             {

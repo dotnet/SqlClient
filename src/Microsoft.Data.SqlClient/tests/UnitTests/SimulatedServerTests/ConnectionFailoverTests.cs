@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     /// <summary>
     /// Verifies primary/partner selection and pool preservation across transport and login SQL errors.
     /// </summary>
+    [Trait("Category", "flaky")]
     [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionFailoverTests
     {

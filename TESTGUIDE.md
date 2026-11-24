@@ -18,5 +18,18 @@ lifecycle disposal regression retains its flaky annotation and probation metadat
 
 Negative TLS scenarios opt into `TdsServerArguments.ExpectTlsHandshakeFailure`. Missing
 certificates, missing keys, and protocol-handler failures still fail disposal.
+I/O exceptions are tolerated only when identified at the physical transport boundary, not merely
+by their exception type. Handler and log-writer I/O failures, including failures while logging
+another error, are reported during disposal.
+Derived simulators can call `AbortConnection(session)` from a pre-login handler and return an empty
+response to reset only that physical socket. This does not join the worker or stop the listener;
+normal session cleanup still runs, and unexpected handler failures after the abort remain errors.
+Retry regressions intentionally abort the first pre-login session and gate the second distinct
+`SessionID` before replying; assert the phase-specific pre-login/login counts and pending open
+before releasing the gate. Use an explicit configurable network-error retry policy and assert
+its retry event; `ConnectRetryCount` does not retry a pre-login reset. Pool-wait regressions
+explicitly select the legacy wait-budget policy, hold the occupied slot beyond that budget,
+and verify actual pool-wait admission before release; elapsed time or transport counts alone are
+not evidence of successful pool waiting.
 `CertificateTestWithTdsServer` uses `makepfxcert.ps1 -SkipTrust` and corresponding cleanup to
 leave root trust stores unchanged; certificates must remain untrusted for rejection cases.
