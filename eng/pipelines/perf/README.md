@@ -404,6 +404,9 @@ physical connections.
   supporting `PERF_LIST_BENCHMARKS` (enumerate enabled units) and `PERF_BENCHMARK=<unit>` (run a
   single unit) — see `Program.cs`.
 
+  Each unit's `BenchmarkDotNet.Artifacts` tree is copied intact under its name in the baseline or
+  current results directory. Use a fresh results directory for each run.
+
   After the first interleaved pass, only the units containing a flagged regression are re-run
   `confirmationRuns` times (best-of-N). A regression is **confirmed** only when a strict majority of
   the N passes agree `(count * 2 > N)`; otherwise it is reported as `regression (unconfirmed)` and

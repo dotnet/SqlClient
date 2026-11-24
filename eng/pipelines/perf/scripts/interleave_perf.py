@@ -137,27 +137,21 @@ def _report_files(root):
     return sorted(glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=True))
 
 
-def _copy_artifact(path, root, dest):
-    relative = os.path.relpath(path, root)
-    # BenchmarkDotNet names reports by suite, so flattening per-case directories would
-    # silently overwrite same-named reports and drop timing results from the comparison.
-    target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
-                          else os.path.basename(path))
-    os.makedirs(os.path.dirname(target), exist_ok=True)
-    shutil.copy2(path, target)
-
-
 def collect_results(cwd, dest):
-    """Copy reports and async-health evidence without flattening per-case directories.
+    """Copy a unit's artifact tree and return the benchmark types it contains.
 
     Returns the set of benchmark ``Type`` names found (used to map a unit to the
     report rows it produced, so best-of-N can re-run the right unit for a flagged key).
     """
-    os.makedirs(dest, exist_ok=True)
-    types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
-    for path in _report_files(artifacts):
-        _copy_artifact(path, artifacts, dest)
+    if not os.path.isdir(artifacts):
+        return set()
+
+    # Separate cases can emit reports with the same filename. Keep their directories intact.
+    shutil.copytree(artifacts, dest)
+
+    types = set()
+    for path in _report_files(dest):
         try:
             with open(path, "r", encoding="utf-8-sig") as fh:
                 for bench in json.load(fh).get("Benchmarks", []):
@@ -165,12 +159,6 @@ def collect_results(cwd, dest):
                         types.add(bench["Type"])
         except (OSError, ValueError):
             pass
-    # Also keep the human-readable GitHub markdown reports alongside, best effort.
-    for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
-        _copy_artifact(md, artifacts, dest)
-    for health in glob.glob(os.path.join(artifacts, "**", "async-health"), recursive=True):
-        shutil.copytree(health, os.path.join(dest, os.path.relpath(health, artifacts)),
-                        dirs_exist_ok=True)
     return types
 
 
@@ -212,7 +200,7 @@ class Runner:
         env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
         rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
                               env_overrides=env_overrides)
-        types = collect_results(cwd, agg_dir)
+        types = collect_results(cwd, os.path.join(agg_dir, unit, "BenchmarkDotNet.Artifacts"))
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
