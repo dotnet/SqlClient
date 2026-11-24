@@ -2,7 +2,16 @@
 # Licensed to the .NET Foundation under one or more agreements.
 # The .NET Foundation licenses this file to you under the MIT license.
 
-"""Own a latency-only SQL TCP loopback queue for one benchmark process."""
+"""Add round-trip latency to SQL TCP traffic on Linux loopback.
+
+The benchmark runner calls ``start`` before launching the benchmark and ``stop`` afterward
+with the same ``--state`` file. This file tracks queue ownership for cleanup, not reporting.
+If the runner is killed, use ``python3 netem.py stop --state <path>`` in the same network namespace.
+
+Shaping requires iproute2 and permission to modify traffic control settings (root or
+noninteractive sudo). Use a dedicated test host: the filter matches an address and port,
+not a process, so any other client hitting the same endpoint also sees the delay.
+"""
 
 import argparse
 from contextlib import contextmanager
@@ -29,6 +38,7 @@ def nonnegative(value):
 
 
 def write_json(path, data):
+    """Replace ownership state atomically so an interrupted write leaves a readable record."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -37,7 +47,10 @@ def write_json(path, data):
 
 @contextmanager
 def locked():
-    """Serialize inspection/mutation; an installed owned root reserves the run's network scope."""
+    """Serialize queue inspection and changes, not the benchmark itself.
+
+    Between ``start`` and ``stop``, the installed root prevents a second run from taking over.
+    """
     if sys.platform != "linux":
         raise RuntimeError("SQL-only netem requires Linux")
     import fcntl
@@ -51,7 +64,7 @@ def locked():
 
 
 class NetworkDelay:
-    """Never replace a foreign queue; persist ownership before any mutation."""
+    """Install, verify, and remove only the queues owned by this run."""
 
     def __init__(self, state_path):
         self.state_path = state_path
@@ -73,6 +86,7 @@ class NetworkDelay:
         return json.loads(self.command("tc", "-s", "-j", "qdisc", "show", "dev", "lo"))
 
     def setup(self, rtt, server, port):
+        """Check that the endpoint routes through loopback before installing the delay."""
         if self.state_path.exists():
             previous = json.loads(self.state_path.read_text(encoding="utf-8"))
             if previous.get("RootHandle") and not previous.get("CleanupSucceeded"):
@@ -99,7 +113,10 @@ class NetworkDelay:
         data = dict(AdditionalRttMilliseconds=rtt, RootHandle=f"{number:x}:",
                     NetemHandle=f"{number + 0x8000:x}:", Applied=False, CleanupSucceeded=False)
         self.attempted_setup = True
+        # Record the handles before touching lo so cleanup can identify a partial install.
         write_json(self.state_path, data)
+        # Unmatched traffic uses the first band. Filters send SQL traffic to the second
+        # band in both directions, so each packet gets half the requested RTT in microseconds.
         self.command("tc", "qdisc", "add", "dev", "lo", "root", "handle", data["RootHandle"],
                      "prio", "bands", "3", "priomap", *(["0"] * 16), privileged=True)
         self.command("tc", "qdisc", "add", "dev", "lo", "parent", f"{number:x}:2",
@@ -120,6 +137,7 @@ class NetworkDelay:
             raise RuntimeError("Netem queue was not installed")
         options = netem[0].get("options", {})
         delay = options.get("delay", {})
+        # tc accepts the delay in microseconds above but reports it in seconds in JSON.
         if (not isinstance(delay, dict) or
             not math.isclose(delay.get("delay", -1), rtt / 2000, abs_tol=0.000001) or
             delay.get("jitter", 0) != 0 or delay.get("correlation", 0) != 0):
@@ -129,6 +147,7 @@ class NetworkDelay:
         print(f"Netem applied: {rtt}ms added RTT for SQL TCP/{port} on lo.", flush=True)
 
     def cleanup(self, require_traffic=True):
+        """Drain and verify the owned queues, then remove them even if verification fails."""
         if not self.state_path.exists():
             return
         data = json.loads(self.state_path.read_text(encoding="utf-8"))
@@ -205,6 +224,7 @@ def main(argv=None):
                     controller.cleanup()
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
                 if args.action == "start" and controller.attempted_setup:
+                    # The benchmark has not started yet, so rollback cannot require traffic.
                     controller.cleanup(require_traffic=False)
                 raise
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
