@@ -703,6 +703,128 @@ public class ServerLifecycleTests
         }
     }
 
+#nullable enable
+    /// <summary>
+    /// A close-log failure must be reported even when its connection has left the active collection.
+    /// </summary>
+    [Fact]
+    public void Dispose_ConnectionClosedLogFails_ReportsFailure()
+    {
+        // Arrange
+        using ClosingFailureWriter log = new();
+        using WorkerTrackingServer server = new(new TdsServerArguments { Log = log });
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        Assert.True(SpinWait.SpinUntil(() => server.ActiveSessions == 1, TimeSpan.FromSeconds(30)));
+        // Act
+        peer.Close();
+
+        // Assert
+        Assert.True(log.FailureTriggered.Wait(TimeSpan.FromSeconds(30)));
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+        Assert.Contains(log.Failure, error.Flatten().InnerExceptions);
+        Assert.Equal(0, server.ActiveSessions);
+    }
+
+    /// <summary>
+    /// An in-flight handler can abort during shutdown; repeated disposal cannot detach its endpoint.
+    /// </summary>
+    [Fact]
+    public void Dispose_HandlerAbortsDuringDrain_CompletesWithoutWorkerFailure()
+    {
+        // Arrange
+        using ManualResetEventSlim entered = new();
+        using ManualResetEventSlim release = new();
+        using AbortDuringDisposeServer server = new(entered, release);
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        using TDSStream transport = new(peer.GetStream(), false) { PacketSize = 4096 };
+        Task? disposing = null;
+        Task? repeatedDispose = null;
+        try
+        {
+            // Act
+            new TDSMessage(TDSMessageType.PreLogin,
+                new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.Off)).Deflate(transport);
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(30)));
+            disposing = Task.Factory.StartNew(server.Dispose,
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            // Assert
+            // Socket closure proves disposal reached the worker drain.
+            Assert.True(peer.Client.Poll(30_000_000, SelectMode.SelectRead));
+            Assert.Equal(0, peer.Available);
+            Assert.False(disposing.IsCompleted);
+            repeatedDispose = Task.Factory.StartNew(server.Dispose,
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            Assert.True(repeatedDispose.Wait(TimeSpan.FromSeconds(30)),
+                "Repeated disposal blocked behind an in-flight handler.");
+        }
+        finally
+        {
+            // Cleanup
+            release.Set();
+            if (disposing != null)
+            {
+                Assert.True(disposing.Wait(TimeSpan.FromSeconds(30)));
+            }
+            if (repeatedDispose != null)
+            {
+                Assert.True(repeatedDispose.Wait(TimeSpan.FromSeconds(30)));
+            }
+        }
+        // Assert
+        Assert.True(server.AbortCompleted);
+    }
+
+    /// <summary>Pauses a handler until endpoint disposal is draining that handler.</summary>
+    private sealed class AbortDuringDisposeServer : TdsServer
+    {
+        private readonly ManualResetEventSlim _entered;
+        private readonly ManualResetEventSlim _release;
+        public bool AbortCompleted { get; private set; }
+
+        public AbortDuringDisposeServer(ManualResetEventSlim entered, ManualResetEventSlim release)
+        {
+            _entered = entered;
+            _release = release;
+        }
+
+        protected override TDSMessageCollection OnPreLoginRequestCore(ITDSServerSession session, TDSMessage request)
+        {
+            _entered.Set();
+            if (!_release.Wait(TimeSpan.FromSeconds(30)))
+            {
+                throw new TimeoutException("Abort handler was not released.");
+            }
+            AbortConnection(session);
+            AbortCompleted = true;
+            return new TDSMessageCollection();
+        }
+    }
+
+    /// <summary>Fails only the endpoint's connection-close diagnostic, after session cleanup.</summary>
+    private sealed class ClosingFailureWriter : TextWriter
+    {
+        private readonly TaskCompletionSource<bool> _failureTriggered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Task FailureTriggered => _failureTriggered.Task;
+        public IOException Failure { get; } = new("Intentional connection-close logging failure.");
+        public override Encoding Encoding => Encoding.UTF8;
+
+        public override void WriteLine(string? value)
+        {
+            if (value != null && value.IndexOf("Connection Closed", StringComparison.Ordinal) >= 0)
+            {
+                _failureTriggered.TrySetResult(true);
+                throw Failure;
+            }
+        }
+
+        public override void WriteLine(string format, params object?[] arg) => WriteLine(format);
+    }
+
+#nullable restore
     private sealed class IoFailureServer : TdsServer
     {
         private readonly Exception _failure;

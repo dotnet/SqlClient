@@ -63,11 +63,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Clean up partial setup because xUnit does not call Dispose when construction fails.
             try
             {
-                RunPowershellScript(s_fullPathToPowershellScript);
+                RunPowershellScript(s_fullPathToPowershellScript, Directory.GetCurrentDirectory());
             }
-            catch
+            catch (Exception setupException)
             {
-                Dispose();
+                try
+                {
+                    RemoveCertificate();
+                }
+                catch (Exception cleanupException)
+                {
+                    throw new AggregateException("Certificate setup and cleanup failed.", setupException, cleanupException);
+                }
                 throw;
             }
         }
@@ -191,9 +198,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void RunPowershellScript(string script)
+        /// <summary>Runs a certificate script without changing trust stores and reports failed exits.</summary>
+        /// <param name="script">The certificate script to execute.</param>
+        /// <param name="currentDirectory">The directory containing scenario-owned certificate files.</param>
+        internal static void RunPowershellScript(string script, string currentDirectory)
         {
-            string currentDirectory = Directory.GetCurrentDirectory();
             string powerShellCommand =
               RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
               ? "powershell.exe"
@@ -205,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             StringBuilder output = new();
-            Process proc = new()
+            using Process proc = new()
             {
                 StartInfo =
                 {
@@ -213,7 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = $"\"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust",
+                    Arguments = $"-NoProfile -NonInteractive -File \"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -225,7 +234,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (e.Data != null)
                 {
-                    output.AppendLine($"[OUT] {e.Data}");
+                    lock (output)
+                    {
+                        output.AppendLine($"[OUT] {e.Data}");
+                    }
                 }
             });
 
@@ -233,7 +245,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (e.Data != null)
                 {
-                    output.AppendLine($"[ERR] {e.Data}");
+                    lock (output)
+                    {
+                        output.AppendLine($"[ERR] {e.Data}");
+                    }
                 }
             });
 
@@ -247,6 +262,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 proc.Kill();
                 proc.WaitForExit(2000);
                 throw new Exception($"Could not generate certificate; script output: {output}");
+            }
+            proc.WaitForExit();
+            if (proc.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"Certificate script exited with code {proc.ExitCode}; script output: {output}");
             }
         }
 
@@ -272,7 +292,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // File cleanup must still run if store removal fails.
             try
             {
-                if (File.Exists(s_fullPathTothumbprint))
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && File.Exists(s_fullPathTothumbprint))
                 {
                     string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
                     using X509Store certStore = new(StoreName.My, StoreLocation.LocalMachine);
@@ -291,7 +311,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             TryCleanup(() => File.Delete(s_fullPathTothumbprint));
-            TryCleanup(() => Directory.Delete(s_fullPathToClientCert, true));
+            TryCleanup(() => File.Delete(s_fullPathToPfx));
+            TryCleanup(() => File.Delete(Path.ChangeExtension(s_fullPathToPfx, "key")));
+            TryCleanup(() => File.Delete(Path.ChangeExtension(s_fullPathToPfx, "cer")));
+            TryCleanup(() => File.Delete(Path.ChangeExtension(s_fullPathToPfx, "pem")));
+            TryCleanup(() =>
+            {
+                if (Directory.Exists(s_fullPathToClientCert))
+                {
+                    Directory.Delete(s_fullPathToClientCert, true);
+                }
+            });
         }
 
         private static void TryCleanup(Action cleanupAction)
@@ -336,7 +366,76 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                RunPowershellScript(s_fullPathToCleanupPowershellScript);
+                RunPowershellScript(s_fullPathToCleanupPowershellScript, Directory.GetCurrentDirectory());
+            }
+        }
+    }
+
+    /// <summary>Verifies certificate-script failures without constructing a SQL Server fixture.</summary>
+    public class CertificateScriptTests
+    {
+#if NET
+        /// <summary>A native generation failure must stop setup without producing a stale certificate.</summary>
+        [Fact]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        [System.Runtime.Versioning.SupportedOSPlatform("linux")]
+        public void RunPowershellScript_NativeFailure_ReportsFailure()
+        {
+            // Arrange
+            string directory = Path.Combine(Path.GetTempPath(), $"{nameof(CertificateScriptTests)}-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(directory);
+            try
+            {
+                string nativeCommand = Path.Combine(directory, "openssl");
+                File.WriteAllText(nativeCommand, "#!/bin/sh\nexit 42\n");
+                File.SetUnixFileMode(nativeCommand, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+                string certificateScript = Path.Combine(AppContext.BaseDirectory, "makepfxcert.ps1").Replace("'", "''");
+                string script = Path.Combine(directory, "native-failure.ps1");
+                File.WriteAllText(script,
+                    "param($OutDir, [switch] $SkipTrust)\n$ErrorActionPreference = 'Stop'\n" +
+                    "$env:PATH = $PSScriptRoot + [IO.Path]::PathSeparator + $env:PATH\n" +
+                    "$env:computerName = [Environment]::MachineName\n" +
+                    $"& '{certificateScript}' -OutDir $OutDir -SkipTrust\n");
+                // Act
+                InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                    () => CertificateTestWithTdsServer.RunPowershellScript(script, directory));
+                // Assert
+                Assert.Contains("code 1", error.Message);
+                Assert.Contains("exited with code 42", error.Message);
+                Assert.False(File.Exists(Path.Combine(directory, "localhostcert.pfx")));
+            }
+            finally
+            {
+                // Cleanup
+                Directory.Delete(directory, true);
+            }
+        }
+#endif
+
+        /// <summary>Nonzero script exits must preserve diagnostics and fail certificate setup.</summary>
+        [Theory]
+        [InlineData("exit 23", 23)]
+        [InlineData("throw 'Intentional script failure.'", 1)]
+        public void RunPowershellScript_UnsuccessfulExit_ReportsFailure(string command, int exitCode)
+        {
+            // Arrange
+            string directory = Path.Combine(Path.GetTempPath(), $"{nameof(CertificateScriptTests)}-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(directory);
+            try
+            {
+                string script = Path.Combine(directory, "failure.ps1");
+                File.WriteAllText(script, "param($OutDir, [switch] $SkipTrust)\nWrite-Output 'Intentional script output.'\n" + command);
+                // Act
+                InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                    () => CertificateTestWithTdsServer.RunPowershellScript(script, directory));
+                // Assert
+                Assert.Contains($"code {exitCode}", error.Message);
+                Assert.Contains("Intentional script output.", error.Message);
+            }
+            finally
+            {
+                // Cleanup
+                Directory.Delete(directory, true);
             }
         }
     }

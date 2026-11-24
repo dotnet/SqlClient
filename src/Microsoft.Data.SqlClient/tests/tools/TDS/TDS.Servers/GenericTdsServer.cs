@@ -72,6 +72,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         private int _login7Count = 0;
 
         private TDSServerEndPoint _endpoint;
+        private int _disposing;
 
         /// <summary>
         /// Initialization constructor
@@ -984,16 +985,30 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         protected void AbortConnection(ITDSServerSession session)
         {
-            if (_endpoint == null)
+            TDSServerEndPoint endpoint = Volatile.Read(ref _endpoint);
+            if (endpoint == null)
             {
                 throw new InvalidOperationException("Server is not started.");
             }
-            _endpoint.AbortConnection(session);
+            endpoint.AbortConnection(session);
         }
 
         public virtual void Dispose()
         {
-            Interlocked.Exchange(ref _endpoint, null)?.Dispose();
+            if (Interlocked.CompareExchange(ref _disposing, 1, 0) != 0)
+            {
+                return;
+            }
+            try
+            {
+                // In-flight handlers still need the endpoint while its workers are draining.
+                Volatile.Read(ref _endpoint)?.Dispose();
+            }
+            finally
+            {
+                Volatile.Write(ref _endpoint, null);
+                Volatile.Write(ref _disposing, 0);
+            }
         }
     }
 }
