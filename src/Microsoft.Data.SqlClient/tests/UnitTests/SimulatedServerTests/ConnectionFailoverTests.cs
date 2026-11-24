@@ -510,6 +510,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109)]
         public void TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary(uint errorCode)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = false;
             // Arrange
             using TdsServer failoverServer = new(
                 new TdsServerArguments
@@ -562,6 +564,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109)]
         public void TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(uint errorCode)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = false;
             // Arrange
             using TdsServer failoverServer = new(
                 new TdsServerArguments
@@ -738,6 +742,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109)]
         public async Task TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = false;
             // Async parity for TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary.
             // Even with a user-provided failover partner, a login-token error must not
             // cause alternation to the failover server.
@@ -794,6 +800,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109, true)]
         public async Task TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(uint errorCode, bool useAsync)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = false;
             // With pooling enabled and a user-provided failover partner, a transient
             // login-token error must not clear the pool and must not contact the failover server.
 
@@ -868,6 +876,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109)]
         public void TransientFault_RetryDisabled_WithUserProvidedPartner_ShouldFail_NotFailover(uint errorCode)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = false;
             // When ConnectRetryCount = 0 and the server returns a login-phase token error,
             // the exception must propagate immediately and the failover partner must not be
             // contacted (parser state is not Closed, so the new guard must kick in).
@@ -914,12 +924,116 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Isolates the parser-state guard by using a non-fatal login error token: without the
+        /// Reproduces #5029's login-error decision: error 976 bypasses connect retries and
+        /// default/true permits partner alternation while explicit false rejects the login,
+        /// independently of pooling and async use.
+        /// This simulates protocol responses, not a real Basic AG; the successful partner
+        /// advertises mirroring information required by the driver's partner validation.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false, false)]
+        [InlineData(null, false, true)]
+        [InlineData(null, true, false)]
+        [InlineData(null, true, true)]
+        [InlineData(false, false, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, false)]
+        [InlineData(true, true, true)]
+        public async Task AvailabilityDatabaseLoginError_WithUserProvidedPartner_RespectsLegacySwitch(
+            bool? useLegacySwitch, bool pooling, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
+
+            TdsServerArguments partnerArguments = new();
+            using TdsServer failoverServer = new(partnerArguments);
+            failoverServer.Start();
+            string partnerDataSource = $"localhost,{failoverServer.EndPoint.Port}";
+
+            const string errorMessage = "The target database, 'test', is participating in an availability group " +
+                "and is currently not accessible for queries. Either data movement is suspended or " +
+                "the availability replica is not enabled for read access.";
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments
+                {
+                    IsEnabledTransientError = true,
+                    Number = 976,
+                    ErrorClass = 14,
+                    Message = errorMessage,
+                    RepeatCount = int.MaxValue,
+                });
+            server.Start();
+            string primaryDataSource = $"localhost,{server.EndPoint.Port}";
+            partnerArguments.FailoverPartner = primaryDataSource;
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = primaryDataSource,
+                InitialCatalog = "test",
+                FailoverPartner = partnerDataSource,
+                ConnectTimeout = 5,
+                ConnectRetryCount = 1,
+                ConnectRetryInterval = 1,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = pooling,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            try
+            {
+                if (useLegacySwitch != false)
+                {
+                    if (useAsync)
+                    {
+                        await connection.OpenAsync();
+                    }
+                    else
+                    {
+                        connection.Open();
+                    }
+
+                    Assert.Equal(ConnectionState.Open, connection.State);
+                    Assert.Equal(partnerDataSource, connection.DataSource);
+                }
+                else
+                {
+                    SqlException exception = useAsync
+                        ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                        : Assert.Throws<SqlException>(() => connection.Open());
+
+                    Assert.Equal(976, exception.Number);
+                    Assert.Equal((byte)14, exception.Class);
+                    Assert.Contains(errorMessage, exception.Message);
+                    Assert.Equal(ConnectionState.Closed, connection.State);
+                }
+
+                Assert.Equal(1, server.Login7Count);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
+                Assert.Equal(useLegacySwitch != false ? 1 : 0, failoverServer.Login7Count);
+                Assert.Equal(useLegacySwitch != false ? 1 : 0,
+                    failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+            }
+            finally
+            {
+                if (pooling)
+                {
+                    SqlConnection.ClearPool(connection);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Isolates the explicitly disabled legacy path using a non-fatal login error token: without the
         /// guard, LoginWithFailover alternates to partner; with the guard, retry stays on primary.
         /// </summary>
         [Fact]
         public void NonFatalTransientLoginError_WithUserProvidedPartner_ShouldRetryPrimary_NotFailover()
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = false;
             // This test isolates the parser-state guard added to LoginWithFailover.
             // We emit a transient login error with non-fatal severity so the connection
             // is not automatically doomed/broken by existing breakConnection logic.
@@ -966,14 +1080,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Verifies opt-in legacy behavior: login-phase SQL errors can alternate to the
-        /// failover partner when UseLegacyFailoverAlternationOnLoginSqlErrors is enabled.
+        /// Verifies default and explicitly enabled legacy alternation for login-phase transient errors.
         /// </summary>
-        [Fact]
-        public void NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner()
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        public void NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner(bool? useLegacySwitch)
         {
             using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = true;
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
 
             using TdsServer failoverServer = new(
                 new TdsServerArguments
@@ -1015,6 +1130,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"127.0.0.1,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+        }
+
+        /// <summary>
+        /// Authentication rejection must stop partner alternation regardless of the compatibility setting.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task LoginFailed_WithUserProvidedPartner_ShouldNotAlternate(bool? useLegacySwitch, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseLegacyFailoverAlternationOnLoginSqlErrors = useLegacySwitch;
+            using TdsServer partner = new(new TdsServerArguments());
+            partner.Start();
+            using TransientTdsErrorTdsServer server = new(new TransientTdsErrorTdsServerArguments
+            {
+                IsEnabledTransientError = true,
+                Number = 18456,
+                ErrorClass = 14,
+                RepeatCount = int.MaxValue,
+            });
+            server.Start();
+            SqlConnectionStringBuilder options = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "test",
+                FailoverPartner = $"localhost,{partner.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+                ConnectRetryCount = 0,
+                ConnectTimeout = 5,
+            };
+            using SqlConnection connection = new(options.ConnectionString);
+            SqlException error = useAsync
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Equal(18456, error.Number);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Equal(1, server.Login7Count);
+            Assert.Equal(0, partner.PreLoginCount);
+            Assert.Equal(0, partner.Login7Count);
         }
     }
 }

@@ -96,7 +96,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(overallConnectTimeout);
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
-        Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
+        Assert.True(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableTransactionIsolationLevelReset);
         Assert.True(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET

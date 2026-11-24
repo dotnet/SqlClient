@@ -252,6 +252,8 @@ not runtime validation.
 
 A selection of parameters for test targets in `build.proj` relevant to common developer workflows can be found below:
 
+For opt-in real-server failover coverage, see the [BAG and database-mirroring test instructions](src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/MirroringTest/README.md). These tests belong to `ManualTests`, require a prepared lab, and must be explicitly selected because normal test filters exclude their `interactive` category.
+
 <!-- markdownlint-disable MD060 -->
 
 | `[optional_parameter]` | Default Value                                            | Description                                                                                                                                                                                         |
