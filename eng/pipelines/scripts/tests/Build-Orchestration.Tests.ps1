@@ -129,7 +129,7 @@ Describe 'PowerShell module restore orchestration' {
         $certificate = Get-Content (Join-Path $repoRoot `
             'src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1') -Raw
         $certificate | Should -Not -Match 'Install-Module|PSGallery'
-        $certificate | Should -Match 'openssl version'
+        $certificate | Should -Match 'Invoke-CertificateNativeCommand openssl @\("version"\)'
         $manifest = Get-Content (Join-Path $repoRoot 'powershell-modules.json') -Raw |
             ConvertFrom-Json
         $manifest.modules.PSObject.Properties.Name | Should -Not -Contain 'OpenSSL'

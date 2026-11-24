@@ -39,3 +39,5 @@ leave root trust stores unchanged; certificates must remain untrusted for reject
 Certificate generation rejects failing PowerShell and native-command exit codes. Constructor-failure
 cleanup removes only simulator-owned certificates/files, never SQL Server registry settings or
 services, and preserves the setup failure if cleanup also fails.
+Cleanup reports all failures after attempting remaining files and retains the thumbprint
+when certificate-store removal fails, preserving ownership for later cleanup.
