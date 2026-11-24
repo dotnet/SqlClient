@@ -139,7 +139,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             catch (AuthenticationException ex) when (ExpectTlsHandshakeFailure)
             {
                 ssl.Dispose();
-                throw new IOException("The expected TLS handshake failed.", ex);
+                throw new ExpectedTlsHandshakeFailureException(ex);
             }
 
             if (multiplexer != null)
@@ -194,6 +194,17 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             {
                 EventLog.WriteLine("[TDSParser]: " + text, args);
             }
+        }
+    }
+
+    /// <summary>
+    /// Marks only an explicitly expected authentication rejection from the TLS handshake itself.
+    /// </summary>
+    internal sealed class ExpectedTlsHandshakeFailureException : Exception
+    {
+        internal ExpectedTlsHandshakeFailureException(AuthenticationException innerException)
+            : base("The expected TLS handshake failed.", innerException)
+        {
         }
     }
 }

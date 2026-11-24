@@ -42,7 +42,12 @@ internal sealed class TlsHandshakeStallingTdsServer : TdsServer
         }
 
         _release.Wait();
-        throw new IOException("The stalled TLS handshake was dropped when the server stopped.");
+        AbortConnection(session);
+        // Unwind TLS setup through a marked transport failure, not a handler exception.
+        if (transport.Read(new byte[1], 0, 1) != 1)
+        {
+            throw new EndOfStreamException("The aborted handshake transport closed.");
+        }
     }
 
     /// <summary>

@@ -146,6 +146,38 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         }
 
         /// <summary>
+        /// Reset only the active physical connection owning the supplied session.
+        /// Unlike disposal, this can be called by that connection's protocol handler.
+        /// </summary>
+        public void AbortConnection(ITDSServerSession session)
+        {
+            if (session == null)
+            {
+                throw new ArgumentNullException(nameof(session));
+            }
+
+            T selected = null;
+            lock (Connections)
+            {
+                foreach (T connection in Connections)
+                {
+                    if (ReferenceEquals(connection.Session, session))
+                    {
+                        selected = connection;
+                        break;
+                    }
+                }
+            }
+
+            if (selected == null)
+            {
+                throw new ArgumentException("The session has no active connection on this endpoint.", nameof(session));
+            }
+
+            selected.Abort();
+        }
+
+        /// <summary>
         /// Stop the listener thread
         /// </summary>
         public void Stop()
