@@ -24,8 +24,6 @@ param(
     [string]$Configuration = "Release",
     [string]$Framework = "net10.0",
     [string]$ResultsSubdir = "perf-results",
-    [ValidateRange(11, 1440)]
-    [int]$TestTimeoutMinutes = 180,
     [string]$BaselineVersion = "",
     # Alternative to -BaselineVersion: benchmark against Microsoft.Data.SqlClient built from ANOTHER
     # git ref of this repository (e.g. 'main') instead of a released NuGet package.  Used by the PR
@@ -71,16 +69,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
-$RunClock = [System.Diagnostics.Stopwatch]::StartNew()
-
-function Get-RemainingPerfSeconds {
-    # Leave time inside the ADO task deadline for the remote poll and artifact collection.
-    $remaining = [int][Math]::Floor(($TestTimeoutMinutes - 10) * 60 - $RunClock.Elapsed.TotalSeconds)
-    if ($remaining -le 0) {
-        throw "Benchmark execution budget exhausted; retaining partial results."
-    }
-    return $remaining
-}
 
 ####################################################################################################
 # Native-command error handling
@@ -147,7 +135,6 @@ Write-Host "  Perf project    : $PerfProject"
 Write-Host "  Configuration   : $Configuration"
 Write-Host "  Framework       : $Framework"
 Write-Host "  Results dir     : $ResultsDir"
-Write-Host "  Task budget     : $TestTimeoutMinutes minutes (10 reserved for collection)"
 Write-Host "  Run mode        : $RunMode (confirmation runs: $ConfirmationRuns)"
 Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
 Write-Host "  Baseline ref    : $(if ($BaselineSourceRef) { $BaselineSourceRef } else { '<none>' })"
@@ -773,7 +760,6 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
         $psi.UseShellExecute = $false
         $psi.WorkingDirectory = $runDir
 
-        $remainingPerfSeconds = Get-RemainingPerfSeconds
         $proc = [System.Diagnostics.Process]::Start($psi)
 
         $mask = Get-AffinityMask $env:PERF_CLIENT_CPUS
@@ -791,15 +777,8 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
         }
 
         Save-CpuTelemetry $Label "before"
-        if (-not $proc.WaitForExit($remainingPerfSeconds * 1000)) {
-            if (-not $proc.HasExited) {
-                Invoke-Native { taskkill /PID $proc.Id /T /F } "Could not terminate timed-out benchmark"
-            }
-            $proc.WaitForExit()
-            $runStatus = 124
-        } else {
-            $runStatus = $proc.ExitCode
-        }
+        $proc.WaitForExit()
+        $runStatus = $proc.ExitCode
         Save-CpuTelemetry $Label "after"
     } finally {
         Pop-Location
@@ -922,8 +901,7 @@ try {
             "--threshold", $RegressionThreshold,
             "--reps", $ConfirmationRuns,
             "--baseline-version", $BaselineLabel,
-            "--client-cpus", "$($env:PERF_CLIENT_CPUS)",
-            "--max-run-seconds", (Get-RemainingPerfSeconds)
+            "--client-cpus", "$($env:PERF_CLIENT_CPUS)"
         )
         # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
         # switch off vs on), even though both are otherwise the same build/env; every other baseline

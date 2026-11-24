@@ -130,8 +130,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </summary>
         public string RunStrategy;
 
-        internal virtual bool RepeatAll => false;
-
         internal virtual int GetOperationsPerInvoke(BenchmarkCase benchmark) =>
             benchmark.Descriptor.OperationsPerInvoke;
 

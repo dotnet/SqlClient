@@ -158,10 +158,10 @@ variables:
   # being combined with --baseline-version / --baseline-source-ref.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
-      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -SwitchUnderTest ${{ parameters.switchUnderTest }} -TestTimeoutMinutes ${{ parameters.testTimeoutMinutes }}'
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -SwitchUnderTest ${{ parameters.switchUnderTest }}'
   - ${{ else }}:
     - name: PerfArgsCommon
-      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --switch-under-test ${{ parameters.switchUnderTest }} --test-timeout-minutes ${{ parameters.testTimeoutMinutes }}'
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --switch-under-test ${{ parameters.switchUnderTest }}'
 
   # Gate flag, only when the run is asserting the switch must not be a slowdown.
   - ${{ if and(eq(parameters.platform, 'windows'), eq(parameters.failIfSwitchSlower, true)) }}:

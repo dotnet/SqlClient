@@ -31,8 +31,6 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
     private void ApplyNetworkPolicy() =>
         AdditionalRttMilliseconds = OperatingSystem.IsLinux() ? 100 : 0;
 
-    internal override bool RepeatAll => SamplingProfile == "Extended";
-
     internal override int GetOperationsPerInvoke(BenchmarkCase benchmark)
     {
         var state = (OpenAsyncBurstRunner.PoolState)benchmark.Parameters.Items

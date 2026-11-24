@@ -36,8 +36,6 @@ export PYTHONDONTWRITEBYTECODE=1
 ####################################################################################################
 
 configuration="Release"
-runStartedSeconds=$SECONDS
-testTimeoutMinutes="180"
 framework="net10.0"
 resultsSubDir="perf-results"
 baselineVersion=""
@@ -85,7 +83,6 @@ usage() {
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
-         "[--test-timeout-minutes <11..1440>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
 }
@@ -103,7 +100,6 @@ while [[ $# -gt 0 ]]; do
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
-        --test-timeout-minutes) testTimeoutMinutes="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
         --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
@@ -111,22 +107,6 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
 done
-
-if ! [[ "${testTimeoutMinutes}" =~ ^[0-9]+$ ]] ||
-        [[ "${testTimeoutMinutes}" -lt 11 || "${testTimeoutMinutes}" -gt 1440 ]]; then
-    echo "ERROR: --test-timeout-minutes must be an integer in 11..1440." >&2
-    exit 2
-fi
-
-# Reserve ten minutes inside the ADO task timeout for the remote completion poll and collection.
-remaining_perf_seconds() {
-    local remaining=$(( (testTimeoutMinutes - 10) * 60 - (SECONDS - runStartedSeconds) ))
-    if [[ "${remaining}" -le 0 ]]; then
-        echo "ERROR: benchmark execution budget exhausted; retaining partial results." >&2
-        return 1
-    fi
-    printf '%s\n' "${remaining}"
-}
 
 # Validate queue-time inputs up front so a typo fails fast with a clear message instead of silently
 # falling back to a different code path (e.g. '--run-mode interleave' would otherwise run sequentially)
@@ -212,7 +192,6 @@ echo "  Perf project   : ${PERF_PROJECT}"
 echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
-echo "  Task budget    : ${testTimeoutMinutes} minutes (10 reserved for collection)"
 echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
 echo "  Baseline ref   : ${baselineSourceRef:-<none>}"
 echo "  Switch A/B     : ${switchUnderTest:-<none>}${switchUnderTest:+ (baseline=false vs current=true)}"
@@ -753,11 +732,9 @@ run_pass() {
     echo "Running (${label}): ${run_cmd[*]}"
     capture_cpu_telemetry "${label}" "before"
     local run_status=0
-    local remaining
-    remaining="$(remaining_perf_seconds)"
     (
         cd "${run_dir}" || exit $?
-        timeout --signal=TERM --kill-after=30 "${remaining}" "${run_cmd[@]}"
+        "${run_cmd[@]}"
     ) || run_status=$?
     capture_cpu_telemetry "${label}" "after"
 
@@ -881,7 +858,6 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         --reps "${confirmationRuns}"
         --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
-        --max-run-seconds "$(remaining_perf_seconds)"
     )
     # --switch-under-test: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
     # switch off vs on), even though both are otherwise the same build/env; every other baseline

@@ -82,20 +82,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             if (Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") != null)
             {
-                if (Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") == "json")
-                {
-                    Console.WriteLine(JsonSerializer.Serialize(enabled.Select(unit =>
-                    {
-                        RunnerJob job = unit.Selector(_config.Benchmarks);
-                        job.ValidateExecution();
-                        return new
-                        {
-                            unit.Name, job.ProcessIsolation, job.AdditionalRttMilliseconds,
-                            job.RepeatAll
-                        };
-                    })));
-                    return;
-                }
                 foreach (BenchmarkUnit unit in enabled)
                 {
                     Console.WriteLine(unit.Name);
