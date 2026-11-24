@@ -319,6 +319,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeTask is not null)
                 {
+                    _asyncReadStagePending = true;
                     AsyncHelper.ContinueTaskWithState(
                         writeTask,
                         localCompletion,
@@ -327,7 +328,9 @@ namespace Microsoft.Data.SqlClient
                         {
                             var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
                             parameters.Item1.BeginExecuteReaderInternalReadStage(parameters.Item2);
-                        });
+                        },
+                        onFailure: static (state, _) => state.Item1._asyncReadStagePending = false,
+                        onCancellation: static state => state.Item1._asyncReadStagePending = false);
                 }
                 else
                 {
@@ -398,11 +401,13 @@ namespace Microsoft.Data.SqlClient
                 // Must finish caching information before ReadSni which can activate the callback
                 // before returning
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
+                _asyncReadStagePending = false;
                 _stateObj.ReadSni(completion);
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
+                _asyncReadStagePending = false;
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
                 CachedAsyncState?.ResetAsyncState();

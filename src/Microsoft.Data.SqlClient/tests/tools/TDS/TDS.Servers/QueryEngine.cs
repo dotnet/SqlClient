@@ -58,6 +58,14 @@ namespace Microsoft.SqlServer.TDS.Servers
         }
 
         /// <summary>
+        /// Handle an RPC request. RPC payloads are not parsed, so engines that expect RPCs must override this.
+        /// </summary>
+        public virtual TDSMessageCollection ExecuteRPC(ITDSServerSession session, TDSMessage request)
+        {
+            throw new NotImplementedException("RPC requests are not implemented by this query engine");
+        }
+
+        /// <summary>
         /// Create a response for the query
         /// </summary>
         /// <param name="session"></param>
