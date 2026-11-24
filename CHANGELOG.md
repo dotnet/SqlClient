@@ -100,6 +100,12 @@ See the [core release notes](release-notes/8.0/8.0.0.md) for platform and depend
 
 #### Fixed
 
+- Fixed `ExecuteXmlReaderAsync` and `BeginExecuteXmlReader` observing the first attempt while
+  an invalid enclave session is being retried. Completion now follows the retry's outcome,
+  and a successful retry releases the original asynchronous reservation. This avoids competing
+  reads of the TDS response, misleading XML/protocol errors, and failed connection reuse.
+  ([#5117](https://github.com/dotnet/SqlClient/pull/5117),
+  [#5136](https://github.com/dotnet/SqlClient/pull/5136))
 - Removed a socket-poll wait from pooled TCP connection health checks, avoiding an approximately
   15 ms delay when reopening healthy idle connections on Windows with managed networking.
   Peer-close detection is retained. The nonblocking check also runs on Unix, where the old
