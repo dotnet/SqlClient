@@ -203,10 +203,10 @@ class Runner:
         env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
         rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
                               env_overrides=env_overrides)
-        types = collect_results(cwd, os.path.join(agg_dir, unit, "BenchmarkDotNet.Artifacts"))
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
+        types = collect_results(cwd, os.path.join(agg_dir, unit, "BenchmarkDotNet.Artifacts"))
         if not types:
             _tail(log_path)
             raise RuntimeError(

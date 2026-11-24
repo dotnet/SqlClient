@@ -92,13 +92,12 @@ if (Test-Path Variable:\PSNativeCommandUseErrorActionPreference) {
 $env:PYTHONDONTWRITEBYTECODE = "1"
 
 # Run a native command (in a scriptblock) with stderr-as-terminating-error suppressed, then throw
-# $FailureMessage if it exited non-zero, unless the caller will check $LASTEXITCODE itself.
+# $FailureMessage if it exited non-zero.  Use for native calls whose non-zero exit must fail the run.
 function Invoke-Native {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, Position = 0)][scriptblock] $Command,
-        [Parameter(Position = 1)][string] $FailureMessage = "Native command failed",
-        [switch] $DeferExitCodeCheck
+        [Parameter(Position = 1)][string] $FailureMessage = "Native command failed"
     )
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
@@ -107,7 +106,7 @@ function Invoke-Native {
     } finally {
         $ErrorActionPreference = $previousPreference
     }
-    if (-not $DeferExitCodeCheck -and $LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0) {
         throw "$FailureMessage (exit $LASTEXITCODE)."
     }
 }
@@ -776,8 +775,8 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
 
         Save-CpuTelemetry $Label "before"
         $proc.WaitForExit()
-        $runStatus = $proc.ExitCode
         Save-CpuTelemetry $Label "after"
+        if ($proc.ExitCode -ne 0) { throw "Benchmark run '$Label' failed (exit $($proc.ExitCode))." }
     } finally {
         Pop-Location
     }
@@ -794,10 +793,6 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
         }
     } else {
         Write-Warning "No BenchmarkDotNet.Artifacts directory was produced for '$Label' at $artifactsDir."
-    }
-
-    if ($runStatus -ne 0) {
-        throw "Benchmark run '$Label' failed (exit $runStatus); diagnostic artifacts retained."
     }
 
     # §2.10 Fail loud: a pass that produced zero benchmark results (server dropped, all benches
@@ -870,7 +865,6 @@ if (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     Set-Content -Path (Join-Path $ResultsDir "baseline-label.txt") -Value $BaselineLabel -Encoding ascii
 }
 
-$comparisonStatus = 0
 if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
     ####################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
@@ -912,9 +906,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
         $interleaveArgs += "--fail-on-regression"
     }
     Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
-    Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } `
-        -DeferExitCodeCheck
-    $comparisonStatus = $LASTEXITCODE
+    Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
@@ -945,15 +937,9 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
         Write-Host "Regression gate ENABLED: a candidate-slower regression (> $RegressionThreshold%) will fail the run."
         $compareArgs += "--fail-on-regression"
     }
-    Invoke-Native { python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs } -DeferExitCodeCheck
-    $comparisonStatus = $LASTEXITCODE
-
-    # The comparator writes Markdown before applying the timing gate, but may fail before writing it.
-    $comparisonMarkdown = Join-Path $comparisonDir "comparison.md"
-    if ($comparisonStatus -eq 0 -or (Test-Path -LiteralPath $comparisonMarkdown)) {
-        Copy-Item -Force -LiteralPath $comparisonMarkdown `
-            -Destination (Join-Path $ResultsDir "summary.md")
-    }
+    Invoke-Native { python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs } "Comparison failed"
+    # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
+    Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
 
 } else {
     # --- No baseline: current-only run (no comparison) --------------------------------------------
@@ -961,18 +947,9 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     Invoke-PerfPass "current" $PerfProject @()
 }
 
-# Report collected evidence even when the timing gate failed.
 Invoke-Native {
     python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir
-} -DeferExitCodeCheck
-$healthStatus = $LASTEXITCODE
-
-if ($comparisonStatus -ne 0) {
-    throw "Performance comparison failed (exit $comparisonStatus); async-health exit: $healthStatus."
-}
-if ($healthStatus -ne 0) {
-    throw "Benchmark async-health reporting failed (exit $healthStatus)."
-}
+} "Benchmark async-health reporting failed"
 
 Write-Host "Collected results:"
 Get-ChildItem -Recurse -File $ResultsDir | ForEach-Object { $_.FullName } | Sort-Object

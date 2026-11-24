@@ -77,11 +77,9 @@ automatic preparation calls without disabling runtime tiering or reducing config
 For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]`.
 
 Failed benchmarks, missing windows, observer faults and incomplete work fail explicitly. Window
-and execution-failure records remain separate. Completed diagnostic artifacts are collected even
-when a benchmark process returns a failure. The pipeline task deadline can still interrupt
-collection. Ordinary regression gates are unchanged.
-After a timing comparison fails its gate, the runners still generate the async-health report
-from collected evidence before returning failure. A report-generation failure also fails the run.
+and execution-failure records remain separate. The runners stop on benchmark or timing-gate
+failures as before. They generate the async-health report after successful execution and any
+timing comparison. Report-generation failures also fail the run.
 
 ### Compact comparison
 
