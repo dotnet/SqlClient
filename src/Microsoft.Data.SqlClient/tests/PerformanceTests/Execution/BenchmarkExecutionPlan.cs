@@ -12,10 +12,13 @@ using BenchmarkDotNet.Running;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Describes an exact selection, without depending on diagnoser annotations or unit names.</summary>
+/// <summary>The parent passes this selection to a child that discovers the same runner's cases.</summary>
 internal sealed record BenchmarkProcessSelection(string Unit, int[] Indexes, string Fingerprint);
 
-/// <summary>Partitions discovered cases according to the explicitly configured process boundary.</summary>
+/// <summary>
+/// Groups selected benchmark cases into one child process per runner or one per case,
+/// according to the runner's <c>ProcessIsolation</c> setting.
+/// </summary>
 internal static class BenchmarkExecutionPlan
 {
     internal static BenchmarkProcessSelection[] Create(
@@ -37,6 +40,9 @@ internal static class BenchmarkExecutionPlan
     {
         job.ValidateExecution();
         ValidateIndexes(cases, selection.Indexes);
+
+        // Indexes alone could select a different workload if the child discovers cases in
+        // a different order. Check that they still point to the workloads the parent chose.
         if (selection.Unit != unit ||
             (job.ProcessIsolation == "PerCase" && selection.Indexes.Length != 1) ||
             selection.Fingerprint != Fingerprint(cases, selection.Indexes))

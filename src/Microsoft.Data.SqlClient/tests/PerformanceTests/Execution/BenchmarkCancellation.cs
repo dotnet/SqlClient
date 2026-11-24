@@ -8,7 +8,11 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Turns cooperative termination into cancellation so child and network cleanup can run.</summary>
+/// <summary>
+/// Converts Ctrl+C and Unix SIGTERM into a shutdown token for the perf harness. Suppressing
+/// the default exit lets the runner stop its child process and dispose its network scope.
+/// A forced kill bypasses this cleanup.
+/// </summary>
 internal sealed class BenchmarkCancellation : IDisposable
 {
     private readonly CancellationTokenSource _source = new();
