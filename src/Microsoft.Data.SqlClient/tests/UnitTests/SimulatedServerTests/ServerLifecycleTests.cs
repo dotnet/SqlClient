@@ -672,6 +672,49 @@ public class ServerLifecycleTests
         }
     }
 
+    /// <summary>
+    /// A close-log failure must be reported even when its connection has left the active collection.
+    /// </summary>
+    [Fact]
+    public void Dispose_ConnectionClosedLogFails_ReportsFailure()
+    {
+        // Arrange
+        using ClosingFailureWriter log = new();
+        using WorkerTrackingServer server = new(new TdsServerArguments { Log = log });
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        Assert.True(SpinWait.SpinUntil(() => server.ActiveSessions == 1, TimeSpan.FromSeconds(30)));
+        // Act
+        peer.Close();
+
+        // Assert
+        Assert.True(log.FailureTriggered.Wait(TimeSpan.FromSeconds(30)));
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+        Assert.Contains(log.Failure, error.Flatten().InnerExceptions);
+        Assert.Equal(0, server.ActiveSessions);
+    }
+
+    /// <summary>Fails only the endpoint's connection-close diagnostic, after session cleanup.</summary>
+    private sealed class ClosingFailureWriter : TextWriter
+    {
+        private readonly TaskCompletionSource<bool> _failureTriggered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Task FailureTriggered => _failureTriggered.Task;
+        public IOException Failure { get; } = new("Intentional connection-close logging failure.");
+        public override Encoding Encoding => Encoding.UTF8;
+
+        public override void WriteLine(string? value)
+        {
+            if (value != null && value.IndexOf("Connection Closed", StringComparison.Ordinal) >= 0)
+            {
+                _failureTriggered.TrySetResult(true);
+                throw Failure;
+            }
+        }
+
+        public override void WriteLine(string format, params object?[] arg) => WriteLine(format);
+    }
+
     private sealed class IoFailureServer : TdsServer
     {
         private readonly Exception _failure;
