@@ -84,8 +84,9 @@ from collected evidence before returning failure. A report-generation failure al
 
 ### Compact comparison
 
-`benchmark-async-health.md` pairs matching configurations by method/parameters and takes independent
-maxima across phases/repetitions for dispatch p99, first-worker queue p99 and both thread peaks.
+`benchmark-async-health-report-github.md` pairs matching configurations by method/parameters. It
+takes independent maxima across phases/repetitions for dispatch p99, first-worker queue p99 and both
+thread peaks.
 It never pools percentiles. Cells show current values with signed percentage/raw baseline deltas.
 Rows sort by descending unrounded dispatch percentage delta, undefined last, with deterministic ties.
 Missing/zero-baseline percentages are N/A. Current dispatch p99 is green below 1ms, yellow from

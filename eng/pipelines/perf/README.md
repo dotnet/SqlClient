@@ -10,7 +10,7 @@ BDN attaches [AsyncHealthDiagnoser](async-health.md) only to annotated suites.
 Unannotated suites retain their ordinary measurements without async-health instrumentation.
 Startup/warmup and the extra diagnostic iteration are observed separately; normal timing
 iterations are not observed. Raw queue/open/outcome/probe/resource evidence is retained alongside
-each side/repetition and summarized in `benchmark-async-health.md`. There is no separate sweep
+each side/repetition and summarized in `benchmark-async-health-report-github.md`. There is no sweep
 or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
 
 The compact async-health report pairs baseline/current worst-observed metrics across

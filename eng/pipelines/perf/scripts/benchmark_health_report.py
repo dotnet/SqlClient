@@ -362,7 +362,7 @@ def main(argv=None):
     parser.add_argument("--source-label", help="Identify historical evidence in a regenerated report.")
     args = parser.parse_args(argv)
     markdown, failed = render(args.results_dir, args.source_label)
-    output = args.out_md or args.results_dir / "benchmark-async-health.md"
+    output = args.out_md or args.results_dir / "benchmark-async-health-report-github.md"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(markdown, encoding="utf-8")
     return 1 if failed else 0
