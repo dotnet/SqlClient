@@ -189,6 +189,17 @@ See the [core release notes](release-notes/8.1/8.1.0-preview1.md) for platform a
 
 ### Fixed
 
+- Fixed asynchronous reader execution allowing `SqlCommand.Connection` or `Transaction` to
+  change, or the same command to execute again, while parameter streaming or setup/write is
+  still pending. These operations now reject conflicting use until the read stage takes over;
+  failure and cancellation release the setup/write guard.
+  ([#5092](https://github.com/dotnet/SqlClient/issues/5092),
+  [#5115](https://github.com/dotnet/SqlClient/pull/5115))
+- Fixed `ExecuteXmlReaderAsync` and `BeginExecuteXmlReader` observing the first attempt while
+  an invalid enclave session is being retried. Completion now follows the retry's outcome,
+  and a successful retry releases the original asynchronous reservation. This avoids competing
+  reads of the TDS response, misleading XML/protocol errors, and failed connection reuse.
+  ([#5117](https://github.com/dotnet/SqlClient/pull/5117))
 - Removed a socket-poll wait from pooled TCP connection health checks, avoiding an approximately
   15 ms delay when reopening healthy idle connections on Windows with managed networking.
   Peer-close detection is retained. The nonblocking check also runs on Unix, where the old
