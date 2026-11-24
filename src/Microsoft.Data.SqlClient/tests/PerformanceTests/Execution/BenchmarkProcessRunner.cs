@@ -12,7 +12,11 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Starts exact child selections and keeps their artifacts and network lifetime separate.</summary>
+/// <summary>
+/// Runs a benchmark selection in a fresh harness process so it does not inherit driver or
+/// ThreadPool state from earlier runs. The parent manages any network shaping around the
+/// child's lifetime.
+/// </summary>
 internal static class BenchmarkProcessRunner
 {
     internal const string SelectionVariable = "SQLCLIENT_BENCHMARK_SELECTION";
@@ -22,6 +26,8 @@ internal static class BenchmarkProcessRunner
         BenchmarkProcessSelection selection, RunnerJob job, string connectionString,
         bool unattended, CancellationToken cancellationToken)
     {
+        // BenchmarkDotNet names reports by suite. Give each child its own working directory
+        // so separate cases and repeated runs cannot overwrite one another's reports.
         string directory = Path.GetFullPath(Path.Combine(
             "BenchmarkDotNet.Artifacts", "processes",
             selection.Unit + "-" + selection.Fingerprint[..16] + "-" +
@@ -75,6 +81,7 @@ internal static class BenchmarkProcessRunner
 
     internal static void Stop(Process child)
     {
+        // Give the Linux child a chance to finish its cleanup before forcing it to exit.
         if (!child.HasExited && OperatingSystem.IsLinux())
         {
             if (Kill(child.Id, 15) != 0 && !child.HasExited)
