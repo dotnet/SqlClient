@@ -373,14 +373,14 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject) => TdsEnums.SNI_SUCCESS_IO_PENDING;
 
-        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
+        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename, Connection.EncryptionInfoAccumulator? encryptionInfo)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             try
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Info | Session Id {0}", sessionHandle.ConnectionId);
                 using CancellationTokenSource connectTimeout = new(GetTimeoutRemaining());
-                return sessionHandle.EnableSsl(info, connectTimeout.Token);
+                return sessionHandle.EnableSsl(info, encryptionInfo, connectTimeout.Token);
             }
             catch (Exception e)
             {

@@ -646,6 +646,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        // Assert.Fail: parallel MARS commands reported Execution Timeout Expired.
+        [Trait("category", "flaky")]
         public static void MarsConcurrencyTest()
         {
             var table = DataTestUtility.GetShortName("MarsConcurrencyTest", withBracket: false);

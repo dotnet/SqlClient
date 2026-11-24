@@ -360,7 +360,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
-        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
+        internal int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Otherwise, use a full-fledged execute that can handle params and stored sprocs
-                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal, forDescribeParameterEncryption: false);
+                    SqlDataReader reader = CompleteAsyncExecutionSynchronously(isInternal, forDescribeParameterEncryption: false);
                     reader?.Close();
                 }
             }
@@ -710,13 +710,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             Task<int> returnedTask = source.Task;
-
-            ExecuteNonQueryAsyncCallContext context = new ExecuteNonQueryAsyncCallContext();
-            context.Set(this, source, registration, operationId);
-            context.CancellationToken = cancellationToken;
+            ExecuteNonQueryAsyncCallContext context = null;
             try
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+                context = new ExecuteNonQueryAsyncCallContext();
+                context.Set(this, source, registration, operationId);
+                context.CancellationToken = cancellationToken;
 
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
                 Task<int>.Factory.FromAsync(
@@ -754,7 +754,14 @@ namespace Microsoft.Data.SqlClient
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
-                context.Dispose();
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
             }
 
