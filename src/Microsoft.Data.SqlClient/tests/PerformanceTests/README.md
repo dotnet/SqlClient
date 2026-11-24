@@ -27,8 +27,8 @@ and `NonPooled`. The default runner config enables it. Existing configs that omi
 `OpenAsyncBurstRunnerConfig` do not run it. Open/close-only bursts are excluded: tight synchronous
 checkout loops can saturate the ThreadPool on their own.
 
-The runner config must specify `"RunStrategy": "Monitoring"`, one launch, one warmup, one
-invocation per iteration, and a positive timing iteration count. The template uses `PerCase`,
+The standard runner config must specify `"RunStrategy": "Monitoring"`, one launch, one warmup,
+one invocation per iteration, and a positive timing iteration count. The template uses `PerCase`,
 three timing iterations, a ten-minute case timeout, and `AdditionalRttMilliseconds: 100`.
 The harness applies the configured delay on Linux only; set it to `0` or omit it to disable
 shaping. Each case sets the worker minimum to 16 and restores it afterward.

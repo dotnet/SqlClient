@@ -45,9 +45,10 @@ public class OpenAsyncBurstRunner
 
     private void Setup(PoolState state)
     {
+        ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
+        ValidateJob(_config.Benchmarks.OpenAsyncBurstRunnerConfig);
         _state = state;
 
-        ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
         if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))
         {
             throw new InvalidOperationException("Could not set the benchmark's worker minimum.");
@@ -69,6 +70,22 @@ public class OpenAsyncBurstRunner
             PoolBlockingPeriod = PoolBlockingPeriod.NeverBlock
         };
         _connectionString = builder.ConnectionString;
+    }
+
+    private static void ValidateJob(RunnerJob job)
+    {
+        if (job.LaunchCount != 1 || job.WarmupCount != 1 || job.InvocationCount != 1 ||
+            job.RunStrategy != "Monitoring")
+        {
+            throw new ArgumentException(
+                "Burst sampling requires Monitoring with one launch, one warmup " +
+                "and one invocation per iteration.");
+        }
+        if (job.IterationCount < 1)
+        {
+            throw new ArgumentException(
+                "Set IterationCount to a positive value in the runner config.");
+        }
     }
 
     [GlobalCleanup]

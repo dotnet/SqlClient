@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
         public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
-        public OpenAsyncBurstRunnerJob OpenAsyncBurstRunnerConfig;
+        public RunnerJob OpenAsyncBurstRunnerConfig;
     }
 
     public class RunnerJob
@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public string RunStrategy;
 
         /// <summary>Rejects unsupported execution policies before launching benchmark work.</summary>
-        public virtual void ValidateExecution()
+        public void ValidateExecution()
         {
             if (ProcessIsolation != "PerRunner" && ProcessIsolation != "PerCase")
             {
