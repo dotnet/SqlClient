@@ -2498,6 +2498,8 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
+                            // The retry holds its own reservation for End, so release the original one.
+                            retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
