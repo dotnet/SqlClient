@@ -2533,10 +2533,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Caller A: 1s virtual timeout, Caller B: 10s virtual timeout. Both run in
             // background tasks so the sync pool path can block on the channel as in production.
+            using SqlConnection shortTimeoutOwner = new();
             var callerATask = Task.Run(() =>
             {
                 pool.TryGetConnection(
-                    new SqlConnection(),
+                    shortTimeoutOwner,
                     taskCompletionSource: null,
                     timerA,
                     out DbConnectionInternal? connectionA);
@@ -2587,17 +2588,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 // Cleanup
                 pool.Shutdown();
-                if (!firstReturned)
+                try
                 {
-                    pool.ReturnInternalConnection(firstConnection, firstOwner);
+                    Task callers = Task.WhenAll(callerATask, callerBTask);
+                    Task drained = await Task.WhenAny(callers, Task.Delay(TimeSpan.FromSeconds(30)));
+                    if (callers.Exception is AggregateException errors)
+                    {
+                        Console.WriteLine($"Pool caller teardown faults: {errors}");
+                    }
+                    Assert.Same(callers, drained);
                 }
-
-                if (resultB is not null)
+                finally
                 {
-                    pool.ReturnInternalConnection(resultB, secondOwner);
+                    if (!firstReturned)
+                    {
+                        pool.ReturnInternalConnection(firstConnection, firstOwner);
+                    }
+                    if (callerBTask.Status == TaskStatus.RanToCompletion && callerBTask.Result is not null)
+                    {
+                        pool.ReturnInternalConnection(callerBTask.Result, secondOwner);
+                    }
+                    if (callerATask.Status == TaskStatus.RanToCompletion && callerATask.Result is not null)
+                    {
+                        pool.ReturnInternalConnection(callerATask.Result, shortTimeoutOwner);
+                    }
+                    pool.Clear();
                 }
-
-                pool.Clear();
             }
         }
 

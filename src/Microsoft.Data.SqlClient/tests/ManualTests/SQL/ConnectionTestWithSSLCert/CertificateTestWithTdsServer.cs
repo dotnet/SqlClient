@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -293,9 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RemoveCertificate()
         {
-            // Remove the generated certificate from My; setup deliberately does not install it in Root.
-            // File cleanup must still run if store removal fails.
-            try
+            RemoveCertificate(Directory.GetCurrentDirectory(), () =>
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && File.Exists(s_fullPathTothumbprint))
                 {
@@ -309,27 +308,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     certStore.Close();
                 }
+            });
+        }
+
+        /// <summary>Attempts all owned file cleanup and retains ownership if store removal fails.</summary>
+        /// <param name="directory">The directory containing scenario-owned certificate files.</param>
+        /// <param name="removeFromStore">Removes the owned certificate without changing SQL Server state.</param>
+        internal static void RemoveCertificate(string directory, Action removeFromStore)
+        {
+            List<Exception> errors = new();
+            bool removedFromStore = false;
+            try
+            {
+                removeFromStore();
+                removedFromStore = true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: failed to remove certificate: {ex.Message}");
+                errors.Add(ex);
             }
 
-            TryCleanup(() => File.Delete(s_fullPathTothumbprint));
-            TryCleanup(() => File.Delete(s_fullPathToPfx));
-            TryCleanup(() => File.Delete(Path.ChangeExtension(s_fullPathToPfx, "key")));
-            TryCleanup(() => File.Delete(Path.ChangeExtension(s_fullPathToPfx, "cer")));
-            TryCleanup(() => File.Delete(Path.ChangeExtension(s_fullPathToPfx, "pem")));
+            if (removedFromStore)
+            {
+                TryCleanup(() => File.Delete(Path.Combine(directory, "thumbprint.txt")), errors);
+            }
+            foreach (string extension in new[] { "pfx", "key", "cer", "pem" })
+            {
+                TryCleanup(() => File.Delete(Path.Combine(directory, $"localhostcert.{extension}")), errors);
+            }
             TryCleanup(() =>
             {
-                if (Directory.Exists(s_fullPathToClientCert))
+                string clientCertificates = Path.Combine(directory, "clientcert");
+                if (Directory.Exists(clientCertificates))
                 {
-                    Directory.Delete(s_fullPathToClientCert, true);
+                    Directory.Delete(clientCertificates, true);
                 }
-            });
+            }, errors);
+            if (errors.Count > 0)
+            {
+                throw new AggregateException("Certificate cleanup failed.", errors);
+            }
         }
 
-        private static void TryCleanup(Action cleanupAction)
+        private static void TryCleanup(Action cleanupAction, List<Exception> errors)
         {
             try
             {
@@ -338,6 +360,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception ex)
             {
                 Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: cleanup step failed: {ex.Message}");
+                errors.Add(ex);
             }
         }
 
@@ -389,6 +412,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("Set", "1")]
     public class CertificateScriptTests
     {
+        /// <summary>Cleanup preserves store/file failures and ownership while attempting remaining files.</summary>
+        [Fact]
+        public void RemoveCertificate_StoreAndFileFailures_PreservesErrorsAndOwnership()
+        {
+            // Arrange
+            string directory = Path.Combine(Path.GetTempPath(), $"{nameof(CertificateScriptTests)}-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(directory);
+            IOException storeFailure = new("Intentional certificate-store failure.");
+            try
+            {
+                string thumbprint = Path.Combine(directory, "thumbprint.txt");
+                string certificate = Path.Combine(directory, "localhostcert.cer");
+                File.WriteAllText(thumbprint, "fixture-owned");
+                File.WriteAllText(certificate, "fixture-owned");
+                Directory.CreateDirectory(Path.Combine(directory, "localhostcert.pfx"));
+
+                // Act
+                AggregateException error = Assert.Throws<AggregateException>(() =>
+                    CertificateTestWithTdsServer.RemoveCertificate(directory, () => throw storeFailure));
+
+                // Assert
+                Assert.Contains(storeFailure, error.Flatten().InnerExceptions);
+                Assert.Equal(2, error.Flatten().InnerExceptions.Count);
+                Assert.True(File.Exists(thumbprint));
+                Assert.False(File.Exists(certificate));
+            }
+            finally
+            {
+                // Cleanup
+                Directory.Delete(directory, true);
+            }
+        }
+
 #if NET
         /// <summary>A native generation failure must stop setup without producing a stale certificate.</summary>
         [Fact]

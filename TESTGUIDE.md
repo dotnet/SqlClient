@@ -57,6 +57,8 @@ its retry event; `ConnectRetryCount` does not retry a pre-login reset. Pool-wait
 explicitly select the legacy wait-budget policy, hold the occupied slot beyond that budget,
 and verify actual pool-wait admission before release; elapsed time or transport counts alone are
 not evidence of successful pool waiting.
+Pool-wait test teardown shuts down the pool, boundedly drains and observes both callers,
+and returns late successful checkouts before clearing the pool or disposing caller owners.
 Assert the expected client failure
 as well, and keep success controls so simulator setup errors cannot masquerade as certificate rejection.
 `ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
@@ -69,6 +71,8 @@ the negative cases; explicit certificate pinning and `TrustServerCertificate` pr
 Certificate generation rejects failing PowerShell and native-command exit codes. Constructor-failure
 cleanup removes only simulator-owned certificates/files, never SQL Server registry settings or
 services, and preserves the setup failure if cleanup also fails.
+Cleanup reports all failures after attempting remaining files and retains the thumbprint
+when certificate-store removal fails, preserving ownership for later cleanup.
 
 ## CI Platform Coverage
 
