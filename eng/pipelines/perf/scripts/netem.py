@@ -92,6 +92,8 @@ class NetworkDelay:
 
     def queues(self):
         """Return the parsed tc queue records for lo, including packet and drop counts."""
+        # Show queueing disciplines on the loopback device (lo), with statistics (-s)
+        # in JSON (-j) so the caller can check queue length, traffic, and drops.
         return json.loads(self.command("tc", "-s", "-j", "qdisc", "show", "dev", "lo"))
 
     def setup(self, rtt, server, port):
@@ -129,16 +131,26 @@ class NetworkDelay:
         self.attempted_setup = True
         # Record the handles before touching lo so cleanup can identify a partial install.
         write_json(self.state_path, data)
-        # Unmatched traffic uses the first band. Filters send SQL traffic to the second
-        # band in both directions, so each packet gets half the requested RTT in microseconds.
+
+        # Add a three-band priority queue at the root of lo, using the saved handle for cleanup.
+        # The 16 priomap entries send every default packet priority to the first band (index 0).
         self.command("tc", "qdisc", "add", "dev", "lo", "root", "handle", data["RootHandle"],
                      "prio", "bands", "3", "priomap", *(["0"] * 16), privileged=True)
+
+        # Attach a separately identified netem queue to the root's second band (class :2).
+        # Delay each direction by half the RTT (500 us per RTT millisecond); cap the queue
+        # at 10,000 packets.
         self.command("tc", "qdisc", "add", "dev", "lo", "parent", f"{number:x}:2",
                      "handle", data["NetemHandle"], "netem", "delay", f"{rtt * 500}us",
                      "limit", "10000", privileged=True)
+
         for index, address in enumerate(addresses):
             protocol = "ip" if ipaddress.ip_address(address).version == 4 else "ipv6"
             for offset, direction in enumerate(("dst", "src")):
+                # Attach a flower filter to the root queue with a distinct priority (pref)
+                # for each address and direction. protocol selects IPv4 or IPv6; ip_proto
+                # selects TCP. Match the SQL address and port as the destination on requests
+                # or source on replies, and send matches to the delayed band (classid :2).
                 self.command("tc", "filter", "add", "dev", "lo", "parent", data["RootHandle"],
                              "protocol", protocol, "pref", str(index * 2 + offset + 1),
                              "flower", "ip_proto", "tcp", f"{direction}_ip", address,
@@ -205,6 +217,8 @@ class NetworkDelay:
                 if require_traffic and (not netem or not netem[0].get("packets", 0)):
                     problems.append("No SQL packets traversed netem")
         finally:
+            # Delete the root queue on lo using the verified ownership handle. Its child
+            # queue and filters are removed with it.
             self.command("tc", "qdisc", "del", "dev", "lo", "root", "handle", handle,
                          privileged=True)
             data["CleanupSucceeded"] = not any(
