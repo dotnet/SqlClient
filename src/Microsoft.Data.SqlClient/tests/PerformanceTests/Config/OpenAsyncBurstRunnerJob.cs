@@ -7,11 +7,9 @@ using System.Text.Json.Serialization;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Selects the sampling mode and validates the benchmark's BDN execution settings.</summary>
+/// <summary>Sets the network policy and validates the benchmark's BDN settings.</summary>
 public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
 {
-    public string SamplingProfile = "Burst";
-
     public OpenAsyncBurstRunnerJob()
     {
         ApplyNetworkPolicy();
@@ -37,10 +35,6 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
         {
             throw new ArgumentException(
                 "Set IterationCount to a positive value in the runner config.");
-        }
-        if (SamplingProfile != "Burst" && SamplingProfile != "Extended")
-        {
-            throw new ArgumentException("SamplingProfile must be Burst or Extended.");
         }
     }
 }

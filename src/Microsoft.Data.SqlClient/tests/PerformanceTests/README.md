@@ -29,20 +29,18 @@ checkout loops can saturate the ThreadPool on their own.
 
 The runner uses `Monitoring`. Its config must specify one launch, one warmup, one invocation per
 iteration, and a positive timing iteration count. The template uses `PerCase`, three timing
-iterations and a five-minute case timeout. The runner always adds 100 ms of SQL RTT on Linux and
+iterations and a ten-minute case timeout. The runner always adds 100 ms of SQL RTT on Linux and
 skips shaping elsewhere. Each case sets the worker minimum to 16 and restores it afterward.
 Warm setup holds 64 connections (16 for Oversubscribed) before returning them; Empty clears
 only its own pool.
 
-`Burst` (default) performs one operation per worker. `Extended` keeps that cold wave for `Empty`.
-Other states use 16 waves of 64 workers, with 20/5/1 operations per worker for
-Warm/Oversubscribed/NonPooled. Each extended workload declares its own
-`[Benchmark(OperationsPerInvoke = ...)]` count for BDN normalization. The single-wave cases share
-`OpenQueryClose` and its operation count.
+`Empty` runs a single cold wave of 64 workers, each doing one operation. The other cases use
+16 waves of 64 workers, with 20/5/1 operations per worker for Warm/Oversubscribed/NonPooled.
+Each workload declares its own `[Benchmark(OperationsPerInvoke = ...)]` count for normalization.
+Remove `SamplingProfile` from existing configs and increase `TimeoutMinutes` to `10` if needed.
 
-For a focused Linux run, set `SamplingProfile=Extended` and `TimeoutMinutes=10` in the standard
-runner config, disable unrelated runners, and select `useConnectionPoolV2=true` at queue time.
-On a 16-CPU Linux host at 100 ms RTT, the extended diagnostic windows took roughly 33 seconds for
+For a focused Linux run, disable unrelated runners and select `useConnectionPoolV2=true` at queue
+time. On a 16-CPU Linux host at 100 ms RTT, the steady diagnostic windows took roughly 33 seconds for
 Warm and Oversubscribed and 53 seconds for NonPooled with both drivers. This is not a guarantee
 for other hosts; check sampling evidence. Sustained non-pooled work can exhaust TCP source ports.
 

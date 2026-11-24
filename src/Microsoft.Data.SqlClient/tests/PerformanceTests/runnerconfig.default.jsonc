@@ -39,13 +39,11 @@
             "Enabled": true,
             "ProcessIsolation": "PerCase",
             // This runner always adds 100 ms of SQL RTT on Linux and skips shaping elsewhere.
-            // Extended uses the runner's fixed per-state work counts.
-            "SamplingProfile": "Burst",
             "LaunchCount": 1,
             "IterationCount": 3,
             "InvocationCount": 1,
             "WarmupCount": 1,
-            "TimeoutMinutes": 5
+            "TimeoutMinutes": 10
         },
         "SqlConnectionRunnerConfig": {
             "Enabled": true,
