@@ -110,11 +110,12 @@ public class OpenAsyncBurstRunner
     {
         public WorkloadConfig()
         {
-            bool extended = Config.Load().Benchmarks.OpenAsyncBurstRunnerConfig
-                .SamplingProfile == "Extended";
+            // BDN can instantiate this config while validating other benchmarks in the assembly.
+            var extended = new Lazy<bool>(() =>
+                Config.Load().Benchmarks.OpenAsyncBurstRunnerConfig.SamplingProfile == "Extended");
             AddFilter(new SimpleFilter(benchmark =>
             {
-                string workload = (extended, benchmark.Parameters[nameof(State)]) switch
+                string workload = (extended.Value, benchmark.Parameters[nameof(State)]) switch
                 {
                     (true, PoolState.Warm) => nameof(OpenQueryCloseWarmExtended),
                     (true, PoolState.Oversubscribed) => nameof(OpenQueryCloseOversubscribedExtended),
