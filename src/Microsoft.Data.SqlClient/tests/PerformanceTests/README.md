@@ -103,9 +103,8 @@ Commands/buffers formerly allocated in benchmark bodies now live in setup; DataT
 materialization alongside its drain baseline; SqlCommand now uses focused one-row workloads.
 Compare baseline and candidate drivers using the same updated benchmark sources. Historical
 results from the old implementations are not directly comparable. No parser or driver API code
-is changed by this suite consolidation. The source-baseline pipeline compiles these same candidate
-benchmark sources with `MdsSourceRoot` pointing to the baseline driver and its matching TestCommon,
-so a baseline need not already contain the benchmark updates.
+is changed by this suite consolidation. The source-baseline pipeline builds each ref's own harness,
+so changes to a workload can affect timing comparisons as well as changes to the driver.
 
 ## Running and configuration
 

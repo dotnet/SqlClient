@@ -69,8 +69,9 @@ The reader still accepts schema 2; missing raw resource metadata is reported as 
 
 ## Pipeline integration and artifacts
 
-The candidate-owned harness builds against both source/package drivers (`MdsSourceRoot` or
-`MdsPackageVersion`); old baselines need not already contain these benchmarks.
+Source baselines build and run their own harness. If it does not produce async-health evidence
+for a candidate case, the report shows the candidate's metrics without a baseline delta.
+Package baselines build the candidate's harness against `MdsPackageVersion`.
 The test-only BDN preview supplies lifecycle hooks. `JitTieringMode.Skip` avoids about 90 extra
 automatic preparation calls without disabling runtime tiering or reducing configured work.
 For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]`.

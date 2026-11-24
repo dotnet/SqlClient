@@ -5,7 +5,6 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
     <Configurations>Debug;Release;</Configurations>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
-    <MdsSourceRoot Condition="'$(MdsSourceRoot)' == ''">$(RepoRoot)</MdsSourceRoot>
   </PropertyGroup>
 
   <!-- OS Constants ==================================================== -->
@@ -44,7 +43,7 @@
     <!-- version of MDS. Package mode is specified by setting the build parameter ReferenceType   -->
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
-    <ProjectReference Include="$(MdsSourceRoot)\src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' == 'Project'"  />
     <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a    -->
     <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. Under Central       -->
@@ -93,6 +92,6 @@
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows"
                       Condition="'$(OS)' == 'Windows_NT'" />
 
-    <ProjectReference Include="$(MdsSourceRoot)\src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
   </ItemGroup>
 </Project>

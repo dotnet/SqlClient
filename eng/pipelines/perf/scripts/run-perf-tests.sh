@@ -623,9 +623,9 @@ prepare_baseline_source() {
         fi
     fi
 
-    if [[ ! -f "${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" ||
-          ! -f "${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" ]]; then
-        echo "ERROR: baseline source tree requires the unified driver and matching TestCommon projects." >&2
+    BASELINE_PERF_PROJECT="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj"
+    if [[ ! -f "${BASELINE_PERF_PROJECT}" ]]; then
+        echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
         exit 1
     fi
 
@@ -684,8 +684,8 @@ build_current_default_output() {
 
 # run_pass <label> <project> <extra dotnet build/run args...>
 # Builds and runs one benchmark pass from <project>, pinned to PERF_CLIENT_CPUS, collecting artifacts
-# into ${RESULTS_DIR}/<label>. Both sides compile the candidate's harness; source baselines
-# override MdsSourceRoot to reference their own driver and matching TestCommon.
+# into ${RESULTS_DIR}/<label>.  <project> is the candidate's perf project for every pass except a
+# source-baseline pass, which builds the baseline ref's own perf project.
 run_pass() {
     local label="$1"; shift
     local project="$1"; shift
@@ -711,9 +711,6 @@ run_pass() {
         if [[ "${label}" == "current" && "${project}" == "${PERF_PROJECT}" \
                 && "${#extra_args[@]}" -eq 0 ]]; then
             CURRENT_DEFAULT_OUTPUT_BUILT=true
-        elif [[ "${project}" == "${PERF_PROJECT}" ]]; then
-            # A baseline build used the same project output; candidate must rebuild before running.
-            CURRENT_DEFAULT_OUTPUT_BUILT=false
         fi
     fi
 
@@ -804,12 +801,11 @@ if [[ -n "${baselineVersion}" ]]; then
         -p:WarningsNotAsErrors=NU1901%3BNU1902%3BNU1903%3BNU1904 # Allow dependencies with vulnerabilities on baseline tests
     )
 elif [[ -n "${baselineSourceRef}" ]]; then
-    # The candidate owns both benchmark definitions and diagnostics; only the driver/common
-    # project references come from the baseline tree, so new benchmark units exist on both sides.
+    # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
+    # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
     prepare_baseline_source "${baselineSourceRef}"
     baselineLabel="${BASELINE_SRC_LABEL}"
-    baselineProject="${PERF_PROJECT}"
-    baselineBuildArgs=(-p:MdsSourceRoot="${BASELINE_SRC_DIR}")
+    baselineProject="${BASELINE_PERF_PROJECT}"
 elif [[ -n "${switchUnderTest}" ]]; then
     # Switch A/B: SAME source/project for both passes (baselineProject/baselineBuildArgs are already
     # the candidate's, set above), so only the runner config differs (see BASELINE_RUNNER_CONFIG /

@@ -137,7 +137,7 @@ An explicit version can still be supplied at queue time; an empty value runs cur
 ## PR pipeline (`sqlclient-perf-pr-pipeline.yml`)
 
 `sqlclient-perf-pr-pipeline.yml` answers the question a PR author actually has — *does my branch
-regress the branch I am merging into?* — by running the **same** benchmarks, on the **same** extends
+regress the branch I am merging into?* — by comparing shared benchmarks on the **same** extends
 template, through the **same** on-VM scripts, with the **same** configuration options as the main
 pipeline. It differs in exactly two ways:
 
@@ -185,10 +185,10 @@ mutually exclusive and the script fails fast if both are supplied). On the VM th
    the ADO build list. (The pipeline cannot produce this tag on its own — at compile time it only
    knows the ref name, which would tag every run identically.)
 
-Because each side builds its own harness, a benchmark added by the PR simply shows up as `new` in
-the comparison (and one removed by the PR as `removed`) instead of failing the run. Both passes
-share the single generated runner config (`RUNNER_CONFIG` / `DATATYPES_CONFIG` env vars), so
-connection string and behaviour flags are identical on both sides.
+Each side builds its own harness. In interleaved mode, candidate units without an enabled baseline
+counterpart run on the candidate only and appear as `new`. The async-health report shows their
+current metrics without a baseline delta. Both passes share the generated runner config
+(`RUNNER_CONFIG` / `DATATYPES_CONFIG`), so the connection string and behaviour flags match.
 
 ## Experiment pipeline (`sqlclient-perf-experiment.yml`)
 
@@ -314,10 +314,8 @@ The `PerformanceTests` project references Microsoft.Data.SqlClient two ways, sel
 - **Baseline (package)**: `ReferenceType=Package` turns the reference into a `PackageReference`. Because the
   repo uses **Central Package Management (CPM)**, the version is pinned with `VersionOverride` via
   `-p:MdsPackageVersion=<version>` (a plain `Version` is ignored under CPM).
-- **Baseline (source)**: the candidate's perf project is built with
-  `-p:MdsSourceRoot=../sqlclient-perf-baseline-src`. Its driver and matching TestCommon references
-  come from that tree, but benchmark definitions, diagnoser and BDN version stay identical on
-  both sides. Baselines do not need the new benchmark unit or diagnostic CLI. Used by perf-pr.
+- **Baseline (source)**: build the baseline ref's own perf project and its default project
+  references from `../sqlclient-perf-baseline-src`. Used by perf-pr.
 - **Baseline (switch experiment)**: no second build at all — `--switch-under-test` measures one
   source tree twice, so the scripts build the `current` variant once and point both passes at it,
   differing only in the runner config each pass is handed. Used by the experiment pipeline.
@@ -397,9 +395,9 @@ physical connections.
 `benchmarkRunMode` selects how the two variants are measured:
 
 - **`interleaved`** (default) — `interleave_perf.py` orchestrates the run. Both variants are built
-  **once** into separate output dirs (`perf-build-baseline`, `perf-build-current`), then for each
-  benchmark unit the baseline and candidate builds run **back-to-back** before moving to the next
-  unit. Because the same benchmark is measured on both sides within seconds, slow host drift affects
+  **once** into separate output dirs (`perf-build-baseline`, `perf-build-current`), then each
+  candidate unit also enabled on the baseline runs **back-to-back** on the two builds. Because
+  the same benchmark is measured on both sides within seconds, slow host drift affects
   both roughly equally and cancels out of the delta. This relies on the `PerformanceTests` runner
   supporting `PERF_LIST_BENCHMARKS` (enumerate enabled units) and `PERF_BENCHMARK=<unit>` (run a
   single unit) — see `Program.cs`.
