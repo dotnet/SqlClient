@@ -80,8 +80,9 @@ Failed benchmarks, missing windows, observer faults and incomplete work fail exp
 and execution-failure records remain separate. Completed diagnostic artifacts are collected even
 when a benchmark process returns a failure. The pipeline task deadline can still interrupt
 collection. Ordinary regression gates are unchanged.
-After a timing comparison fails its gate, the runners still generate the async-health report
-from collected evidence before returning failure. A report-generation failure also fails the run.
+The async-health report is generated alongside the timing comparison, including when its
+regression gate fails. Current-only runs produce the health report without a timing comparison.
+A report-generation failure fails the run.
 
 ### Compact comparison
 
