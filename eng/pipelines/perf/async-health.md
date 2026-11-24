@@ -10,7 +10,7 @@ Execution settings are independent of diagnoser annotations:
 | Setting | Default | Behavior |
 | --- | --- | --- |
 | `ProcessIsolation` | `PerRunner` | Share one process per runner, or use `PerCase` for each selected method/parameter case. No `Auto` or annotation override. |
-| `AdditionalRttMilliseconds` | `0` | Added SQL RTT. Positive values require verified Linux loopback netem. |
+| `AdditionalRttMilliseconds` | `0` | Requested SQL RTT. The harness applies it on Linux only. |
 
 Direct CLI and pipeline execution share the dispatcher. It verifies the child's selected-case
 fingerprint and keeps separate case artifacts. BDN uses the in-process toolchain inside
@@ -24,10 +24,10 @@ execution, including failure/cooperative cancellation. A 100ms RTT adds 50ms per
 odd milliseconds use exact half-delays in microseconds. Filters target the resolved local SQL
 addresses and TCP port. Other clients using that endpoint are affected too: use an exclusive host.
 
-Positive RTT requires Linux loopback routing, Python 3, iproute2 and noninteractive `tc` permission.
-Remote endpoints and named-instance discovery fail explicitly when shaping is requested.
-Zero added RTT needs no shaping tools or privileges. The parent passes the verified RTT directly
-to the child, where the diagnoser records it in the health results.
+On Linux, positive RTT requires loopback routing, Python 3, iproute2 and noninteractive `tc`
+permission. Remote endpoints and named-instance discovery fail explicitly when shaping is
+requested. The harness skips shaping outside Linux and when the requested delay is zero.
+The parent passes the applied RTT to the child, where the diagnoser records both values.
 
 The helper serializes mutation, refuses foreign queues, persists ownership before installation,
 checks applied delay/settings, drains queued packets, and verifies matched traffic and no drops.

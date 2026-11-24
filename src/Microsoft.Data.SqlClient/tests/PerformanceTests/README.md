@@ -29,8 +29,9 @@ checkout loops can saturate the ThreadPool on their own.
 
 The runner uses `Monitoring`. Its config must specify one launch, one warmup, one invocation per
 iteration, and a positive timing iteration count. The template uses `PerCase`, three timing
-iterations and a ten-minute case timeout. The runner always adds 100 ms of SQL RTT on Linux and
-skips shaping elsewhere. Each case sets the worker minimum to 16 and restores it afterward.
+iterations, a ten-minute case timeout, and `AdditionalRttMilliseconds: 100`. The harness applies
+the configured delay on Linux only; set it to `0` or omit it to disable shaping. Each case
+sets the worker minimum to 16 and restores it afterward.
 Warm setup holds 64 connections (16 for Oversubscribed) before returning them; Empty clears
 only its own pool.
 

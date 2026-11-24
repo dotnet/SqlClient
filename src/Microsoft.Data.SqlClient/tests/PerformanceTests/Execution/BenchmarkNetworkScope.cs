@@ -18,7 +18,7 @@ internal sealed class BenchmarkNetworkScope : IDisposable
 
     internal BenchmarkNetworkScope(int rtt, string connectionString)
     {
-        _rtt = rtt;
+        _rtt = GetPlatformRtt(rtt);
         _connectionString = connectionString;
     }
 
@@ -28,11 +28,7 @@ internal sealed class BenchmarkNetworkScope : IDisposable
         {
             return 0;
         }
-        if (!OperatingSystem.IsLinux())
-        {
-            throw new PlatformNotSupportedException(
-                "AdditionalRttMilliseconds requires Linux SQL-only tc netem.");
-        }
+
         (string server, int port) = ParseEndpoint(
             new SqlConnectionStringBuilder(_connectionString).DataSource);
         _statePath = Path.Combine(Directory.CreateTempSubdirectory("sqlclient-perf-netem-").FullName,
@@ -111,13 +107,16 @@ internal sealed class BenchmarkNetworkScope : IDisposable
             return 0;
         }
         if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out int applied) ||
-            applied != job.AdditionalRttMilliseconds)
+            applied != GetPlatformRtt(job.AdditionalRttMilliseconds))
         {
             throw new InvalidOperationException("The benchmark parent did not confirm the requested RTT.");
         }
 
         return applied;
     }
+
+    private static int GetPlatformRtt(int requestedRtt) =>
+        OperatingSystem.IsLinux() ? requestedRtt : 0;
 
     public void Dispose()
     {

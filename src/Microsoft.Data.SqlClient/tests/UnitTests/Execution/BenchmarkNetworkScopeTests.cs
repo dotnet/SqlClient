@@ -13,6 +13,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.Execution;
 [Collection(AsyncHealthBenchmarkCollection.Name)]
 public class BenchmarkNetworkScopeTests
 {
+    public static bool IsNotLinux => !OperatingSystem.IsLinux();
+
+    /// <summary>Non-Linux hosts skip shaping without requiring a supported endpoint.</summary>
+    [ConditionalFact(nameof(IsNotLinux))]
+    public void Start_PositiveRttOutsideLinux_SkipsShaping()
+    {
+        // Arrange
+        using var scope = new BenchmarkNetworkScope(100, "Server=np:localhost");
+
+        // Act
+        int applied = scope.Start();
+
+        // Assert
+        Assert.Equal(0, applied);
+    }
+
     /// <summary>TCP endpoints retain their explicit port and IPv6 host.</summary>
     [Theory]
     [InlineData("tcp:localhost,1434", "localhost", 1434)]
@@ -45,7 +61,7 @@ public class BenchmarkNetworkScopeTests
     [Theory]
     [InlineData(null)]
     [InlineData("invalid")]
-    [InlineData("0")]
+    [InlineData("1")]
     [InlineData("101")]
     public void ReadAppliedRtt_UnconfirmedRequest_Throws(string? confirmed)
     {

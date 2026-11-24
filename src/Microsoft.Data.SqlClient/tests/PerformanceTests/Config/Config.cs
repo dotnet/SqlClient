@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>Cases share a runner process unless PerCase is explicitly requested.</summary>
         public string ProcessIsolation = "PerRunner";
 
-        /// <summary>Additional round-trip delay for SQL traffic; zero leaves networking unchanged.</summary>
+        /// <summary>SQL round-trip delay to apply on Linux; zero leaves networking unchanged.</summary>
         public int AdditionalRttMilliseconds;
 
         public bool Enabled;

@@ -33,12 +33,12 @@
     //                      single operation takes seconds, to skip the harness-overhead
     //                      measurement that "Throughput" performs.
     // Every runner supports ProcessIsolation ("PerRunner" default, or "PerCase").
-    // Other runners can opt into Linux SQL-only shaping via AdditionalRttMilliseconds.
+    // Runners can request Linux SQL-only shaping via AdditionalRttMilliseconds (default 0).
     "Benchmarks": {
         "OpenAsyncBurstRunnerConfig": {
             "Enabled": true,
             "ProcessIsolation": "PerCase",
-            // This runner always adds 100 ms of SQL RTT on Linux and skips shaping elsewhere.
+            "AdditionalRttMilliseconds": 100,
             "LaunchCount": 1,
             "IterationCount": 3,
             "InvocationCount": 1,

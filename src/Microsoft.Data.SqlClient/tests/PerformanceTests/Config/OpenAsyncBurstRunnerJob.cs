@@ -3,23 +3,13 @@
 
 #nullable enable
 using System;
-using System.Text.Json.Serialization;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Sets the network policy and validates the benchmark's BDN settings.</summary>
-public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
+/// <summary>Configures and validates the benchmark's BDN settings.</summary>
+public sealed class OpenAsyncBurstRunnerJob : RunnerJob
 {
-    public OpenAsyncBurstRunnerJob()
-    {
-        ApplyNetworkPolicy();
-        RunStrategy = "Monitoring";
-    }
-
-    void IJsonOnDeserialized.OnDeserialized() => ApplyNetworkPolicy();
-
-    private void ApplyNetworkPolicy() =>
-        AdditionalRttMilliseconds = OperatingSystem.IsLinux() ? 100 : 0;
+    public OpenAsyncBurstRunnerJob() => RunStrategy = "Monitoring";
 
     public override void ValidateExecution()
     {
