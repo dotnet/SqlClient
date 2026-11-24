@@ -6,7 +6,6 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Text.Json;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
@@ -15,29 +14,19 @@ internal sealed class BenchmarkNetworkScope : IDisposable
 {
     private readonly int _rtt;
     private readonly string _connectionString;
-    private readonly string _statePath;
-    private bool _attempted;
+    private string? _statePath;
 
-    internal BenchmarkNetworkScope(int rtt, string connectionString, string directory)
+    internal BenchmarkNetworkScope(int rtt, string connectionString)
     {
         _rtt = rtt;
         _connectionString = connectionString;
-        EvidencePath = Path.Combine(directory, "network.json");
-        _statePath = Path.Combine(directory, "network-state.json");
     }
 
-    internal string EvidencePath { get; }
-
-    internal void Start()
+    internal int Start()
     {
         if (_rtt == 0)
         {
-            File.WriteAllText(EvidencePath, JsonSerializer.Serialize(new
-            {
-                SchemaVersion = 1, AdditionalRttMilliseconds = 0,
-                Applied = false, Status = "Disabled"
-            }));
-            return;
+            return 0;
         }
         if (!OperatingSystem.IsLinux())
         {
@@ -46,8 +35,10 @@ internal sealed class BenchmarkNetworkScope : IDisposable
         }
         (string server, int port) = ParseEndpoint(
             new SqlConnectionStringBuilder(_connectionString).DataSource);
-        _attempted = true;
-        Invoke("start", server, port);
+        _statePath = Path.Combine(Directory.CreateTempSubdirectory("sqlclient-perf-netem-").FullName,
+            "network-state.json");
+        Invoke("start", _statePath, server, port);
+        return _rtt;
     }
 
     internal static (string Server, int Port) ParseEndpoint(string dataSource)
@@ -80,7 +71,7 @@ internal sealed class BenchmarkNetworkScope : IDisposable
         return (parts[0].Trim('[', ']'), port);
     }
 
-    private void Invoke(string action, string? server = null, int port = 1433)
+    private void Invoke(string action, string statePath, string? server = null, int port = 1433)
     {
         string helper = Path.Combine(
             Path.GetDirectoryName(typeof(BenchmarkNetworkScope).Assembly.Location)!, "netem.py");
@@ -88,9 +79,7 @@ internal sealed class BenchmarkNetworkScope : IDisposable
         start.ArgumentList.Add(helper);
         start.ArgumentList.Add(action);
         start.ArgumentList.Add("--state");
-        start.ArgumentList.Add(_statePath);
-        start.ArgumentList.Add("--output");
-        start.ArgumentList.Add(EvidencePath);
+        start.ArgumentList.Add(statePath);
         if (server != null)
         {
             start.ArgumentList.Add("--rtt-ms");
@@ -106,41 +95,44 @@ internal sealed class BenchmarkNetworkScope : IDisposable
         if (!process.WaitForExit(30000))
         {
             BenchmarkProcessRunner.Stop(process);
-            throw new TimeoutException("SQL-only netem " + action + " timed out.");
+            throw new TimeoutException($"SQL-only netem {action} timed out (state: {statePath}).");
         }
         if (process.ExitCode != 0)
         {
-            throw new InvalidOperationException("SQL-only netem " + action + " failed.");
+            throw new InvalidOperationException($"SQL-only netem {action} failed (state: {statePath}).");
         }
     }
 
     internal static int ReadAppliedRtt(RunnerJob job)
     {
-        string? path = Environment.GetEnvironmentVariable(BenchmarkProcessRunner.NetworkVariable);
-        if (path == null)
+        string? value = Environment.GetEnvironmentVariable(BenchmarkProcessRunner.AppliedRttVariable);
+        if (value == null && job.AdditionalRttMilliseconds == 0)
         {
-            if (job.AdditionalRttMilliseconds == 0) return 0;
-            throw new InvalidOperationException("Requested RTT has no runner network evidence.");
+            return 0;
         }
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path));
-        JsonElement data = document.RootElement;
-        int requested = data.GetProperty("AdditionalRttMilliseconds").GetInt32();
-        bool applied = data.GetProperty("Applied").GetBoolean();
-        string? status = data.GetProperty("Status").GetString();
-        if (requested != job.AdditionalRttMilliseconds ||
-            (requested > 0 && (!applied || status != "Applied")) ||
-            (requested == 0 && (applied || status != "Disabled")))
+        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out int applied) ||
+            applied != job.AdditionalRttMilliseconds)
         {
-            throw new InvalidOperationException("Requested and applied network profiles differ.");
+            throw new InvalidOperationException("The benchmark parent did not confirm the requested RTT.");
         }
-        return requested;
+
+        return applied;
     }
 
     public void Dispose()
     {
-        if (_attempted && File.Exists(_statePath))
+        if (_statePath == null)
         {
-            Invoke("stop");
+            return;
         }
+
+        if (File.Exists(_statePath))
+        {
+            Invoke("stop", _statePath);
+        }
+
+        File.Delete(_statePath + ".tmp");
+        File.Delete(_statePath);
+        Directory.Delete(Path.GetDirectoryName(_statePath)!);
     }
 }

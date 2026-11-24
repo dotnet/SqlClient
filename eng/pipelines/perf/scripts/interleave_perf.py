@@ -169,9 +169,6 @@ def collect_results(cwd, dest):
     for health in glob.glob(os.path.join(artifacts, "**", "async-health"), recursive=True):
         shutil.copytree(health, os.path.join(dest, os.path.relpath(health, artifacts)),
                         dirs_exist_ok=True)
-    for name in ("process.json", "network.json"):
-        for path in glob.glob(os.path.join(artifacts, "processes", "**", name), recursive=True):
-            _copy_artifact(path, artifacts, dest)
     return types
 
 

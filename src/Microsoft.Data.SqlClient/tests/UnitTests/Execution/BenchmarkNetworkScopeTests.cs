@@ -3,7 +3,6 @@
 
 #if NET
 using System;
-using System.IO;
 using Microsoft.Data.SqlClient.PerformanceTests;
 using Microsoft.Data.SqlClient.UnitTests.Measurements;
 using Xunit;
@@ -42,33 +41,31 @@ public class BenchmarkNetworkScopeTests
         Assert.Throws<ArgumentException>(() => BenchmarkNetworkScope.ParseEndpoint(value));
     }
 
-    /// <summary>Requested latency requires evidence that the runner actually installed that profile.</summary>
+    /// <summary>Missing or mismatched confirmation must not allow a shaped benchmark to run.</summary>
     [Theory]
-    [InlineData(0, false, "Disabled")]
-    [InlineData(100, false, "Applied")]
-    [InlineData(100, true, "Failed")]
-    [InlineData(101, true, "Applied")]
-    public void ReadAppliedRtt_MismatchedEvidence_Throws(int rtt, bool applied, string status)
+    [InlineData(null)]
+    [InlineData("invalid")]
+    [InlineData("0")]
+    [InlineData("101")]
+    public void ReadAppliedRtt_UnconfirmedRequest_Throws(string? confirmed)
     {
         // Arrange
-        string? previous = Environment.GetEnvironmentVariable(BenchmarkProcessRunner.NetworkVariable);
-        string path = Path.GetTempFileName();
-        File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(new
-        {
-            AdditionalRttMilliseconds = rtt, Applied = applied, Status = status
-        }));
-        Environment.SetEnvironmentVariable(BenchmarkProcessRunner.NetworkVariable, path);
+        const string variable = BenchmarkProcessRunner.AppliedRttVariable;
+        string? previous = Environment.GetEnvironmentVariable(variable);
+        Environment.SetEnvironmentVariable(variable, confirmed);
         try
         {
-            // Act / Assert
-            Assert.Throws<InvalidOperationException>(() =>
+            // Act
+            Exception? error = Record.Exception(() =>
                 BenchmarkNetworkScope.ReadAppliedRtt(new RunnerJob { AdditionalRttMilliseconds = 100 }));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(error);
         }
         finally
         {
             // Cleanup
-            Environment.SetEnvironmentVariable(BenchmarkProcessRunner.NetworkVariable, previous);
-            File.Delete(path);
+            Environment.SetEnvironmentVariable(variable, previous);
         }
     }
 }

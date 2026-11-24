@@ -4,6 +4,7 @@
 #nullable enable
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -15,7 +16,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests;
 internal static class BenchmarkProcessRunner
 {
     internal const string SelectionVariable = "SQLCLIENT_BENCHMARK_SELECTION";
-    internal const string NetworkVariable = "SQLCLIENT_BENCHMARK_NETWORK_EVIDENCE";
+    internal const string AppliedRttVariable = "SQLCLIENT_BENCHMARK_APPLIED_RTT_MS";
 
     internal static int Run(
         BenchmarkProcessSelection selection, RunnerJob job, string connectionString,
@@ -26,9 +27,8 @@ internal static class BenchmarkProcessRunner
             selection.Unit + "-" + selection.Fingerprint[..16] + "-" +
             Guid.NewGuid().ToString("N")[..8]));
         Directory.CreateDirectory(directory);
-        using var network = new BenchmarkNetworkScope(
-            job.AdditionalRttMilliseconds, connectionString, directory);
-        network.Start();
+        using var network = new BenchmarkNetworkScope(job.AdditionalRttMilliseconds, connectionString);
+        int appliedRtt = network.Start();
         cancellationToken.ThrowIfCancellationRequested();
 
         string? executable = Environment.ProcessPath;
@@ -45,49 +45,21 @@ internal static class BenchmarkProcessRunner
         start.Environment.Remove("PERF_LIST_BENCHMARKS");
         start.Environment[SelectionVariable] = JsonSerializer.Serialize(selection);
         start.Environment["SQLCLIENT_BENCHMARK_UNATTENDED"] = unattended ? "1" : "0";
-        start.Environment[NetworkVariable] = network.EvidencePath;
+        start.Environment[AppliedRttVariable] = appliedRtt.ToString(CultureInfo.InvariantCulture);
         start.Environment["RUNNER_CONFIG"] = ChildConfigPath("RUNNER_CONFIG", "runnerconfig.jsonc");
         start.Environment["DATATYPES_CONFIG"] = ChildConfigPath("DATATYPES_CONFIG", "datatypes.json");
         using Process child = Process.Start(start) ??
             throw new InvalidOperationException("Could not start the benchmark process.");
-        var clock = Stopwatch.StartNew();
-        int? exitCode = null;
         try
         {
-            WriteProcessEvidence(directory, selection, job, child.Id, null, null);
             child.WaitForExitAsync(cancellationToken).GetAwaiter().GetResult();
-            exitCode = child.ExitCode;
-            return exitCode.Value;
+            return child.ExitCode;
         }
         catch
         {
             Stop(child);
             throw;
         }
-        finally
-        {
-            WriteProcessEvidence(directory, selection, job, child.Id, exitCode, clock.Elapsed);
-        }
-    }
-
-    private static void WriteProcessEvidence(
-        string directory, BenchmarkProcessSelection selection, RunnerJob job,
-        int processId, int? exitCode, TimeSpan? elapsed)
-    {
-        string path = Path.Combine(directory, "process.json");
-        File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(new
-        {
-            selection.Unit, selection.Indexes, selection.Fingerprint,
-            ParentProcessId = Environment.ProcessId, ProcessId = processId,
-            job.ProcessIsolation, job.AdditionalRttMilliseconds,
-            RequestedProcessIsolation = job.ProcessIsolation,
-            EffectiveProcessIsolation = job.ProcessIsolation,
-            AppliedAdditionalRttMilliseconds = job.AdditionalRttMilliseconds,
-            ExecutionConditions = JsonSerializer.SerializeToElement(
-                job, job.GetType(), new JsonSerializerOptions { IncludeFields = true }),
-            ExitCode = exitCode, ElapsedSeconds = elapsed?.TotalSeconds
-        }, new JsonSerializerOptions { WriteIndented = true }));
-        File.Move(path + ".tmp", path, overwrite: true);
     }
 
     internal static string ChildConfigPath(string variable, string fallback)

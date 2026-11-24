@@ -13,7 +13,7 @@ Execution settings are independent of diagnoser annotations:
 | `AdditionalRttMilliseconds` | `0` | Added SQL RTT. Positive values require verified Linux loopback netem. |
 
 Direct CLI and pipeline execution share the dispatcher. It verifies the child's selected-case
-fingerprint and keeps separate manifests/artifacts. BDN uses the in-process toolchain inside
+fingerprint and keeps separate case artifacts. BDN uses the in-process toolchain inside
 each child so process-wide pool/SNI/async switches apply. Compare pool versions in separate
 processes; requesting V2 fails if the driver cannot apply it. No experimental driver switch is added.
 
@@ -26,14 +26,14 @@ addresses and TCP port. Other clients using that endpoint are affected too: use 
 
 Positive RTT requires Linux loopback routing, Python 3, iproute2 and noninteractive `tc` permission.
 Remote endpoints and named-instance discovery fail explicitly when shaping is requested.
-Zero added RTT needs no shaping tools or privileges. Applied RTT is recorded in the process and
-diagnostic evidence.
+Zero added RTT needs no shaping tools or privileges. The parent passes the verified RTT directly
+to the child, where the diagnoser records it in the health results.
 
 The helper serializes mutation, refuses foreign queues, persists ownership before installation,
 checks applied delay/settings, drains queued packets, and verifies matched traffic and no drops.
-Forced termination cannot guarantee cleanup; use retained state with
-`netem.py stop --state <network-state.json> --output <network.json>` for explicit recovery.
-Never replace an unrecovered or foreign queue. Credentials never reach the helper/evidence.
+The ownership file is temporary, outside the artifacts directory. If cleanup fails, use
+`netem.py stop --state <path>` on the same host. The state is in a `sqlclient-perf-netem-*`
+directory under the system temp directory. Never replace an unrecovered or foreign queue.
 
 ## Measurement boundaries and evidence
 
