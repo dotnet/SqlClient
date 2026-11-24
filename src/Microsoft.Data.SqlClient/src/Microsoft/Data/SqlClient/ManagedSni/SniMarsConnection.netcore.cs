@@ -384,11 +384,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public uint EnableSsl(uint options, CancellationToken cancellationToken)
+        public uint EnableSsl(uint options, Connection.EncryptionInfoAccumulator encryptionInfo, CancellationToken cancellationToken)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                return _lowerHandle.EnableSsl(options, cancellationToken);
+                return _lowerHandle.EnableSsl(options, encryptionInfo, cancellationToken);
             }
         }
 

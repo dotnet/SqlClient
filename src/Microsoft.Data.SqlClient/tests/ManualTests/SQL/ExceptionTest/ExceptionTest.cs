@@ -133,6 +133,142 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlConnection.Close();
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("same-value")]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_MatchingDataValues_ReturnsTrue(string value)
+        {
+            var first = RetryLogicConfigHelper.CreateSqlException(1);
+            var second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("shared-key", value);
+            second.Data.Add("shared-key", value);
+
+            var result = CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData("first-value", "second-value")]
+        [InlineData(null, "value")]
+        [InlineData("value", null)]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_DifferentDataValues_Throws(string firstValue, string secondValue)
+        {
+            var first = RetryLogicConfigHelper.CreateSqlException(1);
+            var second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("shared-key", firstValue);
+            second.Data.Add("shared-key", secondValue);
+
+            Action compare = () => CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            var exception = Assert.Throws<Xunit.Sdk.TrueException>(compare);
+            Assert.Contains("FAILED: exceptions do not contain the same data", exception.Message);
+        }
+
+        /// <summary>
+        /// Equal boxed values compare by value rather than reference identity.
+        /// </summary>
+        [Fact]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_BoxedValues_ReturnsTrue()
+        {
+            // Arrange
+            SqlException first = RetryLogicConfigHelper.CreateSqlException(1);
+            SqlException second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("shared-key", 42);
+            second.Data.Add("shared-key", 42);
+
+            // Act
+            bool result = CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        /// <summary>
+        /// Dictionary equality does not depend on insertion order or key reference identity.
+        /// </summary>
+        [Fact]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_ReorderedEntries_ReturnsTrue()
+        {
+            // Arrange
+            SqlException first = RetryLogicConfigHelper.CreateSqlException(1);
+            SqlException second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("first-key", "first-value");
+            first.Data.Add("second-key", null);
+            second.Data.Add(new string("second-key".ToCharArray()), null);
+            second.Data.Add(new string("first-key".ToCharArray()), "first-value");
+
+            // Act
+            bool result = CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        /// <summary>
+        /// Missing entries must fail validation in either direction, including empty dictionaries.
+        /// </summary>
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 0)]
+        [InlineData(1, 2)]
+        [InlineData(2, 1)]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_DifferentCounts_Throws(
+            int firstCount, int secondCount)
+        {
+            // Arrange
+            string[] keys = { "first-key", "second-key" };
+            SqlException first = RetryLogicConfigHelper.CreateSqlException(1);
+            SqlException second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            for (int i = 0; i < firstCount; i++)
+            {
+                first.Data.Add(keys[i], null);
+            }
+            for (int i = 0; i < secondCount; i++)
+            {
+                second.Data.Add(keys[i], null);
+            }
+
+            // Act
+            Action compare = () => CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            // Assert
+            var exception = Assert.Throws<Xunit.Sdk.TrueException>(compare);
+            Assert.Contains("FAILED: exceptions do not contain the same data", exception.Message);
+        }
+
+        /// <summary>
+        /// A missing key is not equivalent to a present key whose value is null.
+        /// </summary>
+        [Fact]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_DifferentKeys_Throws()
+        {
+            // Arrange
+            SqlException first = RetryLogicConfigHelper.CreateSqlException(1);
+            SqlException second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("first-key", null);
+            second.Data.Add("second-key", null);
+
+            // Act
+            Action compare = () => CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            // Assert
+            var exception = Assert.Throws<Xunit.Sdk.TrueException>(compare);
+            Assert.Contains("FAILED: exceptions do not contain the same data", exception.Message);
+        }
+
         private static bool CheckThatExceptionsAreDistinctButHaveSameData(SqlException e1, SqlException e2)
         {
             Assert.True(e1 != e2, "FAILED: verification of exception cloning in subsequent connection attempts");
@@ -141,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool equal = (e1.Message == e2.Message) && (e1.HelpLink == e2.HelpLink) && (e1.InnerException == e2.InnerException)
                 && (e1.Source == e2.Source) && (e1.Data.Count == e2.Data.Count) && (e1.Errors.Count == e2.Errors.Count);
 
-            for (int i = 0; i < e1.Errors.Count; i++)
+            for (int i = 0; equal && i < e1.Errors.Count; i++)
             {
                 equal = e1.Errors[i].Number == e2.Errors[i].Number
                     && e1.Errors[i].Message == e2.Errors[i].Message
@@ -158,16 +294,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             IDictionaryEnumerator enum1 = e1.Data.GetEnumerator();
-            IDictionaryEnumerator enum2 = e2.Data.GetEnumerator();
-            while (equal)
+            while (equal && enum1.MoveNext())
             {
-                if (!enum1.MoveNext())
-                {
-                    break;
-                }
-
-                enum2.MoveNext();
-                equal = (enum1.Key == enum2.Key) && (enum2.Value == enum2.Value); // @TODO: 2nd condition compares the same values!
+                equal = e2.Data.Contains(enum1.Key) && Equals(enum1.Value, e2.Data[enum1.Key]);
             }
 
             Assert.True(equal, string.Format("FAILED: exceptions do not contain the same data (besides call stack):\nFirst: {0}\nSecond: {1}\n", e1, e2));

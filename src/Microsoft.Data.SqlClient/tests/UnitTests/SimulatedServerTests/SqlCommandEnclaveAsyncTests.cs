@@ -18,6 +18,7 @@ using Microsoft.Data.SqlClient.Parser;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
+using Microsoft.SqlServer.TDS.Error;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.SqlServer.TDS.SQLBatch;
 using Xunit;
@@ -644,6 +645,60 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// An XML execution whose first response reports an invalid enclave session stays
+        /// pending until the internal retry finishes, and then reports the retry's outcome.
+        /// </summary>
+        [Fact]
+        public async Task BeginExecuteXmlReader_InvalidEnclaveSession_CompletesWithRetry()
+        {
+            // Arrange
+            // The first query reports an invalid enclave session, which the internal End retries.
+            // The retried query waits on a gate, then fails with a distinct error.
+            using ManualResetEventSlim retryGate = new ManualResetEventSlim(false);
+            TdsServerArguments arguments = new TdsServerArguments();
+            RetryQueryEngine engine = new RetryQueryEngine(arguments, retryGate);
+            using TdsServer server = new TdsServer(engine, arguments);
+            server.Start();
+            using Fixture fixture = new Fixture(server);
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.CacheHit = true;
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+
+            // Act
+            IAsyncResult result;
+            bool completedDuringRetry;
+            try
+            {
+                result = command.BeginExecuteXmlReader();
+                Assert.True(engine.RetryEntered.Wait(TimeSpan.FromSeconds(30)));
+                completedDuringRetry = result.IsCompleted;
+            }
+            finally
+            {
+                retryGate.Set();
+            }
+
+            // Assert
+            // The caller observes only the retry's outcome. The retry skips the internal End,
+            // so its task completes when the response arrives and End reports the error.
+            Assert.False(completedDuringRetry);
+            await (Task)result;
+            Assert.Equal(
+                RetryQueryEngine.RetryErrorNumber,
+                Assert.Throws<SqlException>(() => command.EndExecuteXmlReader(result)).Number);
+
+            // Command and connection state are released, so both remain usable.
+            Assert.Null(GetField(command, "_stateObj"));
+            Assert.Null(GetField(command, "_enclaveRetryConnection"));
+            Assert.False((bool)GetField(command, "_internalEndExecuteInitiated"));
+            Assert.Equal(0, GetAsyncCount(inner));
+            using SqlCommand reusable =
+                new SqlCommand("/* reuse after XML enclave retry */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
+            Assert.Equal(0, GetAsyncCount(inner));
+        }
+
+        /// <summary>
         /// The command retry cannot start before invalidation completes, and must not start after failure or cancellation.
         /// </summary>
         [Theory]
@@ -669,7 +724,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retry =
                 (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) =>
                 {
+                    // Like a real retry, take a reservation for End.
                     retries++;
+                    inner.IncrementAsyncCount();
                     return Task.FromResult<object>(null);
                 };
             typeof(SqlCommand).GetMethod("CreateLocalCompletionTask", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -688,6 +745,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.CompleteSessionOperation();
                 await global.Task;
                 Assert.Equal(1, retries);
+                // Only the retry's reservation remains for End.
+                Assert.Equal(1, GetAsyncCount(inner));
                 inner.DecrementAsyncCount();
             }
             else if (outcome == 1)
@@ -859,6 +918,62 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 _responseGate.Wait();
                 TDSMessage response = new TDSMessage(TDSMessageType.Response);
                 response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
+                return new TDSMessageCollection { response };
+            }
+        }
+
+        /// <summary>Fails the first query with a retryable enclave error and gates the retry.</summary>
+        private sealed class RetryQueryEngine : QueryEngine
+        {
+            internal const int RetryErrorNumber = 50000;
+            private readonly ManualResetEventSlim _retryGate;
+            private int _queries;
+
+            internal RetryQueryEngine(TdsServerArguments arguments, ManualResetEventSlim retryGate)
+                : base(arguments)
+            {
+                _retryGate = retryGate;
+            }
+
+            /// <summary>Signaled when the retried query reaches the server.</summary>
+            internal ManualResetEventSlim RetryEntered { get; } = new ManualResetEventSlim(false);
+
+            /// <summary>
+            /// Answers sp_describe_parameter_encryption with no result sets, so the command needs no enclave computations.
+            /// </summary>
+            /// <param name="session">The connected test session.</param>
+            /// <param name="request">The RPC request.</param>
+            /// <returns>An empty response.</returns>
+            public override TDSMessageCollection ExecuteRPC(ITDSServerSession session, TDSMessage request)
+            {
+                TDSMessage response = new TDSMessage(TDSMessageType.Response);
+                response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
+                return new TDSMessageCollection { response };
+            }
+
+            /// <summary>Returns an invalid enclave session error, then a gated distinct error.</summary>
+            /// <param name="session">The connected test session.</param>
+            /// <param name="batchRequest">The batch to execute.</param>
+            /// <returns>An error response.</returns>
+            protected override TDSMessageCollection CreateQueryResponse(
+                ITDSServerSession session, TDSSQLBatchToken batchRequest)
+            {
+                uint number = (uint)TdsEnums.TCE_ENCLAVE_INVALID_SESSION_HANDLE;
+                int query = Interlocked.Increment(ref _queries);
+                if (query == 2)
+                {
+                    RetryEntered.Set();
+                    _retryGate.Wait();
+                    number = RetryErrorNumber;
+                }
+                else if (query > 2)
+                {
+                    return base.CreateQueryResponse(session, batchRequest);
+                }
+
+                TDSMessage response = new TDSMessage(TDSMessageType.Response);
+                response.Add(new TDSErrorToken(number, 1, 16, "Query failure", ServerArguments.ServerName));
+                response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Error));
                 return new TDSMessageCollection { response };
             }
         }

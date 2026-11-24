@@ -113,7 +113,7 @@
         Returns the leaf certificate that the server presented during the TLS handshake.
       </summary>
       <returns>
-        A new <see cref="T:System.Security.Cryptography.X509Certificates.X509Certificate2" /> instance that contains the server-presented leaf certificate, or <see langword="null" /> if no certificate was captured for the connection attempt or the captured certificate cannot be parsed.
+        A new <see cref="T:System.Security.Cryptography.X509Certificates.X509Certificate2" /> instance that contains the server-presented leaf certificate, or <see langword="null" /> if the certificate is not available for the connection attempt.
       </returns>
       <remarks>
         <para>
@@ -123,13 +123,16 @@
           The returned certificate is the leaf certificate only; the chain is not included. It never contains a private key. It is the certificate the server presented, not a certificate configured by the caller (for example, through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" />).
         </para>
         <para>
-          The certificate is captured whenever the server presents one, including when <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="true" /> and when certificate validation fails. On failure, read it from <see cref="P:Microsoft.Data.SqlClient.SqlException.EncryptionInfo" />. Validation results are reported separately through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" />.
+          When the network implementation in use captures certificates, the certificate is captured when the server presents one, including when <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="true" /> and when certificate validation fails. On failure, read it from <see cref="P:Microsoft.Data.SqlClient.SqlException.EncryptionInfo" />. Validation results are reported separately through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" />.
+        </para>
+        <para>
+          A <see langword="null" /> result means the certificate is not available. It does not mean that the server presented no certificate. The certificate is not available when the network implementation in use does not capture it, when its encoding cannot be read or decoded, or when it is larger than 64 KiB (65,536 bytes). An oversized certificate is never truncated; it is not retained, which bounds the memory a server can make each connection and exception hold. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" /> can still describe a certificate that is not available. Omitting the certificate is not a validation error and does not change the connection's trust decision.
         </para>
         <para>
           This method is intended for diagnostics only. Its result is not a trust decision: a returned certificate does not mean that it passed validation, and it must not be used to override or bypass the driver's certificate validation.
         </para>
         <para>
-          If the captured certificate cannot be decoded, this method returns <see langword="null" />. It does not perform a handshake or certificate validation.
+          This method does not perform a handshake or certificate validation.
         </para>
       </remarks>
     </GetServerCertificate>

@@ -322,8 +322,9 @@ namespace Microsoft.SqlServer.TDS
                         break;
                     }
                 case TDSMessageType.Attention:
+                case TDSMessageType.RPC:
                     {
-                        // Do nothing
+                        // Do nothing; RPC payloads are not parsed
                         break;
                     }
                 case TDSMessageType.FederatedAuthenticationToken:

@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static SqlConnectionEncryptionInfo Empty { get; } = new();
 
-        private readonly byte[]? _presentedServerCertificate;
+        private readonly ReadOnlyMemory<byte>? _presentedServerCertificate;
 
         private SqlConnectionEncryptionInfo()
         {
@@ -36,8 +36,9 @@ namespace Microsoft.Data.SqlClient
         /// <param name="negotiatedEncryptionMode">The negotiated encryption mode.</param>
         /// <param name="negotiatedEncryptionProtocol">The negotiated TLS protocol version.</param>
         /// <param name="presentedServerCertificate">
-        /// The DER encoding of the leaf certificate presented by the server. The array is copied;
-        /// an empty array is treated as <see langword="null"/>.
+        /// The DER encoding of the leaf certificate presented by the server. The memory is retained
+        /// without copying, so the caller must own it and never mutate it; the accumulator passes
+        /// its own copy. Empty memory is treated as <see langword="null"/>.
         /// </param>
         /// <param name="validationErrors">The certificate validation errors observed by the driver.</param>
         /// <param name="chainStatus">The aggregated X.509 chain status flags.</param>
@@ -49,7 +50,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionEncryptionInfo(
             SqlConnectionEncryptionMode? negotiatedEncryptionMode,
             SslProtocols? negotiatedEncryptionProtocol,
-            byte[]? presentedServerCertificate,
+            ReadOnlyMemory<byte>? presentedServerCertificate,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus,
 #if NET
@@ -74,9 +75,9 @@ namespace Microsoft.Data.SqlClient
 #endif
             NegotiatedEncryptionMode = negotiatedEncryptionMode;
             NegotiatedEncryptionProtocol = negotiatedEncryptionProtocol;
-            if (presentedServerCertificate is { Length: > 0 })
+            if (presentedServerCertificate is { IsEmpty: false })
             {
-                _presentedServerCertificate = (byte[])presentedServerCertificate.Clone();
+                _presentedServerCertificate = presentedServerCertificate;
             }
             ValidationErrors = validationErrors;
             ChainStatus = chainStatus;
@@ -108,14 +109,14 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*' />
         public X509Certificate2? GetServerCertificate()
         {
-            if (_presentedServerCertificate is null)
+            if (_presentedServerCertificate is not { } derBytes)
             {
                 return null;
             }
 
             try
             {
-                return X509CertificateLoader.LoadCertificate(_presentedServerCertificate);
+                return X509CertificateLoader.LoadCertificate(derBytes.Span);
             }
             catch (CryptographicException)
             {
@@ -126,14 +127,10 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Gets the captured DER encoding of the server-presented leaf certificate, or
-        /// <see langword="null"/> if none was captured. The memory wraps the snapshot's private
-        /// copy without allocating; internal callers must not mutate it. Public callers only
-        /// receive a newly parsed certificate from <see cref="GetServerCertificate"/>.
+        /// <see langword="null"/> if none was captured. Public callers only receive a newly parsed
+        /// certificate from <see cref="GetServerCertificate"/>.
         /// </summary>
-        internal ReadOnlyMemory<byte>? PresentedServerCertificateRawData =>
-            _presentedServerCertificate is null
-                ? (ReadOnlyMemory<byte>?)null
-                : new ReadOnlyMemory<byte>(_presentedServerCertificate);
+        internal ReadOnlyMemory<byte>? PresentedServerCertificateRawData => _presentedServerCertificate;
 
         /// <summary>
         /// Gets a value indicating whether every field is unavailable.
