@@ -89,8 +89,7 @@ public class AsyncHealthDiagnoserTests : IDisposable
         }
         JsonElement observation = Assert.Single(result.RootElement.GetProperty("Operations")
             .GetProperty("Observations").EnumerateArray());
-        Assert.True(observation.GetProperty("StartMs").GetDouble() <=
-            observation.GetProperty("OpenEndMs").GetDouble());
+        Assert.Equal(JsonValueKind.Null, observation.GetProperty("OpenEndMs").ValueKind);
         Assert.Equal("Completed", observation.GetProperty("Outcome").GetString());
         Assert.Equal(0, result.RootElement.GetProperty("Measurement")
             .GetProperty("ResourceSamplesDropped").GetInt64());
@@ -120,6 +119,8 @@ public class AsyncHealthDiagnoserTests : IDisposable
         Assert.Equal(JsonValueKind.Object, window.RootElement.GetProperty("Measurement").ValueKind);
         Assert.Equal(1, window.RootElement.GetProperty("Operations")
             .GetProperty("Failed").GetInt64());
+        Assert.Equal(0, window.RootElement.GetProperty("Operations")
+            .GetProperty("OpenFailures").GetInt64());
         Assert.False(diagnoser.IsObserving);
     }
 

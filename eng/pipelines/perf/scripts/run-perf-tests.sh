@@ -418,6 +418,7 @@ echo "Preflight: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is reachable and warme
 
 RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
+export SQLCLIENT_PERF_PIPELINE=1
 RESULTS_RUNNER_CONFIG="${RESULTS_DIR}/runnerconfig.json"
 SOURCE_RUNNER_CONFIG="${PERF_DIR}/runnerconfig.jsonc"
 
@@ -446,11 +447,10 @@ write_runner_config() {
     local results_dst="$2"
     local switch_name="${3:-}"
     local switch_value="${4:-}"
-    python3 - "$SOURCE_RUNNER_CONFIG" "$dst" "$results_dst" "$switch_name" "$switch_value" \
-        "${PERF_DIR}/runnerconfig.default.jsonc" <<'PY'
+    python3 - "$SOURCE_RUNNER_CONFIG" "$dst" "$results_dst" "$switch_name" "$switch_value" <<'PY'
 import json, os, re, sys
 
-src, dst, results_dst, switch_name, switch_value, defaults_path = sys.argv[1:]
+src, dst, results_dst, switch_name, switch_value = sys.argv[1:]
 
 with open(src, "r", encoding="utf-8-sig") as fh:
     text = fh.read()
@@ -459,12 +459,6 @@ with open(src, "r", encoding="utf-8-sig") as fh:
 # inside string values, so a simple line-comment strip is safe here.
 text = re.sub(r'(?m)^\s*//.*$', '', text)
 cfg = json.loads(text)
-
-# Pipeline diagnostics cannot depend on a pre-existing runnerconfig having the new defaults.
-with open(defaults_path, encoding="utf-8-sig") as fh:
-    defaults = json.loads(re.sub(r'(?m)^\s*//.*$', '', fh.read()))
-cfg["Benchmarks"].setdefault(
-    "OpenAsyncBurstRunnerConfig", defaults["Benchmarks"]["OpenAsyncBurstRunnerConfig"])["Enabled"] = True
 
 server = os.environ["SQL_SERVER"]
 password = os.environ["SQL_PASSWORD"]

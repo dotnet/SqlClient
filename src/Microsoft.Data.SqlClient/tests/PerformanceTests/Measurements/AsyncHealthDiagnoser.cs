@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -63,8 +62,9 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
 
     internal bool HasFailed { get; private set; }
     internal bool IsObserving => _observer != null && _phase == "ExtraIteration";
-    internal static AsyncHealthOperationRecorder.Invocation? BeginInvocation(int workers) =>
-        Volatile.Read(ref s_operations)?.BeginInvocation(workers);
+    internal static AsyncHealthOperationRecorder.Invocation? BeginInvocation(
+        int workers, bool trackConnectionOpens = false) =>
+        Volatile.Read(ref s_operations)?.BeginInvocation(workers, trackConnectionOpens);
     public IEnumerable<string> Ids => [nameof(AsyncHealthDiagnoser)];
     public IEnumerable<IExporter> Exporters => [];
     public IEnumerable<IAnalyser> Analysers => [];
@@ -268,10 +268,6 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         }
         ThreadPool.GetMinThreads(out int minimumWorkers, out _);
         ThreadPool.GetMaxThreads(out int maximumWorkers, out _);
-        BurstWorkload? workload = job is OpenAsyncBurstRunnerJob burst ?
-            OpenAsyncBurstRunner.GetWorkload(burst,
-                benchmark.Parameters.Items.Single(p => p.Name == "State").Value?.ToString() ??
-                    throw new InvalidOperationException("Missing burst pool state.")) : null;
 
         var result = new
         {
@@ -299,11 +295,6 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
                 EffectiveProcessIsolation = job.ProcessIsolation,
                 RequestedAdditionalRttMilliseconds = job.AdditionalRttMilliseconds,
                 AppliedAdditionalRttMilliseconds = BenchmarkNetworkScope.ReadAppliedRtt(job),
-                SamplingProfile = (job as OpenAsyncBurstRunnerJob)?.SamplingProfile ?? "Default",
-                ConcurrentWorkers = workload == null ? (int?)null :
-                    OpenAsyncBurstRunner.ConcurrentWorkers,
-                WorkloadWaves = workload?.Waves,
-                SteadyOperationsPerWorker = workload?.OperationsPerWorker,
                 ThreadPoolHealthObserver.ProbeIntervalMilliseconds,
                 ThreadPoolHealthObserver.MaximumOutstandingProbes,
                 AsyncHealthSummary.MinimumP99Samples

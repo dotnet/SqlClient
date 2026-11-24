@@ -52,7 +52,6 @@ public class AsyncHealthBenchmarkFixture
         if (invocation == null) Interlocked.Increment(ref TimingInvocations);
         operation?.Start();
         await Task.Delay(150).ConfigureAwait(false);
-        operation?.Opened();
         operation?.Complete();
         invocation?.Complete();
     }
@@ -71,7 +70,6 @@ public class AsyncHealthBenchmarkFixture
             {
                 throw new InvalidOperationException("Intentional diagnostic failure.");
             }
-            operation?.Opened();
             operation?.Complete();
             invocation?.Complete();
         }

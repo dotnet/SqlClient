@@ -31,10 +31,23 @@ public class OpenAsyncBurstRunner
     private int _originalMinimumWorkers;
     private int _originalMinimumIo;
 
+    internal static OpenAsyncBurstRunnerJob GetJob(Benchmarks benchmarks)
+    {
+        var job = benchmarks.OpenAsyncBurstRunnerConfig ??
+            new OpenAsyncBurstRunnerJob { ProcessIsolation = "PerCase" };
+
+        if (Environment.GetEnvironmentVariable("SQLCLIENT_PERF_PIPELINE") == "1")
+        {
+            job.Enabled = true;
+        }
+
+        return job;
+    }
+
     [GlobalSetup]
     public void SetupOpenQueryClose()
     {
-        _openQueryClose = GetWorkload(_config.Benchmarks.OpenAsyncBurstRunnerConfig, State.ToString());
+        _openQueryClose = GetWorkload(GetJob(_config.Benchmarks), State);
 
         ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
         if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))
@@ -102,18 +115,18 @@ public class OpenAsyncBurstRunner
         SqlConnection.ClearPool(connection);
     }
 
-    internal static BurstWorkload GetWorkload(OpenAsyncBurstRunnerJob job, string state)
+    internal static BurstWorkload GetWorkload(OpenAsyncBurstRunnerJob job, PoolState state)
     {
         job.ValidateExecution();
         // Fixed per-worker work from the 100ms calibration; Empty remains one cold burst.
         int operations = state switch
         {
-            nameof(PoolState.Empty) or nameof(PoolState.NonPooled) => 1,
-            nameof(PoolState.Warm) => 20,
-            nameof(PoolState.Oversubscribed) => 5,
+            PoolState.Empty or PoolState.NonPooled => 1,
+            PoolState.Warm => 20,
+            PoolState.Oversubscribed => 5,
             _ => throw new ArgumentException("Unknown burst pool state.", nameof(state))
         };
-        return job.SamplingProfile == "Extended" && state != nameof(PoolState.Empty)
+        return job.SamplingProfile == "Extended" && state != PoolState.Empty
             ? new BurstWorkload(ExtendedWaves, operations)
             : new BurstWorkload(1, 1);
     }
@@ -121,7 +134,8 @@ public class OpenAsyncBurstRunner
     [Benchmark(OperationsPerInvoke = ConcurrentWorkers)]
     public async Task OpenQueryClose()
     {
-        var invocation = AsyncHealthDiagnoser.BeginInvocation(_openQueryClose.WorkerStarts);
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(
+            _openQueryClose.WorkerStarts, trackConnectionOpens: true);
         for (int wave = 0; wave < _openQueryClose.Waves; wave++)
         {
             var tasks = new Task[ConcurrentWorkers];

@@ -6,35 +6,30 @@ dedicated performance test lab (Azure Dedicated Hosts), compare the branch under
 released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
 database.
 
-BDN runs [AsyncHealthDiagnoser](async-health.md) only for the four new `OpenAsyncBurst` query cases.
-Existing benchmarks retain their ordinary measurements without async-health instrumentation.
-The pipeline enables the diagnoser and burst unit even with an older private runner config.
+BDN attaches [AsyncHealthDiagnoser](async-health.md) only to annotated suites.
+Unannotated suites retain their ordinary measurements without async-health instrumentation.
 Startup/warmup and the extra diagnostic iteration are observed separately; normal timing
 iterations are not observed. Raw queue/open/outcome/probe/resource evidence is retained alongside
 each side/repetition and summarized in `benchmark-async-health.md`. There is no separate sweep
 or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
 
-The compact async-health report pairs baseline/current worst-observed burst metrics across
+The compact async-health report pairs baseline/current worst-observed metrics across
 phases and repetitions. Its leading indicator is **healthy (green)** below **1ms**,
 **warning (yellow)** from **1ms through 10ms inclusive**, and **unhealthy (red)** above **10ms**,
 using the current maximum dispatch p99. Missing current values are unknown.
 Relative deltas and their ordering are unchanged; ordinary performance
 statuses still use `regressionThreshold`. Coverage qualifications and raw provenance remain separate.
 
-All runner configs support explicit `ProcessIsolation` (`PerRunner` by default, or `PerCase`).
-`OpenAsyncBurst` always adds 100 ms of SQL RTT on Linux and skips shaping elsewhere; other runners
-can opt in via `AdditionalRttMilliseconds` (zero by default). These are independent of diagnoser
-annotations. The shared dispatcher verifies owned Linux SQL-only shaping and retains per-process
-artifacts for both direct CLI and pipeline runs.
-Execution conditions also participate in ordinary timing comparisons. See the
-[execution protocol and workload settings](async-health.md#execution-and-workload-settings).
+All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and optional
+`AdditionalRttMilliseconds`. These are independent of diagnoser annotations. The dispatcher
+verifies Linux SQL-only shaping and retains per-process artifacts for both direct CLI and pipeline
+runs. Execution conditions also participate in ordinary timing comparisons. See the
+[execution protocol](async-health.md#execution-settings).
 
-All runner settings live in the standard `runnerconfig.jsonc`, created from
-`runnerconfig.default.jsonc` on a clean checkout. There is no separate preset file or
-`runnerProfile` queue parameter. For a focused Linux extended run, configure the burst entry with
-`SamplingProfile=Extended` and `TimeoutMinutes=10`, disable unrelated runner entries, and select
-`useConnectionPoolV2=true` at queue time. The benchmark defines the per-state work counts.
-`confirmationRuns=1` runs one matched pass without changing BDN iterations.
+Use the standard `runnerconfig.jsonc`, created from `runnerconfig.default.jsonc` on a clean
+checkout. See the [runner settings](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/README.md)
+for workload-specific policies. `confirmationRuns=1` runs one matched pass without changing BDN
+iterations.
 
 ## Contents
 
@@ -47,7 +42,7 @@ All runner settings live in the standard `runnerconfig.jsonc`, created from
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
-| `scripts/benchmark_health_report.py` | Pairs worst-observed burst metrics, current dispatch health bands at 1ms/10ms, and separate coverage/provenance evidence. |
+| `scripts/benchmark_health_report.py` | Pairs worst-observed async-health metrics and reports dispatch health bands and coverage. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 

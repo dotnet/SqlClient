@@ -77,7 +77,7 @@ internal sealed class AsyncHealthOperationRecorder
 
     private double Timestamp() => _time.GetElapsedTime(_origin).TotalMilliseconds;
 
-    internal Invocation BeginInvocation(int workers)
+    internal Invocation BeginInvocation(int workers, bool trackConnectionOpens = false)
     {
         if (workers < 1)
         {
@@ -86,7 +86,7 @@ internal sealed class AsyncHealthOperationRecorder
         lock (_gate)
         {
             _expectedWorkers += workers;
-            return new Invocation(this, ++_invocations, workers);
+            return new Invocation(this, ++_invocations, workers, trackConnectionOpens);
         }
     }
 
@@ -111,7 +111,8 @@ internal sealed class AsyncHealthOperationRecorder
         }
     }
 
-    internal sealed class Invocation(AsyncHealthOperationRecorder owner, int id, int workers)
+    internal sealed class Invocation(
+        AsyncHealthOperationRecorder owner, int id, int workers, bool trackConnectionOpens)
     {
         private bool _completed;
 
@@ -132,7 +133,7 @@ internal sealed class AsyncHealthOperationRecorder
                 {
                     owner._records.Add(record);
                 }
-                return new Operation(owner, record);
+                return new Operation(owner, record, trackConnectionOpens);
             }
         }
 
@@ -151,7 +152,8 @@ internal sealed class AsyncHealthOperationRecorder
     }
 
     internal readonly struct Operation(
-        AsyncHealthOperationRecorder owner, AsyncHealthOperationObservation record)
+        AsyncHealthOperationRecorder owner, AsyncHealthOperationObservation record,
+        bool trackConnectionOpens)
     {
         internal void Start()
         {
@@ -198,7 +200,7 @@ internal sealed class AsyncHealthOperationRecorder
                 {
                     throw new InvalidOperationException("Invalid operation completion.");
                 }
-                if (error == null && !record.OpenEndMs.HasValue)
+                if (trackConnectionOpens && error == null && !record.OpenEndMs.HasValue)
                 {
                     throw new InvalidOperationException("Completed work has no successful open.");
                 }
@@ -219,7 +221,7 @@ internal sealed class AsyncHealthOperationRecorder
                     else
                     {
                         owner._failed++;
-                        if (!record.OpenEndMs.HasValue) owner._openFailures++;
+                        if (trackConnectionOpens && !record.OpenEndMs.HasValue) owner._openFailures++;
                     }
                 }
             }

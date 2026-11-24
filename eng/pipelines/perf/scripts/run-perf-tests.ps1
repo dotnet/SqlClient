@@ -420,6 +420,7 @@ Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warme
 
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
+$env:SQLCLIENT_PERF_PIPELINE = "1"
 $ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
 $SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
 
@@ -451,16 +452,6 @@ function Write-RunnerConfig {
     # Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
     $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
     $cfg = ConvertFrom-Json $rawConfig
-
-    $defaultsText = Get-Content (Join-Path $PerfDir "runnerconfig.default.jsonc") -Raw
-    $defaultsText = ($defaultsText -split "`n" |
-        ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
-    $defaults = ConvertFrom-Json $defaultsText
-    if ($cfg.Benchmarks.PSObject.Properties.Name -notcontains "OpenAsyncBurstRunnerConfig") {
-        $cfg.Benchmarks | Add-Member -NotePropertyName OpenAsyncBurstRunnerConfig `
-            -NotePropertyValue $defaults.Benchmarks.OpenAsyncBurstRunnerConfig
-    }
-    $cfg.Benchmarks.OpenAsyncBurstRunnerConfig.Enabled = $true
 
     $cfg.ConnectionString = $BenchmarkConnectionString
     # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value

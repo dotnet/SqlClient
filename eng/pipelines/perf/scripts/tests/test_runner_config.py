@@ -36,10 +36,6 @@ class RunnerConfigTests(unittest.TestCase):
             config = {"ConnectionString": "local", "Iterations": 17,
                       "Benchmarks": {"ExistingRunnerConfig": {"Enabled": True}},
                       **dict.fromkeys(SWITCHES, False)}
-            burst_job = {"Enabled": True, "InvocationCount": 1, "IterationCount": 3,
-                         "LaunchCount": 1, "WarmupCount": 1}
-            (root / "runnerconfig.default.jsonc").write_text(json.dumps({
-                "Benchmarks": {"OpenAsyncBurstRunnerConfig": burst_job}}), encoding="utf-8")
             (root / "template.jsonc").write_text(
                 "// local settings\n" + json.dumps(config), encoding="utf-8")
             env = dict(os.environ, TEST_ROOT=root.as_posix(), SQL_PASSWORD=PASSWORD,
@@ -139,9 +135,7 @@ prepare_runner_config || exit 6
             for variant in variants:
                 runtime = json.loads((root / f"perf-runnerconfig{variant}.json").read_text(encoding="utf-8-sig"))
                 redacted = json.loads((root / "results" / f"runnerconfig{variant}.json").read_text(encoding="utf-8-sig"))
-                expected = {**config, "UseManagedSniOnWindows": True,
-                            "Benchmarks": {**config["Benchmarks"],
-                                           "OpenAsyncBurstRunnerConfig": burst_job}}
+                expected = {**config, "UseManagedSniOnWindows": True}
                 if variant:
                     expected[switch] = variant == "-current"
                 self.assertEqual(redacted, {**expected, "ConnectionString": "<redacted>"})

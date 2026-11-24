@@ -74,7 +74,7 @@ internal sealed class ThreadPoolHealthObserver : IDisposable
             throw new InvalidOperationException("Observer is single-use.");
         }
 
-        _thread = new Thread(Observe) { Name = "OpenAsync health observer", IsBackground = true };
+        _thread = new Thread(Observe) { Name = "Async health observer", IsBackground = true };
         _thread.Start();
 
         if (!_ready.Wait(TimeSpan.FromSeconds(10)))

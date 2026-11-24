@@ -1,72 +1,21 @@
 # Async health within the performance benchmarks
 
-Async-health observation runs inside BenchmarkDotNet, not in a separate sweep or prerequisite.
-Only `OpenAsyncBurstRunner.OpenQueryClose` is instrumented. Its four states are `Empty`, `Warm`,
-`Oversubscribed` (16 pool slots), and `NonPooled`; other benchmarks and pipeline triggers are unchanged.
-Open/close-only bursts were removed because tight synchronous checkout loops can themselves
-saturate the ThreadPool, amplified by recorder contention, without identifying blocked async I/O.
+Async-health observation runs inside BenchmarkDotNet for suites annotated with
+`[AsyncHealthDiagnoser]`, not in a separate sweep or prerequisite.
 
-## Execution and workload settings
+## Execution settings
 
 Execution settings are independent of diagnoser annotations:
 
 | Setting | Default | Behavior |
 | --- | --- | --- |
 | `ProcessIsolation` | `PerRunner` | Share one process per runner, or use `PerCase` for each selected method/parameter case. No `Auto` or annotation override. |
-| `AdditionalRttMilliseconds` | `0` | Optional SQL RTT for runners other than `OpenAsyncBurst`. |
-
-`OpenAsyncBurst` uses a fixed 100 ms on Linux and 0 elsewhere, ignoring older config values.
-Positive RTT requires verified Linux loopback netem.
+| `AdditionalRttMilliseconds` | `0` | Added SQL RTT. Positive values require verified Linux loopback netem. |
 
 Direct CLI and pipeline execution share the dispatcher. It verifies the child's selected-case
 fingerprint and keeps separate manifests/artifacts. BDN uses the in-process toolchain inside
 each child so process-wide pool/SNI/async switches apply. Compare pool versions in separate
 processes; requesting V2 fails if the driver cannot apply it. No experimental driver switch is added.
-
-The burst job requires `Monitoring` and one launch/warmup/invocation to protect startup
-observations. Its template uses `PerCase`, three timing iterations and a five-minute case timeout.
-Each case sets the worker minimum to 16 and restores it afterward.
-Warm setup holds all 64 connections (16 for Oversubscribed) before returning them; Empty clears
-only its own pool. Query work keeps network waits and pool contention visible.
-
-| `SamplingProfile` | Work per invocation |
-| --- | --- |
-| `Burst` (default) | One wave of 64 workers, one operation each. |
-| `Extended` | Empty remains one cold wave. Other states use 16 waves (1,024 worker starts), with work counts defined on `OpenAsyncBurstRunner`. |
-
-The benchmark defines 20 operations per worker for Warm, 5 for Oversubscribed, and 1 for
-NonPooled. These are not configuration settings; remove old `SteadyOperationsPerWorker` entries.
-The complete work count drives
-BDN normalization: 16 waves of 64 workers doing 20 operations means 20,480, not 64.
-Both sides use identical counts. Extended jobs use all configured interleaved repetitions,
-without nesting another confirmation loop.
-
-### Calibrated 100ms example
-
-Use the standard `runnerconfig.jsonc`, created from
-[`runnerconfig.default.jsonc`](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.default.jsonc)
-when absent. For the extended Linux workload, set `OpenAsyncBurstRunnerConfig.SamplingProfile`
-to `Extended` and `TimeoutMinutes` to `10`. The 100 ms delay is automatic.
-Enable `UseConnectionPoolV2` and disable unrelated runner entries for a focused run.
-On a clean pipeline checkout, make those selections in `runnerconfig.default.jsonc`;
-queue-time behavior switches still override the file, so select `useConnectionPoolV2=true`.
-There is no separate profile file or `runnerProfile` selector.
-`confirmationRuns=1` requests one matched pass without reducing BDN iterations.
-
-Local 16-CPU Linux calibration against current/7.1.2 used one warmup, one timing iteration and
-the diagnostic extra iteration. These fixed counts produced:
-
-| State | Operations/worker/wave | ExtraIteration duration, baseline/current |
-| --- | ---: | --- |
-| Warm | 20 | 32.9s / 32.9s |
-| Oversubscribed | 5 | 32.8s / 32.8s |
-| NonPooled | 1 | 52.6s / 52.5s |
-
-Each window retained 1,312-2,104 dispatch probes, 1,024 first-worker starts and no missing probes.
-The latency configuration keeps three timing iterations and a ten-minute timeout; its full
-three-repetition runtime was not calibrated. RTT also lengthens prewarming. This is not a calibrated zero-RTT
-profile or a guarantee for other hosts; check the recorded sampling evidence. Sustained non-pooled
-work can exhaust TCP source ports: retain that failure rather than changing shared-host TCP settings.
 
 ## SQL-only latency
 
@@ -77,8 +26,8 @@ addresses and TCP port. Other clients using that endpoint are affected too: use 
 
 Positive RTT requires Linux loopback routing, Python 3, iproute2 and noninteractive `tc` permission.
 Remote endpoints and named-instance discovery fail explicitly when shaping is requested.
-On Windows, the burst benchmark still runs with zero added RTT and needs no shaping tools
-or privileges. Its effective RTT is recorded in the process and diagnostic evidence.
+Zero added RTT needs no shaping tools or privileges. Applied RTT is recorded in the process and
+diagnostic evidence.
 
 The helper serializes mutation, refuses foreign queues, persists ownership before installation,
 checks applied delay/settings, drains queued packets, and verifies matched traffic and no drops.
@@ -99,14 +48,15 @@ retains scheduled/posted/executed times; missing, rejected, dropped and outstand
 recovery; process/ThreadPool thread counts; queue depth; allocations and Gen2 collections.
 Missing thread peaks are null, not zero; the process peak includes its recorded start count.
 
-Operation evidence retains offer/start/open/end times, inline/pending opens, worker/invocation
-identity, throughput and completed/failed/cancelled/queued/in-flight outcomes. Every worker's
+Operation evidence retains offer/start/end times, worker/invocation identity, throughput and
+completed/failed/cancelled/queued/in-flight outcomes. Workloads can also opt into recording
+connection-open timing and inline/pending opens. Every worker's
 first record survives the ordinary 100,000-record cap; truncation remains explicit. Snapshots
 freeze results. Errors include only types/SQL numbers, not private messages or connection strings.
 
 Dispatch-p99 adequacy requires at least 25 seconds, 1,000 executed probes and no missing evidence.
 First-worker adequacy requires 1,000 retained starts and complete outcomes; resource completeness
-is separate. Cold 64-start p99 is its observed maximum, not a precise population estimate.
+is separate. A first-worker p99 below 100 samples is the observed maximum, not a precise estimate.
 Short/censored/incomplete windows remain insufficient regardless of the report's health color.
 The report derives complete/missing/truncated/invalid resource evidence from raw observations.
 Observer bookkeeping affects diagnostic allocation/CPU measurements; it is not driver-only cost.
@@ -119,8 +69,6 @@ The reader still accepts schema 2; missing raw resource metadata is reported as 
 
 ## Pipeline integration and artifacts
 
-Both entrypoints enable the burst unit, preserving existing tuning in private configs.
-The `[AsyncHealthDiagnoser]` attribute attaches health observation to that suite.
 The candidate-owned harness builds against both source/package drivers (`MdsSourceRoot` or
 `MdsPackageVersion`); old baselines need not already contain these benchmarks.
 The test-only BDN preview supplies lifecycle hooks. `JitTieringMode.Skip` avoids about 90 extra

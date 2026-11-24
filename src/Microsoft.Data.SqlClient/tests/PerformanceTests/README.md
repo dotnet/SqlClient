@@ -1,33 +1,14 @@
 # SqlClient performance tests
 
-## Async-health benchmarks and diagnoser
-
-`OpenAsyncBurst` runs 64 open/query/close workers against four pool states: `Empty`, `Warm`,
-`Oversubscribed` (16 slots), and `NonPooled`. Only this runner has async-health instrumentation.
-Open/close-only bursts are excluded because tight synchronous checkout loops can themselves
-saturate the ThreadPool. Unrelated connection/churn benchmarks are unchanged.
+## Async-health diagnoser
 
 The `[AsyncHealthDiagnoser]` suite attribute attaches the diagnoser. It observes startup/warmup
 and the extra diagnostic iteration, not normal timing. Startup includes fixture setup; the extra
 iteration excludes it.
-Raw queue/open/outcome/probe/resource evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
+Raw scheduling and operation evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
 short, censored or failed windows are not sufficient evidence of health.
 Schema-3 summaries contain the four report metrics and completeness fields; additional latency
 statistics can be derived from retained raw observations. Schema-2 reports remain readable.
-
-All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`). The burst
-defaults select `PerCase`, one warmup, three timing iterations, one invocation per iteration
-and a five-minute timeout. The burst runner always adds 100 ms of SQL RTT on Linux and skips
-shaping on Windows and other platforms. Other runners can opt in via `AdditionalRttMilliseconds`
-(default 0). Positive RTT requires Linux SQL-loopback netem; unsupported requests fail explicitly.
-
-The default `Burst` profile performs one operation per worker. `Extended` keeps that cold
-wave for `Empty`, but uses 16 waves and benchmark-defined work counts for the other states:
-Warm=20, Oversubscribed=5, NonPooled=1 per worker. Work counts drive both execution and BDN
-normalization; first-worker records survive ordinary-record truncation.
-Configure sampling in the standard `runnerconfig.jsonc` (or its checked-in
-`runnerconfig.default.jsonc` template), not a separate profile file.
-See the [100ms settings and sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
 
 The compact report preserves baseline/current deltas, phase coverage and raw provenance.
 Its current dispatch-p99 indicator is green below 1ms, yellow from 1-10ms inclusive, and red
@@ -38,6 +19,29 @@ Use separate process configurations to compare pool versions; the switch is cach
 For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]`.
 The [pipeline protocol](../../../../eng/pipelines/perf/async-health.md) documents lifecycle
 boundaries, BDN preview/JIT preparation, network ownership/cleanup, reporting and limitations.
+
+## OpenAsyncBurst workload
+
+`OpenAsyncBurst` runs 64 open/query/close workers across `Empty`, `Warm`, `Oversubscribed` (16 slots)
+and `NonPooled`. The pipeline enables the runner even with an older private config. Open/close-only
+bursts are excluded: tight synchronous checkout loops can saturate the ThreadPool on their own.
+
+The runner requires `Monitoring` and one launch, warmup and invocation per iteration. The template
+uses `PerCase`, three timing iterations and a five-minute case timeout. It always adds 100 ms
+of SQL RTT on Linux and skips shaping elsewhere. Each case sets the worker minimum to 16 and
+restores it afterward. Warm setup holds 64 connections (16 for Oversubscribed) before returning
+them; Empty clears only its own pool.
+
+`Burst` (default) performs one operation per worker. `Extended` keeps that cold wave for `Empty`.
+Other states use 16 waves of 64 workers, with 20/5/1 operations per worker for
+Warm/Oversubscribed/NonPooled. Those counts drive both execution and BDN normalization.
+Extended runs use all configured interleaved repetitions without an extra confirmation loop.
+
+For a focused Linux run, set `SamplingProfile=Extended` and `TimeoutMinutes=10` in the standard
+runner config, disable unrelated runners, and select `useConnectionPoolV2=true` at queue time.
+On a 16-CPU Linux host at 100 ms RTT, the extended diagnostic windows took roughly 33 seconds for
+Warm and Oversubscribed and 53 seconds for NonPooled with both drivers. This is not a guarantee
+for other hosts; check sampling evidence. Sustained non-pooled work can exhaust TCP source ports.
 
 ## Command and reader benchmarks
 

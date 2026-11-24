@@ -2,7 +2,7 @@
 # Licensed to the .NET Foundation under one or more agreements.
 # The .NET Foundation licenses this file to you under the MIT license.
 
-"""Compare worst-observed OpenAsyncBurst health metrics, retaining raw cohort provenance."""
+"""Compare worst-observed async health metrics, retaining raw cohort provenance."""
 
 import argparse
 from collections import Counter, defaultdict
@@ -70,10 +70,8 @@ def _load(root):
         if data.get("SchemaVersion") not in (2, 3) or data.get("Kind") != "BenchmarkAsyncHealth":
             raise ValueError(f"Unknown BDN async-health schema: {path.name}")
         benchmark = data.get("Benchmark")
-        if not isinstance(benchmark, str):
+        if not isinstance(benchmark, str) or not benchmark:
             raise ValueError(f"Missing BDN benchmark identity: {path.name}")
-        if benchmark.rpartition(".")[0].rsplit(".", 1)[-1] != "OpenAsyncBurstRunner":
-            continue
         if (not isinstance(data.get("CaseId"), str) or not data["CaseId"] or
             not isinstance(data.get("Parameters"), str)):
             raise ValueError(f"Invalid BDN case identity: {path.name}")
@@ -108,7 +106,7 @@ def _load(root):
             seen[identity] = dict(data=data, side=side, repetition=repetition,
                                   sources=[relative.as_posix()], configuration=signature)
     if not seen:
-        raise ValueError("No BDN OpenAsyncBurst async-health artifacts were produced.")
+        raise ValueError("No BDN async-health artifacts were produced.")
     return list(seen.values())
 
 
@@ -289,7 +287,7 @@ def _provenance(entry, index):
 def render(root, source_label=None):
     """Render current dispatch health separately from relative deltas and coverage qualifications."""
     entries = build_comparison(root)
-    lines = ["# OpenAsyncBurst async-health comparison", ""]
+    lines = ["# Benchmark async-health comparison", ""]
     if source_label:
         lines.extend(["Source: " + _text(source_label), ""])
     lines.extend([
@@ -305,7 +303,7 @@ def render(root, source_label=None):
         "independently per metric. Existing cohort p99 values are not pooled or recomputed.",
         "Percentages are N/A when either value is missing or the baseline is zero, including 0 to 0.",
         "",
-        "| Status | Method | Parameters | " + " | ".join(METRICS.values()) + " |",
+        "| Status | Benchmark | Parameters | " + " | ".join(METRICS.values()) + " |",
         "| --- | --- | --- | --- | --- | --- | --- |",
     ])
     identities = Counter((e["benchmark"], e["parameters"]) for e in entries)
@@ -313,8 +311,8 @@ def render(root, source_label=None):
         parameters = entry["parameters"]
         if identities[(entry["benchmark"], parameters)] > 1:
             parameters += f" (configuration {index})"
-        values = [STATUS_LABELS[entry["status"]],
-                  entry["benchmark"].rsplit(".", 1)[-1], parameters]
+        benchmark = ".".join(entry["benchmark"].rsplit(".", 2)[-2:])
+        values = [STATUS_LABELS[entry["status"]], benchmark, parameters]
         values.extend(_cell(entry["metrics"][metric], metric) for metric in METRICS)
         lines.append("| " + " | ".join(_text(value) for value in values) + " |")
     groups = [entry[side] for entry in entries for side in ("baseline", "current") if entry[side]]

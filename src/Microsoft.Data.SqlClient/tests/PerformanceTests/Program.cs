@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
             new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
             new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
-            new BenchmarkUnit("OpenAsyncBurst", b => b.OpenAsyncBurstRunnerConfig, typeof(OpenAsyncBurstRunner)),
+            new BenchmarkUnit("OpenAsyncBurst", OpenAsyncBurstRunner.GetJob, typeof(OpenAsyncBurstRunner)),
         };
 
         /// <summary>
@@ -91,8 +91,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         return new
                         {
                             unit.Name, job.ProcessIsolation, job.AdditionalRttMilliseconds,
-                            RepeatAll = job is OpenAsyncBurstRunnerJob burst &&
-                                burst.SamplingProfile == "Extended"
+                            job.RepeatAll
                         };
                     })));
                     return;
@@ -155,16 +154,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         .Select(item => item.index).ToArray();
                 if (selectedIndexes.Length == 0) continue;
                 BenchmarkExecutionPlan.ValidateIndexes(cases, selectedIndexes);
-                if (job is OpenAsyncBurstRunnerJob burst)
+                foreach (int index in selectedIndexes)
                 {
-                    cases = cases.ToArray();
-                    foreach (int index in selectedIndexes)
+                    BenchmarkCase benchmark = cases[index];
+                    int operations = job.GetOperationsPerInvoke(benchmark);
+                    if (operations != benchmark.Descriptor.OperationsPerInvoke)
                     {
-                        BenchmarkCase benchmark = cases[index];
-                        string state = benchmark.Parameters.Items.Single(p => p.Name == "State")
-                            .Value.ToString();
-                        int operations = OpenAsyncBurstRunner.GetWorkload(burst, state)
-                            .OperationsPerInvoke;
                         cases[index] = BenchmarkExecutionPlan.WithOperationsPerInvoke(
                             benchmark, operations);
                     }

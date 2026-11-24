@@ -4,6 +4,7 @@
 
 #nullable disable
 using System;
+using BenchmarkDotNet.Running;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
@@ -51,15 +52,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         ///
         public static Config Load()
         {
-            Config config = Loader.FromJsonFile<Config>(
+            return Loader.FromJsonFile<Config>(
                 "runnerconfig.jsonc", "RUNNER_CONFIG");
-
-            if (config.Benchmarks?.OpenAsyncBurstRunnerConfig is { } burst)
-            {
-                burst.AdditionalRttMilliseconds = OperatingSystem.IsLinux() ? 100 : 0;
-            }
-
-            return config;
         }
     }
 
@@ -135,6 +129,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// When null or empty, "Throughput" is used.
         /// </summary>
         public string RunStrategy;
+
+        internal virtual bool RepeatAll => false;
+
+        internal virtual int GetOperationsPerInvoke(BenchmarkCase benchmark) =>
+            benchmark.Descriptor.OperationsPerInvoke;
 
         /// <summary>Rejects unsupported execution policies before launching benchmark work.</summary>
         public virtual void ValidateExecution()

@@ -126,7 +126,7 @@ public class AsyncHealthOperationRecorderTests
         // Arrange
         var time = new FakeTimeProvider();
         var recorder = new AsyncHealthOperationRecorder(time);
-        var operation = recorder.BeginInvocation(1).Offer(0);
+        var operation = recorder.BeginInvocation(1, trackConnectionOpens: true).Offer(0);
         operation.Start();
 
         // Act
