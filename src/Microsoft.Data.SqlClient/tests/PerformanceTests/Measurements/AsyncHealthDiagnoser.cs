@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
@@ -95,25 +94,17 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             throw new InvalidOperationException("Async-health benchmark already active.");
         }
 
-        Config suite = (_settings ??
-            throw new InvalidOperationException("Missing async-health run configuration.")).Suite;
+        if (_settings == null)
+        {
+            throw new InvalidOperationException("Missing async-health run configuration.");
+        }
+
         _case = benchmarkCase;
         _caseId = Guid.NewGuid().ToString("N");
         _windowCompleted = false;
         _startupCompleted = false;
         _operations = null;
         _phase = null;
-        if (suite.UseConnectionPoolV2 && !Equals(typeof(SqlConnection).Assembly
-            .GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches")
-            ?.GetProperty("UseConnectionPoolV2",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
-            ?.GetValue(null), true))
-        {
-            HasFailed = true;
-            FinishRun();
-            throw new InvalidOperationException(
-                "The driver cannot provide the requested V2 benchmark path.");
-        }
         if (!s_active.TryAdd(_handlerId, this))
         {
             throw new InvalidOperationException("Async-health handler already registered.");

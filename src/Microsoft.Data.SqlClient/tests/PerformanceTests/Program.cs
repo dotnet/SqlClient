@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using BenchmarkDotNet.ConsoleArguments;
@@ -172,6 +173,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 BenchmarkCase[] selectedCases = BenchmarkExecutionPlan.Select(
                     childSelection, unit.Name, cases, job);
                 _ = BenchmarkNetworkScope.ReadAppliedRtt(job);
+
+                // Older package baselines can ignore the switch set by SetupConfigurations.
+                if (diagnoser != null && _config.UseConnectionPoolV2 &&
+                    !Equals(typeof(SqlConnection).Assembly
+                        .GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches")
+                        ?.GetProperty("UseConnectionPoolV2",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+                        ?.GetValue(null), true))
+                {
+                    Console.Error.WriteLine(
+                        "The driver cannot provide the requested V2 benchmark path.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+
                 if (diagnoser != null && job.ProcessIsolation == "PerRunner" &&
                     selectedCases.Length > 1)
                 {

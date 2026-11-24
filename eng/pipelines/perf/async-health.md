@@ -15,7 +15,8 @@ Execution settings are independent of diagnoser annotations:
 Direct CLI and pipeline execution share the dispatcher. It verifies the child's selected-case
 fingerprint and keeps separate case artifacts. BDN uses the in-process toolchain inside
 each child so process-wide pool/SNI/async switches apply. Compare pool versions in separate
-processes; requesting V2 fails if the driver cannot apply it. No experimental driver switch is added.
+processes. Before collecting async-health measurements, the harness checks that the driver honors
+a V2 request. No experimental driver switch is added.
 
 ## SQL-only latency
 
