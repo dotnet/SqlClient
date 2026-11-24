@@ -23,8 +23,7 @@ statuses still use `regressionThreshold`. Coverage qualifications and raw proven
 All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and optional
 `AdditionalRttMilliseconds`. These are independent of diagnoser annotations. The dispatcher
 verifies Linux SQL-only shaping and retains per-process artifacts for both direct CLI and pipeline
-runs. Execution conditions also participate in ordinary timing comparisons. See the
-[execution protocol](async-health.md#execution-settings).
+runs. See the [execution protocol](async-health.md#execution-settings).
 
 Use the standard `runnerconfig.jsonc`, created from `runnerconfig.default.jsonc` on a clean
 checkout. See the [runner settings](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/README.md)

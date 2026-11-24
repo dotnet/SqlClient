@@ -381,8 +381,13 @@ def orchestrate(runner, units, results_dir, threshold, reps):
 # Rendering.
 # --------------------------------------------------------------------------------------------------
 _ICON = {
-    **compare_perf.STATUS_LABELS,
+    "regression": "\U0001f534 regression",
     "regression-unconfirmed": "\U0001f7e0 regression (unconfirmed)",
+    "improvement": "\U0001f7e2 improvement",
+    "unchanged": "\u26aa unchanged",
+    "current-only": "\U0001f195 new",
+    "baseline-only": "\u2796 removed",
+    "unknown": "\u2754",
 }
 
 
@@ -415,7 +420,7 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
                 status=_ICON.get(e["status"], e["status"]),
                 name=e["benchmarkName"],
                 method=e["methodName"],
-                params=compare_perf._fmt_parameters(e),
+                params=e["parameterSignature"] or "-",
                 base=compare_perf._fmt_ms(e["baselineMeanMs"]),
                 cur=compare_perf._fmt_ms(e["currentMeanMs"]),
                 delta=compare_perf._fmt_pct(e["meanDeltaPct"]),
@@ -443,7 +448,7 @@ def main(argv=None):
                         help="Per-unit raw artifacts directory (default: <results>/runs).")
     parser.add_argument("--max-run-seconds", type=float, default=None,
                         help="Remaining execution budget, excluding pipeline collection grace.")
-    parser.add_argument("--threshold", type=float, default=compare_perf.DEFAULT_THRESHOLD_PCT)
+    parser.add_argument("--threshold", type=float, default=10.0)
     parser.add_argument("--reps", type=int, default=3,
                         help="Total interleaved passes for a flagged unit (best-of-N). 1 disables confirmation.")
     parser.add_argument("--baseline-version", default="baseline")

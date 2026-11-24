@@ -94,7 +94,7 @@ Missing/zero-baseline percentages are N/A. Current dispatch p99 is green below 1
 
 Coverage warnings and expanded provenance retain phase/sample/outcome completeness, driver hashes,
 all aliases and each maximum's source. Conflicting aliases/origins or mixed driver identities fail;
-incompatible execution conditions remain unpaired, including ordinary timing comparisons.
+incompatible execution conditions remain unpaired in the async-health report.
 A green/yellow indicator does not waive missing evidence. Historical artifacts retain retired cases.
 To regenerate without overwriting an original:
 

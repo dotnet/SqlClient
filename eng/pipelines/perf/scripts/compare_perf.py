@@ -15,49 +15,12 @@ without installing any packages.
 
 import argparse
 import glob
-import hashlib
 import json
 import os
 import sys
-from pathlib import Path
 
 
 NS_PER_MS = 1_000_000.0
-DEFAULT_THRESHOLD_PCT = 10.0
-STATUS_LABELS = {
-    "regression": "\U0001f534 regression",
-    "improvement": "\U0001f7e2 improvement",
-    "unchanged": "\u26aa unchanged",
-    "current-only": "\U0001f195 new",
-    "baseline-only": "\u2796 removed",
-    "unknown": "\u2754",
-}
-
-
-def _execution_conditions(path, directory):
-    """Keep new runner outputs from silently pairing across different execution conditions."""
-    root = Path(directory).resolve()
-    parent = Path(path).resolve().parent
-    while parent == root or root in parent.parents:
-        manifest = parent / "process.json"
-        if manifest.is_file():
-            data = json.loads(manifest.read_text(encoding="utf-8-sig"))
-            conditions = data.get("ExecutionConditions")
-            if not isinstance(conditions, dict):
-                raise ValueError(f"Missing execution conditions: {manifest}")
-            requested = conditions.get("AdditionalRttMilliseconds")
-            applied = data.get("AppliedAdditionalRttMilliseconds")
-            if requested is None or applied != requested:
-                raise ValueError(f"Mismatched requested/applied RTT: {manifest}")
-            if data.get("EffectiveProcessIsolation") != conditions.get("ProcessIsolation"):
-                raise ValueError(f"Mismatched process isolation: {manifest}")
-            return conditions
-        if parent == root:
-            break
-        parent = parent.parent
-    if "processes" in Path(path).resolve().relative_to(root).parts:
-        raise ValueError(f"Missing process manifest for isolated benchmark report: {path}")
-    return None
 
 
 def _load_benchmarks(directory):
@@ -69,9 +32,6 @@ def _load_benchmarks(directory):
     records = {}
     pattern = os.path.join(directory, "**", "*-report-full.json")
     for path in sorted(glob.glob(pattern, recursive=True)):
-        conditions = _execution_conditions(path, directory)
-        signature = (hashlib.sha256(json.dumps(conditions, sort_keys=True).encode()).hexdigest()[:16]
-                     if conditions is not None else None)
         try:
             with open(path, "r", encoding="utf-8-sig") as handle:
                 data = json.load(handle)
@@ -91,16 +51,12 @@ def _load_benchmarks(directory):
             alloc = memory.get("BytesAllocatedPerOperation")
 
             key = f"{btype}.{method}({params})"
-            if signature is not None:
-                key += f"[conditions={signature}]"
             records[key] = {
                 "benchmarkName": btype,
                 "methodName": method,
                 "parameterSignature": params,
                 "meanNs": float(mean_ns),
                 "allocatedBytes": float(alloc) if alloc is not None else None,
-                "executionConditions": conditions,
-                "conditionSignature": signature,
             }
     return records
 
@@ -130,8 +86,6 @@ def build_comparison(baseline_dir, current_dir, threshold_pct):
             "benchmarkName": ref["benchmarkName"],
             "methodName": ref["methodName"],
             "parameterSignature": ref["parameterSignature"],
-            "executionConditions": ref["executionConditions"],
-            "conditionSignature": ref["conditionSignature"],
             "baselineMeanMs": (b["meanNs"] / NS_PER_MS) if b else None,
             "currentMeanMs": (c["meanNs"] / NS_PER_MS) if c else None,
             "baselineAllocBytes": b["allocatedBytes"] if b else None,
@@ -207,13 +161,6 @@ def _fmt_alloc(entry):
     return "-"
 
 
-def _fmt_parameters(entry):
-    parameters = entry["parameterSignature"] or "-"
-    if entry["status"] in ("current-only", "baseline-only") and entry.get("conditionSignature"):
-        parameters += f" [conditions={entry['conditionSignature']}]"
-    return parameters
-
-
 def render_markdown(entries, baseline_version, threshold_pct):
     regressions = [e for e in entries if e["status"] == "regression"]
     improvements = [e for e in entries if e["status"] == "improvement"]
@@ -222,25 +169,33 @@ def render_markdown(entries, baseline_version, threshold_pct):
     lines.append("# SqlClient Performance Comparison")
     lines.append("")
     lines.append(f"Baseline: **{baseline_version}** &nbsp;|&nbsp; "
-                 f"Regression threshold: **{threshold_pct:g}%**")
+                 f"Regression threshold: **{threshold_pct:.0f}%**")
     lines.append("")
     lines.append(f"- Benchmarks compared: **{len(entries)}**")
-    lines.append(f"- Regressions (slower > {threshold_pct:g}%): **{len(regressions)}**")
-    lines.append(f"- Improvements (faster > {threshold_pct:g}%): **{len(improvements)}**")
+    lines.append(f"- Regressions (slower > {threshold_pct:.0f}%): **{len(regressions)}**")
+    lines.append(f"- Improvements (faster > {threshold_pct:.0f}%): **{len(improvements)}**")
     lines.append("")
     lines.append("| Status | Benchmark | Method | Params | Baseline (ms) | "
                  "Current (ms) | Mean Δ | Alloc Δ |")
     lines.append("| ------ | --------- | ------ | ------ | ------------- | "
                  "------------ | ------ | ------- |")
 
+    icon = {
+        "regression": "🔴 regression",
+        "improvement": "🟢 improvement",
+        "unchanged": "⚪ unchanged",
+        "current-only": "🆕 new",
+        "baseline-only": "➖ removed",
+        "unknown": "❔",
+    }
     for e in entries:
         lines.append(
             "| {status} | {name} | {method} | {params} | {base} | {cur} | "
             "{delta} | {alloc} |".format(
-                status=STATUS_LABELS.get(e["status"], e["status"]),
+                status=icon.get(e["status"], e["status"]),
                 name=e["benchmarkName"],
                 method=e["methodName"],
-                params=_fmt_parameters(e),
+                params=e["parameterSignature"] or "-",
                 base=_fmt_ms(e["baselineMeanMs"]),
                 cur=_fmt_ms(e["currentMeanMs"]),
                 delta=_fmt_pct(e["meanDeltaPct"]),
@@ -258,7 +213,7 @@ def main(argv=None):
     parser.add_argument("--out-md", required=True)
     parser.add_argument("--out-json", required=True)
     parser.add_argument("--baseline-version", default="baseline")
-    parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD_PCT,
+    parser.add_argument("--threshold", type=float, default=10.0,
                         help="Percent slowdown that counts as a regression.")
     parser.add_argument("--fail-on-regression", action="store_true",
                         help="Exit non-zero if any regression is detected.")
