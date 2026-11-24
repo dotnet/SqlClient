@@ -12,16 +12,10 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
 {
     public string SamplingProfile = "Burst";
 
-    /// <summary>Keeps the first observed workload a single cold burst without JIT/pilot repeats.</summary>
     public OpenAsyncBurstRunnerJob()
     {
         ApplyNetworkPolicy();
-        LaunchCount = 1;
-        WarmupCount = 1;
-        InvocationCount = 1;
-        IterationCount = 3;
         RunStrategy = "Monitoring";
-        TimeoutMinutes = 5;
     }
 
     void IJsonOnDeserialized.OnDeserialized() => ApplyNetworkPolicy();
@@ -38,6 +32,11 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob, IJsonOnDeserialized
             throw new ArgumentException(
                 "Burst sampling requires Monitoring with one launch, one warmup " +
                 "and one invocation per iteration.");
+        }
+        if (IterationCount < 1)
+        {
+            throw new ArgumentException(
+                "Set IterationCount to a positive value in the runner config.");
         }
         if (SamplingProfile != "Burst" && SamplingProfile != "Extended")
         {

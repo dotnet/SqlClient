@@ -27,11 +27,12 @@ and `NonPooled`. The default runner config enables it. Existing configs that omi
 `OpenAsyncBurstRunnerConfig` do not run it. Open/close-only bursts are excluded: tight synchronous
 checkout loops can saturate the ThreadPool on their own.
 
-The runner requires `Monitoring` and one launch, warmup and invocation per iteration. The template
-uses `PerCase`, three timing iterations and a five-minute case timeout. It always adds 100 ms
-of SQL RTT on Linux and skips shaping elsewhere. Each case sets the worker minimum to 16 and
-restores it afterward. Warm setup holds 64 connections (16 for Oversubscribed) before returning
-them; Empty clears only its own pool.
+The runner uses `Monitoring`. Its config must specify one launch, one warmup, one invocation per
+iteration, and a positive timing iteration count. The template uses `PerCase`, three timing
+iterations and a five-minute case timeout. The runner always adds 100 ms of SQL RTT on Linux and
+skips shaping elsewhere. Each case sets the worker minimum to 16 and restores it afterward.
+Warm setup holds 64 connections (16 for Oversubscribed) before returning them; Empty clears
+only its own pool.
 
 `Burst` (default) performs one operation per worker. `Extended` keeps that cold wave for `Empty`.
 Other states use 16 waves of 64 workers, with 20/5/1 operations per worker for
