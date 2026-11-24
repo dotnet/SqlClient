@@ -23,8 +23,9 @@ boundaries, BDN preview/JIT preparation, network ownership/cleanup, reporting an
 ## OpenAsyncBurst workload
 
 `OpenAsyncBurst` runs 64 open/query/close workers across `Empty`, `Warm`, `Oversubscribed` (16 slots)
-and `NonPooled`. The pipeline enables the runner even with an older private config. Open/close-only
-bursts are excluded: tight synchronous checkout loops can saturate the ThreadPool on their own.
+and `NonPooled`. The default runner config enables it. Existing configs that omit or disable
+`OpenAsyncBurstRunnerConfig` do not run it. Open/close-only bursts are excluded: tight synchronous
+checkout loops can saturate the ThreadPool on their own.
 
 The runner requires `Monitoring` and one launch, warmup and invocation per iteration. The template
 uses `PerCase`, three timing iterations and a five-minute case timeout. It always adds 100 ms

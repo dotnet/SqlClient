@@ -407,7 +407,6 @@ Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warme
 
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
-$env:SQLCLIENT_PERF_PIPELINE = "1"
 $ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
 $SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
 

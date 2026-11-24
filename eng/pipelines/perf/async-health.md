@@ -79,7 +79,8 @@ For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]
 Failed benchmarks, missing windows, observer faults and incomplete work fail explicitly. Window
 and execution-failure records remain separate. The runners stop on benchmark or timing-gate
 failures as before. They generate the async-health report after successful execution and any
-timing comparison. Report-generation failures also fail the run.
+timing comparison. Runs with no collected async-health artifacts say so without reporting a
+health verdict. Invalid artifacts and report-generation failures still fail the run.
 
 ### Compact comparison
 

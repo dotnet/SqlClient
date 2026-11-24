@@ -31,23 +31,10 @@ public class OpenAsyncBurstRunner
     private int _originalMinimumWorkers;
     private int _originalMinimumIo;
 
-    internal static OpenAsyncBurstRunnerJob GetJob(Benchmarks benchmarks)
-    {
-        var job = benchmarks.OpenAsyncBurstRunnerConfig ??
-            new OpenAsyncBurstRunnerJob { ProcessIsolation = "PerCase" };
-
-        if (Environment.GetEnvironmentVariable("SQLCLIENT_PERF_PIPELINE") == "1")
-        {
-            job.Enabled = true;
-        }
-
-        return job;
-    }
-
     [GlobalSetup]
     public void SetupOpenQueryClose()
     {
-        _openQueryClose = GetWorkload(GetJob(_config.Benchmarks), State);
+        _openQueryClose = GetWorkload(_config.Benchmarks.OpenAsyncBurstRunnerConfig, State);
 
         ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
         if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))

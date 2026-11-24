@@ -397,7 +397,6 @@ echo "Preflight: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is reachable and warme
 
 RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
-export SQLCLIENT_PERF_PIPELINE=1
 RESULTS_RUNNER_CONFIG="${RESULTS_DIR}/runnerconfig.json"
 SOURCE_RUNNER_CONFIG="${PERF_DIR}/runnerconfig.jsonc"
 

@@ -53,7 +53,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
             new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
             new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
-            new BenchmarkUnit("OpenAsyncBurst", OpenAsyncBurstRunner.GetJob, typeof(OpenAsyncBurstRunner)),
+            new BenchmarkUnit(
+                "OpenAsyncBurst", b => b.OpenAsyncBurstRunnerConfig, typeof(OpenAsyncBurstRunner)),
         };
 
         /// <summary>

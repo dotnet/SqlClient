@@ -64,6 +64,9 @@ def _origin(path):
 
 def _load(root):
     """Deduplicate aliases, rejecting conflicting contents or origin instead of choosing one."""
+    if not root.is_dir():
+        raise ValueError(f"Results directory does not exist: {root}")
+
     seen, owners = {}, {}
     for path in sorted(root.glob("**/async-health/*.json")):
         data = json.loads(path.read_text(encoding="utf-8-sig"))
@@ -105,8 +108,6 @@ def _load(root):
         else:
             seen[identity] = dict(data=data, side=side, repetition=repetition,
                                   sources=[relative.as_posix()], configuration=signature)
-    if not seen:
-        raise ValueError("No BDN async-health artifacts were produced.")
     return list(seen.values())
 
 
@@ -290,6 +291,10 @@ def render(root, source_label=None):
     lines = ["# Benchmark async-health comparison", ""]
     if source_label:
         lines.extend(["Source: " + _text(source_label), ""])
+    if not entries:
+        lines.append("No async-health artifacts were collected.")
+        return "\n".join(lines) + "\n", False
+
     lines.extend([
         f"Current dispatch-p99 health: below **{DISPATCH_WARNING_THRESHOLD_MS:g}ms** is "
         f"healthy (green); from **{DISPATCH_WARNING_THRESHOLD_MS:g}ms** through "
