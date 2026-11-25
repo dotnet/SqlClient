@@ -338,7 +338,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             public override void WriteLine(string message)
             {
-                Write(@"ASSERT: {0}", message);
+                Write(message);
             }
         }
 
