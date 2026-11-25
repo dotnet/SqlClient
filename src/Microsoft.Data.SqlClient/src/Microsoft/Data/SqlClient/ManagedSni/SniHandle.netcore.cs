@@ -34,7 +34,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 ClientCertificates = certificate,
                 RemoteCertificateValidationCallback = validationCallback
             };
-            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
+            // Strict opens synchronously wait for this task, even on single-worker schedulers.
+            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token).ConfigureAwait(false);
         }
 
         /// <summary>
