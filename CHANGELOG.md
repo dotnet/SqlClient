@@ -177,8 +177,12 @@ See the [core release notes](release-notes/8.1/8.1.0-preview1.md) for platform a
 
 - Updated Azure.Core to `1.65.0`, MSAL and its broker to `4.92.0`, and the applicable .NET 10
   dependency floors to `10.0.15`. The exact per-framework direct dependencies are listed below.
-  SNI, IdentityModel, Key Vault Keys, and legacy polyfill versions are unchanged from preview1.
+  IdentityModel, Key Vault Keys, and legacy polyfill versions are unchanged from preview1.
   ([#5031](https://github.com/dotnet/SqlClient/pull/5031))
+- Updated the native `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime`
+  dependency minimums from `8.0.0-preview1.26309.4` to `8.0.0`. Native SNI remains independently
+  versioned; the managed driver family version is `8.1.0-preview1`.
+  ([#5144](https://github.com/dotnet/SqlClient/pull/5144))
 - Authentication configuration/registration diagnostics now use resources owned by Abstractions.
   Existing translated messages move with their satellite assemblies. Nine additional messages
   are included in all 13 satellite resource sets but remain English until translated.
