@@ -79,14 +79,42 @@ Use `[Trait("category", "...")]` (xUnit, used in both ManualTests and UnitTests)
 | `nonwindowstests` | Windows | Test targets non-Windows behavior |
 | `nonlinuxtests` | Linux | Test targets non-Linux behavior |
 | `nonuaptests` | UAP/UWP | Not applicable for UAP |
-| `failing` | All platforms | Known permanent failures |
+| `failing` | Wherever the trait is present | Known failures or platform-ineligible tests |
 | `flaky` | All platforms (quarantine) | Intermittently failing tests (see Quarantine Zone below) |
 | `probation` | With `flaky` (quarantine) | Fixed tests being monitored before leaving quarantine |
+
+### PlatformSpecific Is a Trait-Based Exclusion, Not a Skip
+
+In the `Microsoft.DotNet.XUnitExtensions` version used by this repository,
+`[PlatformSpecific(TestPlatforms.Windows)]` does not directly skip a test on
+Linux/macOS. Its discoverer adds `category=failing` on a nonmatching platform,
+and the runner must explicitly filter that category out. On Windows, the
+attribute adds no `failing` trait of its own. This differs from a failing
+`ConditionalFact` condition, which marks a test skipped.
+
+A test can have several values for the same category. If the Windows-only test
+also has `[Trait("category", "flaky")]`, it has both `flaky` and `failing` on
+Linux/macOS. Selecting `category=flaky` alone therefore runs the unsupported test.
+Use `category=flaky&category!=failing` for quarantine runs: the test remains
+eligible on Windows but is excluded on Linux/macOS.
+
+The default regular-suite filter already excludes `failing`. However, an explicit
+`TestFilters` or `dotnet test --filter` expression replaces the default category
+exclusions rather than adding to them. Include `category!=failing` when narrowing
+normal or quarantine runs, including fully-qualified-name filters. Omit it only
+when deliberately investigating an excluded test and after checking its platform
+requirements. `TestFilters=none` also removes this platform protection; test-set
+selection and actual conditional skips are separate mechanisms.
+
+Do not interpret every `failing` trait as a product defect: it can be generated
+because the current platform is unsupported. Filtered-out tests do not run and
+are not reported as skipped.
 
 ### Flaky Test Quarantine Zone
 Tests that intermittently fail are quarantined with `[Trait("category", "flaky")]`. Quarantined tests:
 - Are **excluded** from regular test runs by the default filter: `category!=failing&category!=flaky`
 - Run in **separate quarantine pipeline steps** to track their status without blocking CI
+- Use `category=flaky&category!=failing` so platform-ineligible cases stay excluded
 - Do **not** collect code coverage
 - Should be investigated and fixed, then un-quarantined by removing the trait
 
@@ -139,6 +167,8 @@ The default test filter is defined in `build.proj` via `TestFilters`:
 <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
 ```
 This can be overridden via build property: `dotnet build build.proj -t:TestSqlClientUnit -p:TestFilters="your_filter"`.
+Retain `category!=failing` in custom filters unless intentionally overriding the
+trait-based platform exclusion described above.
 
 ### Test Attributes
 ```csharp
@@ -188,7 +218,7 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.S
   --filter "category!=failing&category!=flaky&category!=interactive"
 
 # Run ONLY quarantined flaky tests (for investigation)
-dotnet test ... --filter "category=flaky"
+dotnet test ... --filter "category=flaky&category!=failing"
 
 # Single test
 dotnet test ... --filter "FullyQualifiedName=Namespace.ClassName.MethodName"

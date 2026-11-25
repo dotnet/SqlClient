@@ -19,7 +19,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 {
     /// <summary>
     /// Verifies that parallel SQL Browser requests do not depend on the caller's scheduler.
+    /// Runs without other collections so unrelated blocking work cannot starve UDP completions
+    /// during the transport's one-second receive timeout.
     /// </summary>
+    [Collection(SimulatedServerTestCollection.Name)]
     public sealed class SsrpClientTests
     {
         /// <summary>
