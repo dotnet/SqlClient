@@ -69,6 +69,10 @@ Keep retry/error/partner assertions explicit; transport attempt counts are not p
 
 The simulator runs blocking handlers on dedicated workers. Fault budgets are reserved before
 response processing, and disposal must finish owned workers and report unexpected handler failures.
+The scheduler-sensitive `SsrpClientTests` share the nonparallel `SimulatedServerTestCollection`.
+Their UDP response assertions must not compete with unrelated blocking collections for thread-pool
+completion workers during the transport's one-second receive timeout. This isolation does not change
+the exclusive scheduler used by the regression or increase production timeouts.
 Transport initialization and socket closure share a lock so shutdown cannot invalidate a
 `TcpClient` while its worker acquires the stream or initializes the parser. The worker-drain
 wait stays outside that lock, allowing a stopped worker to finish its cleanup.
@@ -247,7 +251,7 @@ big-endian runtime (for example, s390x). Passing on x64 verifies only the little
 
 | Category      | Why it is excluded by default                                                       |
 |---------------|-------------------------------------------------------------------------------------|
-| `failing`     | Known failing tests.                                                                |
+| `failing`     | Known failing tests or tests excluded on the current platform by `PlatformSpecific`. |
 | `flaky`       | Intermittently failing tests.                                                       |
 | `interactive` | Tests that require user interaction or external setup not suitable for normal runs. |
 
@@ -255,21 +259,50 @@ Unsigned runs also exclude `category=signed`, unless `TestFilters=none` is speci
 `TestFilters` expression replaces the default `failing`, `flaky`, and `interactive` exclusions, so include
 any you still want to exclude. Trait keys must match the source: use lowercase `category` and uppercase `Set`.
 
-Examples:
+### PlatformSpecific does not automatically skip tests
+
+The `Microsoft.DotNet.XUnitExtensions` version used here implements
+`[PlatformSpecific]` through traits. For example,
+`[PlatformSpecific(TestPlatforms.Windows)]` adds `category=failing` during discovery
+on Linux/macOS, rather than marking the test skipped. On Windows it adds no
+`failing` trait of its own. The attribute relies on the runner filtering out
+`category=failing`; without that filter, the test can execute on an unsupported
+platform.
+
+This is particularly important for quarantined tests. A Windows-only test marked
+`[Trait("category", "flaky")]` has both category values, `flaky` and `failing`,
+on Linux/macOS. `category=flaky` selects it despite the platform restriction.
+Use `category=flaky&category!=failing` to run eligible quarantined tests while
+preserving platform exclusions. Otherwise, an unsupported operation can fail
+with `PlatformNotSupportedException` and look like a driver regression.
+
+Regular runs use `category!=failing&category!=flaky&category!=interactive`.
+Custom filters replace these exclusions, so retain `category!=failing` even when
+selecting a single test by name, unless deliberately investigating an excluded
+test on an appropriate platform. `TestFilters=none` removes the trait-based
+platform guard too. Test-set restrictions do not restore it.
+
+This mechanism differs from `ConditionalFact` conditions that actually skip tests.
+Filtered-out tests are not executed or reported as skipped, and a generated
+`failing` trait does not by itself indicate a product defect.
+
+### Filter examples
 
 Run a single test by fully-qualified name:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 \
+  '-p:TestFilters=category!=failing&FullyQualifiedName=Namespace.ClassName.MethodName'
 ```
 
 Run only flaky tests while investigating quarantine failures:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestFilters=category=flaky
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 \
+  '-p:TestFilters=category=flaky&category!=failing'
 ```
 
-Disable the default filter:
+Disable the default filter, including trait-based platform exclusions, for deliberate investigation:
 
 ```bash
 dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0 -p:TestFilters=none

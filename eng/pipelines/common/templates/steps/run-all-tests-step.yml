@@ -118,7 +118,7 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="category=flaky&category!=failing"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
@@ -130,7 +130,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="category=flaky&category!=failing"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
     continueOnError: true
@@ -175,7 +175,7 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="category=flaky&category!=failing"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
@@ -187,7 +187,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="category=flaky&category!=failing"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
     continueOnError: true
@@ -245,7 +245,7 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="category=flaky&category!=failing"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
@@ -258,7 +258,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="category=flaky&category!=failing"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
     continueOnError: true
@@ -292,7 +292,7 @@ steps:
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
+        -p:TestFilters="category=flaky&category!=failing"
         -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
     continueOnError: true
@@ -325,7 +325,7 @@ steps:
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
+        -p:TestFilters="category=flaky&category!=failing"
         -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
     continueOnError: true
@@ -360,7 +360,7 @@ steps:
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
+        -p:TestFilters="category=flaky&category!=failing"
         -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
     continueOnError: true

@@ -303,7 +303,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 for (int i = 0; i < ipAddresses.Length; i++)
                 {
                     IPEndPoint endPoint = new IPEndPoint(ipAddresses[i], port);
-                    tasks.Add(Task.Factory.StartNew<SsrpResult>(() => SendUDPRequest(endPoint, requestPacket), cts.Token));
+                    // The caller blocks below, so request workers must not inherit its scheduler.
+                    tasks.Add(Task.Factory.StartNew<SsrpResult>(
+                        () => SendUDPRequest(endPoint, requestPacket),
+                        cts.Token, TaskCreationOptions.None, TaskScheduler.Default));
                 }
 
                 List<Task<SsrpResult>> completedTasks = new();

@@ -17,8 +17,9 @@ public sealed class AppContextSwitchTestCollection
 }
 
 /// <summary>
-/// Serializes simulated-server tests with all other collections because some scenarios mutate
-/// process-wide cached AppContext switch values while exercising connections.
+/// Serializes simulated-server and scheduler-sensitive transport tests with all other collections.
+/// Some scenarios mutate cached AppContext switches; others need timely socket completions without
+/// unrelated blocking work competing for thread-pool workers.
 /// </summary>
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class SimulatedServerTestCollection
