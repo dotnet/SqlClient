@@ -32,7 +32,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 ApplicationProtocols = s_tdsProtocols,
                 ClientCertificates = certificate
             };
-            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
+            // Strict opens synchronously wait for this task, even on single-worker schedulers.
+            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token).ConfigureAwait(false);
         }
 
         protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
