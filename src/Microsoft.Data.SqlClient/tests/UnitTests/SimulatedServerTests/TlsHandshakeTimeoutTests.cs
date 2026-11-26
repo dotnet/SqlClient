@@ -8,6 +8,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -107,6 +108,70 @@ public sealed class TlsHandshakeTimeoutTests
 
         // Assert
         AssertTimedOutAtConnectTimeout(server, outcome);
+    }
+
+    /// <summary>
+    /// A synchronous strict open must release its caller's only scheduler worker when the TLS
+    /// handshake times out, rather than wait for a continuation queued to that same worker.
+    /// </summary>
+    [Fact]
+    public void Open_StrictEncryptionOnSingleWorkerScheduler_ThrowsTimeoutWithoutDeadlock()
+    {
+        // Arrange
+        using TlsHandshakeStallingTdsServer server = new(new TdsServerArguments { TlsFirst = true });
+        server.Start();
+        using SqlConnection connection = new(ConnectionString(
+            server, SqlConnectionEncryptOption.Strict, multiSubnetFailover: false));
+        ConcurrentExclusiveSchedulerPair schedulerPair = new(
+            TaskScheduler.Default, maxConcurrencyLevel: 1);
+
+        try
+        {
+            // Act
+            OpenOutcome outcome = RunOpen(() => Task.Factory.StartNew(
+                connection.Open, CancellationToken.None, TaskCreationOptions.None,
+                schedulerPair.ExclusiveScheduler));
+
+            // Assert
+            AssertTimedOutAtConnectTimeout(server, outcome);
+        }
+        finally
+        {
+            // Cleanup
+            schedulerPair.Complete();
+        }
+    }
+
+    /// <summary>
+    /// An asynchronous strict open must also complete its TLS timeout when invoked by a
+    /// single-worker scheduler, without requiring another worker on that scheduler.
+    /// </summary>
+    [Fact]
+    public void OpenAsync_StrictEncryptionOnSingleWorkerScheduler_ThrowsTimeoutWithoutDeadlock()
+    {
+        // Arrange
+        using TlsHandshakeStallingTdsServer server = new(new TdsServerArguments { TlsFirst = true });
+        server.Start();
+        using SqlConnection connection = new(ConnectionString(
+            server, SqlConnectionEncryptOption.Strict, multiSubnetFailover: false));
+        ConcurrentExclusiveSchedulerPair schedulerPair = new(
+            TaskScheduler.Default, maxConcurrencyLevel: 1);
+
+        try
+        {
+            // Act
+            OpenOutcome outcome = RunOpen(() => Task.Factory.StartNew(
+                () => connection.OpenAsync(), CancellationToken.None, TaskCreationOptions.None,
+                schedulerPair.ExclusiveScheduler).Unwrap());
+
+            // Assert
+            AssertTimedOutAtConnectTimeout(server, outcome);
+        }
+        finally
+        {
+            // Cleanup
+            schedulerPair.Complete();
+        }
     }
 
     /// <summary>

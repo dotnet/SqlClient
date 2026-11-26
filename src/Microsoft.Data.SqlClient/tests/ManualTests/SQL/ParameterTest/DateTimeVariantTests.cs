@@ -55,6 +55,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("category", "flaky")]
     public class DateTimeVariantTests
     {
+        /// <summary>Provides the DateTime extremes rejected by SQL time columns.</summary>
+        public static TheoryData<DateTime> DateTimeExtremes =>
+            new() { DateTime.MinValue, DateTime.MaxValue };
+
+        /// <summary>
+        /// Verifies conversion-error checks accept the runtime's en-US date formatting.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(DateTimeExtremes))]
+        public void CannotConvertDateTimeToTime_RuntimeFormattedValue_ReturnsTrue(DateTime value)
+        {
+            // Arrange
+            string formattedValue = value.ToString(CultureInfo.GetCultureInfo("en-US"));
+            InvalidOperationException exception = new(
+                $"The given value '{formattedValue}' of type DateTime from the data source " +
+                "cannot be converted to type time for Column 0 [f1] Row 1.");
+
+            // Act
+            bool result = CannotConvertDateTimeToTime(exception, value);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        /// <summary>Verifies a conversion error for another value is not accepted.</summary>
+        [Fact]
+        public void CannotConvertDateTimeToTime_DifferentValue_ReturnsFalse()
+        {
+            // Arrange
+            string formattedValue = DateTime.MaxValue.ToString(CultureInfo.GetCultureInfo("en-US"));
+            InvalidOperationException exception = new(
+                $"The given value '{formattedValue}' of type DateTime from the data source " +
+                "cannot be converted to type time for Column 0 [f1] Row 1.");
+
+            // Act
+            bool result = CannotConvertDateTimeToTime(exception, DateTime.MinValue);
+
+            // Assert
+            Assert.False(result);
+        }
+
         private static void RunTest(
             TestVariations tag,
             Func<object, string, string, TestResult> action,
@@ -1341,8 +1382,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new Dictionary<TestVariations, string>()};
             yield return new object[] { DateTime.MinValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> {
-                    { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMinDateTimeToTime},
-                    { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMinDateTimeToTime},
+                    { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertDateTimeToTime},
+                    { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertDateTimeToTime},
                     { TestVariations.TestSimpleParameter_Type, InvalidCastDateTimeToTimeSpan },
                     { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
                     { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidCastNotValid },
@@ -1368,8 +1409,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new Dictionary<TestVariations, string>()};
             yield return new object[] { DateTime.MaxValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> {
-                    { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMaxDateTimeToTime },
-                    { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMaxDateTimeToTime },
+                    { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertDateTimeToTime },
+                    { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertDateTimeToTime },
                     { TestVariations.TestSimpleParameter_Type, InvalidCastDateTimeToTimeSpan },
                     { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidCastNotValid },
                     { TestVariations.TestSqlDataReaderParameterToTVP_Type, InvalidCastDateTimeToTimeSpan },
@@ -1410,13 +1451,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             (e.GetType() == typeof(SqlException)) &&
             e.Message.Contains("The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.");
 
-        private static ExceptionChecker CannotConvertMinDateTimeToTime = (e, paramValue) =>
+        private static ExceptionChecker CannotConvertDateTimeToTime = (e, paramValue) =>
             (e.GetType() == typeof(InvalidOperationException)) &&
-            e.Message.Contains("The given value '1/1/0001 12:00:00 AM' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.");
-
-        private static ExceptionChecker CannotConvertMaxDateTimeToTime = (e, paramValue) =>
-            (e.GetType() == typeof(InvalidOperationException)) &&
-            e.Message.Contains("The given value '12/31/9999 11:59:59 PM' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.");
+            e.Message.Contains(string.Format(CultureInfo.GetCultureInfo("en-US"),
+                "The given value '{0}' of type DateTime from the data source " +
+                "cannot be converted to type time for Column 0 [f1] Row 1.", paramValue));
 
         private static ExceptionChecker CannotConvertCharacterStringToDateOrTime = (e, paramValue) =>
             (e.GetType() == typeof(SqlException)) &&

@@ -80,4 +80,27 @@ Describe 'Unified PR platform selection' {
             $platform.Groups[1].Value | Should -BeIn @('Windows', 'Linux')
         }
     }
+
+}
+
+Describe 'Quarantine platform filtering in <RelativePath>' -ForEach @(
+    @{ RelativePath = 'common/templates/steps/run-all-tests-step.yml' }
+    @{ RelativePath = 'common/templates/steps/build-and-run-tests-netcore-step.yml' }
+    @{ RelativePath = 'common/templates/steps/build-and-run-tests-netfx-step.yml' }
+) {
+    It 'excludes platform-ineligible tests even when they are also flaky' {
+        # Arrange
+        $pipelineRoot = Join-Path $PSScriptRoot '../..'
+        $template = Get-Content -LiteralPath (Join-Path $pipelineRoot $RelativePath) -Raw
+
+        # Act
+        $filters = [regex]::Matches(
+            $template, '(?:-p:TestFilters=|--filter )"([^"]*category=flaky[^"]*)"')
+
+        # Assert
+        $filters.Count | Should -BeGreaterThan 0
+        foreach ($filter in $filters) {
+            $filter.Groups[1].Value | Should -Match '(^|&)category!=failing(&|$)'
+        }
+    }
 }

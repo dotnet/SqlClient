@@ -88,16 +88,44 @@ Test partitioning:
 - `TestSet=AE` — Always Encrypted tests (controlled by `runAlwaysEncryptedTests`)
 
 Test filters — default excludes `failing` and `flaky` categories:
-- `failing` — known permanent failures, always excluded
+- `failing` — known failures or platform-ineligible tests, always excluded from CI
 - `flaky` — intermittent failures, quarantined in separate pipeline steps
 - `nonnetfxtests` / `nonnetcoreapptests` — platform-specific exclusions
 - `nonwindowstests` / `nonlinuxtests` — OS-specific exclusions
 
 Flaky test quarantine:
 - Quarantined tests (`[Trait("category", "flaky")]`) run in separate steps after main tests
+- Quarantine filters use `category=flaky&category!=failing`
 - Main test runs are not blocked by flaky failures
 - No code coverage collected for flaky runs
 - Configured in `common/templates/steps/build-and-run-tests-netcore-step.yml`, `build-and-run-tests-netfx-step.yml`, and `run-all-tests-step.yml`
+
+### Platform-specific exclusions depend on runner filters
+
+The `Microsoft.DotNet.XUnitExtensions` version used by this repository implements
+`[PlatformSpecific]` as a trait-based exclusion, **not an automatic skip**. During
+discovery, its discoverer adds `category=failing` on a nonmatching platform. On a
+matching platform, it adds no `failing` trait of its own. The runner must exclude
+`failing`; the attribute alone does not prevent execution.
+
+Categories are additive. For example, a Windows-only test also marked
+`[Trait("category", "flaky")]` has `flaky` on Windows, but both `flaky` and `failing`
+on Linux/macOS. A filter of `category=flaky` still selects it on Linux/macOS.
+The resulting failure can be an unsupported API, such as distributed transaction
+promotion throwing `PlatformNotSupportedException`, rather than a product regression.
+
+Keep platform exclusions in **every regular and quarantine CI filter**:
+
+- Regular: `category!=failing&category!=flaky&category!=interactive`
+- Quarantine: `category=flaky&category!=failing`
+
+An explicit `TestFilters` or `--filter` replaces the default category exclusions;
+it does not extend them. A `TestSet` restriction or unsigned-test exclusion does
+not restore the missing platform guard. Do not assume that excluding `flaky` in
+regular runs also protects quarantine runs. Filtered-out tests are not executed
+or reported as skipped.
+
+### SNI and test timeouts
 
 SNI testing — `useManagedSNI` controls testing with native SNI (`false`) or managed SNI (`true`)
 
