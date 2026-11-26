@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Stable Release 8.0.0]
+## [Stable Release 8.0.0] - 2026-11-26
 
 The driver and four companion packages align at `8.0.0`, with `AssemblyVersion 8.0.0.0`.
 See the [core release notes](release-notes/8.0/8.0.0.md) for platform and dependency details.
@@ -297,7 +297,7 @@ are not presented again as new in 8.0, even though preview1's branch-cut baselin
   include compatible dependency updates.
 - [Microsoft.Data.SqlClient.Internal.Logging 8.0.0](release-notes/Internal/Logging/8.0/8.0.0.md)
   is version-alignment-only since preview1. Each companion's cumulative changes are documented
-  in its own notes; no separate Microsoft.SqlServer.Server release is established.
+  in its own notes; no separate Microsoft.SqlServer.Server release is included in this milestone.
 
 ## [Stable Release 7.1.2] - 2026-11-12
 
