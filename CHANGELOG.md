@@ -88,9 +88,12 @@ See the [core release notes](release-notes/8.0/8.0.0.md) for platform and depend
 
 - Updated Azure.Core to `1.65.0`, MSAL and its broker to `4.92.0`, and the applicable .NET 10
   dependency floors to `10.0.15`. The exact per-framework direct dependencies are listed below.
-  SNI, IdentityModel, Key Vault Keys, and legacy polyfill versions are unchanged from preview1.
+  IdentityModel, Key Vault Keys, and legacy polyfill versions are unchanged from preview1.
   ([#5031](https://github.com/dotnet/SqlClient/pull/5031),
   [#5041](https://github.com/dotnet/SqlClient/pull/5041))
+- Updated native SNI dependencies from `8.0.0-preview1.26309.4` to `8.0.0`.
+  ([#5144](https://github.com/dotnet/SqlClient/pull/5144),
+  [#5146](https://github.com/dotnet/SqlClient/pull/5146))
 - Authentication configuration/registration diagnostics now use resources owned by Abstractions.
   Existing translated messages move with their satellite assemblies; messages without a
   translation fall back to English. Exception types and authentication contracts are unchanged,
@@ -100,6 +103,12 @@ See the [core release notes](release-notes/8.0/8.0.0.md) for platform and depend
 
 #### Fixed
 
+- Fixed managed networking deadlocks when opening connections on a single-worker scheduler.
+  Parallel SQL Browser (SSRP) requests now run on the default scheduler, and Strict TLS
+  authentication completes without capturing the blocked caller's scheduler.
+  (net10.0, managed SNI only)
+  ([#5147](https://github.com/dotnet/SqlClient/pull/5147),
+  [#5148](https://github.com/dotnet/SqlClient/pull/5148))
 - Fixed `ExecuteXmlReaderAsync` and `BeginExecuteXmlReader` observing the first attempt while
   an invalid enclave session is being retried. Completion now follows the retry's outcome,
   and a successful retry releases the original asynchronous reservation. This avoids competing
@@ -142,8 +151,9 @@ See the [core release notes](release-notes/8.0/8.0.0.md) for platform and depend
 ### Cumulative Changes Since [7.1.2](release-notes/7.1/7.1.2.md)
 
 This view combines the delta above with the customer-facing changes introduced in preview1.
-Fixes already shipped in [7.1.1](release-notes/7.1/7.1.1.md) or [7.1.2](release-notes/7.1/7.1.2.md) are not presented
-again as new 8.0 fixes, even though preview1's branch-cut baseline included them.
+Changes already shipped in [7.1.1](release-notes/7.1/7.1.1.md) or
+[7.1.2](release-notes/7.1/7.1.2.md), including the user-agent configured-compatibility bits,
+are not presented again as new in 8.0, even though preview1's branch-cut baseline included them.
 
 #### Added
 
@@ -234,12 +244,11 @@ again as new 8.0 fixes, even though preview1's branch-cut baseline included them
   per-row asynchronous bulk-copy loop is unchanged.
   ([#4256](https://github.com/dotnet/SqlClient/pull/4256),
   [#4687](https://github.com/dotnet/SqlClient/pull/4687))
-- Added user-agent configured-compatibility bits and reconnection database-context diagnostics.
+- Added reconnection database-context diagnostics.
   Reader documentation clarifies complete result consumption for trailing errors/`InfoMessage`;
   preparation and batch documentation clarify existing restrictions. These diagnostics/docs
   do not change effective async defaults, reconnection, or reader cleanup semantics.
-  ([#4911](https://github.com/dotnet/SqlClient/pull/4911),
-  [#4130](https://github.com/dotnet/SqlClient/pull/4130),
+  ([#4130](https://github.com/dotnet/SqlClient/pull/4130),
   [#4723](https://github.com/dotnet/SqlClient/pull/4723),
   [#4729](https://github.com/dotnet/SqlClient/pull/4729),
   [#4726](https://github.com/dotnet/SqlClient/pull/4726),
