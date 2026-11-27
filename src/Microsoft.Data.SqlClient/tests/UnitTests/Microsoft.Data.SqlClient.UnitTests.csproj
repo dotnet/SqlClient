@@ -38,6 +38,10 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SqlServer.Types" />
+  </ItemGroup>
+
   <!-- Test target reference -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
