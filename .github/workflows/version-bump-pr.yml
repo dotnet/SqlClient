@@ -1,0 +1,52 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Version Bump PR
+#
+# Opens a PR that bumps SqlClientNextVersion in src/Microsoft.Data.SqlClient/Versions.props
+# when a SqlClient GitHub release is published. See .github/scripts/new-version-bump-pr.ps1
+# for how the target branch, next version, and PR milestone are chosen.
+#
+# Release events run this workflow from the tagged commit, so it must exist on each branch that
+# releases are tagged from (main and release/X.Y). The script is always taken from the default
+# branch, so every branch uses the same logic.
+#
+# The PR is created with GITHUB_TOKEN, so it does not trigger pull_request workflows. A
+# maintainer must re-run the milestone checks, for example by editing the PR milestone.
+#
+#################################################################################
+
+name: Version Bump PR
+
+on:
+  release:
+    types: [published]
+
+# 'contents: write' is needed to push the bump branch and commit.
+# 'pull-requests: write' is needed to open the PR.
+# 'issues: write' is needed to assign the PR milestone.
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    # Releases published in forks are ignored.
+    if: github.repository == 'dotnet/SqlClient'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Open version bump PR
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: ./.github/scripts/new-version-bump-pr.ps1
