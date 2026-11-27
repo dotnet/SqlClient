@@ -134,7 +134,21 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Secure the channel
             try
             {
-                ssl.AuthenticateAsServer(certificate, false, encryptionProtocols, false);
+#if NET
+                if (tlsFirst)
+                {
+                    ssl.AuthenticateAsServer(new SslServerAuthenticationOptions
+                    {
+                        ServerCertificate = certificate,
+                        EnabledSslProtocols = encryptionProtocols,
+                        ApplicationProtocols = new() { new SslApplicationProtocol("tds/8.0") }
+                    });
+                }
+                else
+#endif
+                {
+                    ssl.AuthenticateAsServer(certificate, false, encryptionProtocols, false);
+                }
             }
             catch (AuthenticationException ex) when (ExpectTlsHandshakeFailure)
             {
