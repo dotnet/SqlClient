@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- A minimal optional Azure contract exercises discovery without Azure dependencies. -->
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <PublishTrimmed>true</PublishTrimmed>
+    <PublishAot Condition="'$(NativeAot)' == 'true'">true</PublishAot>
+    <SelfContained>true</SelfContained>
+    <EnableReflection Condition="'$(EnableReflection)' == ''">false</EnableReflection>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+    <RuntimeHostConfigurationOption
+        Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig"
+        Value="$(EnableReflection)" Trim="true" />
+    <RuntimeHostConfigurationOption
+        Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery"
+        Value="$(EnableReflection)" Trim="true" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(EnableReflection)' == 'true'">
+    <DefineConstants>$(DefineConstants);ENABLE_REFLECTION</DefineConstants>
+    <AppConfig>AuthenticationPublishTest.config</AppConfig>
+    <!-- This consumer deliberately accepts the diagnostics and roots its reflective contracts. -->
+    <ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableReflection)' == 'true'">
+    <TrimmerRootAssembly Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+    <TrimmerRootAssembly Include="System.Configuration.ConfigurationManager" />
+    <TrimmerRootAssembly Include="$(AssemblyName)" />
+  </ItemGroup>
+</Project>
