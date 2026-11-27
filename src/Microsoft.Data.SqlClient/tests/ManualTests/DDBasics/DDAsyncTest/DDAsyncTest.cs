@@ -4,29 +4,40 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>
+    /// Verifies asynchronous command execution with independent and shared connections.
+    /// </summary>
     [Trait("Set", "3")]
     public static class DDAsyncTest
     {
         #region <<ExecuteCommand_WithNewConnection>>
         // TODO Synapse: Remove dependency on Northwind database by creating required table in setup.
         // CI observed AggregateException with IndexOutOfRangeException from List<T>.Add.
+        /// <summary>
+        /// Verifies independent connections record both asynchronous command executions.
+        /// </summary>
         [Trait("category", "flaky")]
+        [Trait("category", "probation")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteCommand_WithNewConnection_ShouldPerformAsyncByDefault()
         {
+            // Arrange
             var executedProcessList = new List<string>();
 
+            // Act
             var task1 = ExecuteCommandWithNewConnectionAsync("A", "SELECT top 10 * FROM Orders", executedProcessList);
             var task2 = ExecuteCommandWithNewConnectionAsync("B", "SELECT top 10 * FROM Products", executedProcessList);
             //wait all before verifying the results
             Task.WaitAll(task1, task2);
 
-            //verify whether it executed async
+            // Assert
             Assert.True(DoesProcessExecutedAsync(executedProcessList));
         }
 
@@ -54,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     while (await reader.ReadAsync())
                     {
-                        executedProcessList.Add(processName);
+                        RecordProcess(executedProcessList, processName);
                     }
                 }
             }
@@ -90,10 +101,130 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 while (await reader.ReadAsync())
                 {
-                    executedProcessList.Add(processName);
+                    RecordProcess(executedProcessList, processName);
                 }
             }
         }
         #endregion
+
+        /// <summary>
+        /// Ensures overlapping reader continuations cannot mutate their shared execution trace
+        /// concurrently, including while a collection insertion is in progress.
+        /// </summary>
+        [Fact]
+        public static void RecordProcess_ConcurrentReaders_SerializesWrites()
+        {
+            // Arrange
+            using var firstInsertion = new ManualResetEventSlim();
+            using var releaseInsertion = new ManualResetEventSlim();
+            using var secondFinished = new ManualResetEventSlim();
+            var processes = new GatedProcessList(firstInsertion, releaseInsertion);
+            Exception firstError = null;
+            Exception secondError = null;
+            var first = new Thread(() =>
+            {
+                try
+                {
+                    RecordProcess(processes, "A");
+                }
+                catch (Exception error)
+                {
+                    firstError = error;
+                }
+            }) { IsBackground = true };
+            var second = new Thread(() =>
+            {
+                try
+                {
+                    RecordProcess(processes, "B");
+                }
+                catch (Exception error)
+                {
+                    secondError = error;
+                }
+                finally
+                {
+                    secondFinished.Set();
+                }
+            }) { IsBackground = true };
+
+            try
+            {
+                // Act
+                // Hold the first insertion open before admitting the second writer.
+                first.Start();
+                Assert.True(firstInsertion.Wait(TimeSpan.FromSeconds(30)));
+                second.Start();
+                Assert.True(SpinWait.SpinUntil(
+                    () => secondFinished.IsSet ||
+                        (second.ThreadState & ThreadState.WaitSleepJoin) != 0,
+                    TimeSpan.FromSeconds(30)));
+
+                // Assert
+                // The second writer must wait outside the collection until the first is done.
+                Assert.False(secondFinished.IsSet);
+                releaseInsertion.Set();
+                Assert.True(first.Join(TimeSpan.FromSeconds(30)));
+                Assert.True(second.Join(TimeSpan.FromSeconds(30)));
+                Assert.Null(firstError);
+                Assert.Null(secondError);
+                Assert.Equal(new[] { "A", "B" }, processes);
+            }
+            finally
+            {
+                // Cleanup
+                releaseInsertion.Set();
+                if ((first.ThreadState & ThreadState.Unstarted) == 0)
+                {
+                    Assert.True(first.Join(TimeSpan.FromSeconds(30)));
+                }
+
+                if ((second.ThreadState & ThreadState.Unstarted) == 0)
+                {
+                    Assert.True(second.Join(TimeSpan.FromSeconds(30)));
+                }
+            }
+        }
+
+        /// <summary>Records a row's originating command in the shared execution trace.</summary>
+        /// <param name="processes">The trace shared by the concurrent reader continuations.</param>
+        /// <param name="processName">The command which produced the row.</param>
+        private static void RecordProcess(ICollection<string> processes, string processName)
+        {
+            lock (processes)
+            {
+                processes.Add(processName);
+            }
+        }
+
+        /// <summary>Holds one insertion open and rejects a concurrent collection mutation.</summary>
+        private sealed class GatedProcessList : Collection<string>
+        {
+            private readonly ManualResetEventSlim _firstInsertion;
+            private readonly ManualResetEventSlim _releaseInsertion;
+            private int _insertionCount;
+
+            internal GatedProcessList(
+                ManualResetEventSlim firstInsertion, ManualResetEventSlim releaseInsertion)
+            {
+                _firstInsertion = firstInsertion;
+                _releaseInsertion = releaseInsertion;
+            }
+
+            protected override void InsertItem(int index, string item)
+            {
+                if (Interlocked.Increment(ref _insertionCount) == 1)
+                {
+                    _firstInsertion.Set();
+                    Assert.True(_releaseInsertion.Wait(TimeSpan.FromSeconds(30)));
+                }
+                else if (!_releaseInsertion.IsSet)
+                {
+                    throw new InvalidOperationException("Concurrent execution-trace insertion.");
+                }
+
+                base.InsertItem(index, item);
+            }
+        }
     }
 }

@@ -451,6 +451,11 @@ Microsoft Entra authentication through Azure Arc.
 
 ## Manual Test Sets
 
+Async command tests may have reader continuations running concurrently. Serialize writes to
+shared execution traces without holding the trace lock across database operations or awaits.
+`DDAsyncTest.RecordProcess_ConcurrentReaders_SerializesWrites` gates a collection insertion to
+verify this ownership rule without requiring SQL Server.
+
 Manual tests are grouped using `[Trait("Set", "...")]` attributes so large runs can be partitioned.
 All sets are compiled; `build.proj` converts `TestSet` into a runtime filter and combines it with `TestFilters`.
 
