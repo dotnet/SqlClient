@@ -20,6 +20,25 @@ namespace Interop.Windows.Sni
 
         uint SniClose(IntPtr pConn);
 
+        /// <summary>
+        /// Calls <c>SNIGetCertValidationInfoWrapper</c>: reads the certificate validation details
+        /// native SNI recorded for the most recent client TLS handshake on a connection.
+        /// </summary>
+        /// <param name="pConn">The SNI connection handle.</param>
+        /// <param name="pInfo">
+        /// Receives the details. A field is meaningful only when its
+        /// <see cref="SniCertInfoAvailability"/> flag is set in
+        /// <see cref="SniCertValidationInfo.dwAvailable"/>.
+        /// </param>
+        /// <returns>
+        /// <c>ERROR_SUCCESS</c> (0) if <paramref name="pInfo"/> was filled; otherwise a Win32 error
+        /// code, such as <c>ERROR_INVALID_PARAMETER</c> (87) for an invalid argument.
+        /// </returns>
+        /// <exception cref="EntryPointNotFoundException">
+        /// The loaded SNI library does not export the function.
+        /// </exception>
+        uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo);
+
         uint SniGetMaxComposedSpnLength();
 
         uint SniGetInfoWrapper(SNIHandle pConn, QueryType queryType, out bool pbQueryInfo);
@@ -31,6 +50,28 @@ namespace Interop.Windows.Sni
         uint SniGetInfoWrapper(SNIHandle pConn, QueryType queryType, out ushort portNumber);
 
         void SniGetLastError(out SniError pLastError);
+
+        /// <summary>
+        /// Calls <c>SNIGetServerCertificateWrapper</c>: copies the DER encoding of the leaf
+        /// certificate the server presented during the most recent client TLS handshake on a
+        /// connection.
+        /// </summary>
+        /// <param name="pConn">The SNI connection handle.</param>
+        /// <param name="pbCertificate">
+        /// The destination buffer, or <see langword="null"/> to query only the size.
+        /// </param>
+        /// <param name="cbCertificate">The size, in bytes, of <paramref name="pbCertificate"/>.</param>
+        /// <param name="pcbCertificate">Receives the size, in bytes, of the certificate.</param>
+        /// <returns>
+        /// <c>ERROR_SUCCESS</c> (0) if the certificate was copied; <c>ERROR_INSUFFICIENT_BUFFER</c>
+        /// (122) if the buffer is null or too small, with the required size in
+        /// <paramref name="pcbCertificate"/>; <c>ERROR_NOT_FOUND</c> (1168) if no certificate was
+        /// captured; or another Win32 error code.
+        /// </returns>
+        /// <exception cref="EntryPointNotFoundException">
+        /// The loaded SNI library does not export the function.
+        /// </exception>
+        unsafe uint SniGetServerCertificate(SNIHandle pConn, byte* pbCertificate, uint cbCertificate, out uint pcbCertificate);
 
         uint SniGetPeerAddrStrWrapper(SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLength);
 

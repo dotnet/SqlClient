@@ -395,7 +395,10 @@ namespace Microsoft.Data.SqlClient.Parser
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion)
+        // Managed SNI has nothing to record here: its certificate validation callback already
+        // recorded the handshake into the accumulator during EnableSsl, so the accumulator
+        // parameter is intentionally discarded.
+        internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion, Connection.EncryptionInfoAccumulator? _)
         {
             protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
             return TdsEnums.SNI_SUCCESS;
