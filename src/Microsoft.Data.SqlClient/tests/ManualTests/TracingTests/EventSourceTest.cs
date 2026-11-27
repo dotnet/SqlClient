@@ -10,7 +10,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class EventSourceTest
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        // Listener event IDs can change while the test enumerates them.
         [Trait("category", "flaky")]
         public void EventSourceTestAll()
         {

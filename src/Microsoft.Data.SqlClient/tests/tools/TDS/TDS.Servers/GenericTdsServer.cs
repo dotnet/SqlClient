@@ -95,10 +95,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         private int _preLoginCount = 0;
 
-        protected int _login7Count = 0;
-
         private TDSServerEndPoint _endpoint;
-        private int _disposing;
 
         /// <summary>
         /// Initialization constructor
@@ -140,11 +137,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public int PreLoginCount => _preLoginCount;
 
-        /// <summary>
-        /// Counts login requests, including injected login errors.
-        /// </summary>
-        public int Login7Count => Volatile.Read(ref _login7Count);
-
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         /// <summary>
@@ -163,13 +155,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 throw new InvalidOperationException("Server is already started");
             }
-            _endpoint = new TDSServerEndPoint(this)
-            {
-                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
-                EndpointName = methodName,
-                EventLog = Arguments.Log,
-                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
-            };
+            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
+            _endpoint.EndpointName = methodName;
+            _endpoint.EventLog = Arguments.Log;
             _endpoint.Start();
         }
 
@@ -264,8 +252,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
-            Interlocked.Increment(ref _login7Count);
-
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
@@ -1080,36 +1066,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             return left.SequenceEqual<byte>(right);
         }
 
-        /// <summary>
-        /// Deliberately reset one active session's transport without stopping the listener or joining its worker.
-        /// A protocol handler should return an empty response after requesting the abort.
-        /// </summary>
-        protected void AbortConnection(ITDSServerSession session)
-        {
-            TDSServerEndPoint endpoint = Volatile.Read(ref _endpoint);
-            if (endpoint == null)
-            {
-                throw new InvalidOperationException("Server is not started.");
-            }
-            endpoint.AbortConnection(session);
-        }
-
         public virtual void Dispose()
         {
-            if (Interlocked.CompareExchange(ref _disposing, 1, 0) != 0)
-            {
-                return;
-            }
-            try
-            {
-                // In-flight handlers still need the endpoint while its workers are draining.
-                Volatile.Read(ref _endpoint)?.Dispose();
-            }
-            finally
-            {
-                Volatile.Write(ref _endpoint, null);
-                Volatile.Write(ref _disposing, 0);
-            }
+            _endpoint?.Dispose();
+            _endpoint = null;
         }
     }
 }

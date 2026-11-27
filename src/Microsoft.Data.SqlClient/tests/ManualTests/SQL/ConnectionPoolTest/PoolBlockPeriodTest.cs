@@ -35,7 +35,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Azure with Auto Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.Auto })]
         [InlineData("Azure with Always Policy must Enable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.AlwaysBlock })]
         [InlineData("Azure with Never Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.NeverBlock })]
-        // The timing assertion intermittently fails under CI load.
         [Trait("category", "flaky")]
         public void TestAzureBlockingPeriod(string description, object[] Params)
         {

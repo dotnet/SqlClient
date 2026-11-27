@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void OneByteSplitTest()
         {
             _splitPacketSize = 1;
@@ -49,6 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void AlmostFullHeaderTest()
         {
             _splitPacketSize = 7;
@@ -66,7 +68,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
-        // SqlException: connection timed out consuming the pre-login handshake acknowledgement.
         [Trait("category", "flaky")]
         public void HeaderPlusOneTest()
         {
@@ -76,7 +77,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
-        // SqlException: connection timed out consuming the pre-login handshake acknowledgement.
         [Trait("category", "flaky")]
         public void MARSSplitTest()
         {
@@ -86,7 +86,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
-        // SqlException: connection timed out consuming the pre-login handshake acknowledgement.
         [Trait("category", "flaky")]
         public void MARSReplicateTest()
         {

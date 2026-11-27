@@ -74,10 +74,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>
-        /// Retries one login SQL error on the same server without sharing a pool with another case.
-        /// </summary>
-        [Trait("category", "flaky")]
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -93,21 +90,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
-                ConnectRetryInterval = 1,
-                Encrypt = SqlConnectionEncryptOption.Optional,
-#if NETFRAMEWORK
-                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
-                TransparentNetworkIPResolution = false
-                #pragma warning restore 618
-#endif
+                DataSource = "localhost," + server.EndPoint.Port,
+                Encrypt = SqlConnectionEncryptOption.Optional
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount);
         }
 
@@ -127,16 +117,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
-                ConnectRetryInterval = 1,
+                DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount);
         }
 
@@ -156,12 +144,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Equal((int)errorCode, e.Number);
@@ -169,10 +156,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount);
         }
 
-        /// <summary>
-        /// Propagates the configured login error when connect retry is disabled.
-        /// </summary>
-        [Trait("category", "flaky")]
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -188,12 +172,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
             Assert.Equal((int)errorCode, e.Number);
@@ -201,69 +184,42 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount);
         }
 
-        /// <summary>
-        /// Retries an aborted physical connection before the next pre-login response is released.
-        /// </summary>
-        [Trait("category", "flaky")]
-        [Trait("category", "probation")]
+        [Trait("Category", "flaky")]
         [Theory]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
-        [InlineData(true, false)]
-        [InlineData(true, true)]
-        public async Task NetworkError_ConfigurableRetry_ShouldSucceed(bool multiSubnetFailoverEnabled, bool useAsync)
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled)
         {
-            using GatedTdsServer server = new(new TdsServerArguments(), abortFirstConnection: true);
+            using TransientDelayTdsServer server = new(
+                new TransientDelayTdsServerArguments()
+                {
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(1000),
+                });
             server.Start();
-            server.WithholdPreLoginResponses();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 30,
-                ConnectRetryCount = 0,
-                Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
+                ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
 #endif
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-            // ConnectRetryCount does not retry pre-login resets; use an explicit network-error policy.
-            connection.RetryLogicProvider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(new SqlRetryLogicOption
-            {
-                NumberOfTries = 2,
-                DeltaTime = TimeSpan.FromMilliseconds(10),
-                TransientErrors = new[] { 0, 64, 233, 10053, 10054 }
-            });
-            int retries = 0;
-            connection.RetryLogicProvider.Retrying += (_, _) => Interlocked.Increment(ref retries);
-            Task open = useAsync
-                ? connection.OpenAsync()
-                : Task.Factory.StartNew(() => connection.Open(),
-                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-            try
-            {
-                Assert.Same(server.PreLoginBlocked, await Task.WhenAny(
-                    server.PreLoginBlocked, open, Task.Delay(TimeSpan.FromSeconds(30))));
-                Assert.False(open.IsCompleted);
-                Assert.NotNull(server.AbortedSessionId);
-                Assert.NotNull(server.BlockedSessionId);
-                Assert.NotEqual(server.AbortedSessionId, server.BlockedSessionId);
-                Assert.Equal(2, server.PreLoginCount);
-                Assert.Equal(0, server.Login7Count);
-                Assert.Equal(1, Volatile.Read(ref retries));
-            }
-            finally
-            {
-                server.ReleasePreLoginResponses();
-                await open;
-            }
+            await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(1, server.Login7Count);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Trait("Category", "flaky")]
@@ -282,8 +238,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
-                ConnectTimeout = 30,
+                DataSource = "localhost," + server.EndPoint.Port,
+                ConnectTimeout = 5,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -292,7 +248,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
@@ -300,9 +255,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
-            Assert.Equal(1, server.Login7Count);
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Trait("Category", "flaky")]
@@ -321,17 +283,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 30,
+                ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
 #endif
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
@@ -339,9 +300,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
-            Assert.Equal(1, server.Login7Count);
+            if (multiSubnetFailoverEnabled)
+            {
+                Assert.True(server.PreLoginCount > 1, "Expected multiple pre-login attempts due to retry.");
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Fact]

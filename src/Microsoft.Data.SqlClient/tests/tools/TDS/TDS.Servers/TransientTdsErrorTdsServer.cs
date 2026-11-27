@@ -17,18 +17,13 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class TransientTdsErrorTdsServer : GenericTdsServer<TransientTdsErrorTdsServerArguments>, IDisposable
     {
         private int RequestCounter = 0;
-        private readonly object _errorLock = new object();
 
         public void SetErrorBehavior(bool isEnabledTransientError, uint errorNumber, int repeatCount = 1, string message = null)
         {
-            lock (_errorLock)
-            {
-                Arguments.IsEnabledTransientError = isEnabledTransientError;
-                Arguments.Number = errorNumber;
-                Arguments.Message = message;
-                Arguments.RepeatCount = repeatCount;
-                RequestCounter = 0;
-            }
+            Arguments.IsEnabledTransientError = isEnabledTransientError;
+            Arguments.Number = errorNumber;
+            Arguments.Message = message;
+            Arguments.RepeatCount = repeatCount;
         }
 
         public TransientTdsErrorTdsServer(TransientTdsErrorTdsServerArguments arguments) : base(arguments)
@@ -63,11 +58,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
             // Check if we're still going to raise transient error
-            if (TryReserveError(out TDSErrorToken error))
+            if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
-                // Increment Login7 count since we won't call base.OnLogin7Request
-                Interlocked.Increment(ref _login7Count);
-                return GenerateErrorMessage(request, error);
+                return GenerateErrorMessage(request);
             }
 
             // Return login response from the base class
@@ -77,34 +70,24 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <inheritdoc/>
         public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
         {
-            if (TryReserveError(out TDSErrorToken error))
+            if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
-                return GenerateErrorMessage(message, error);
+                return GenerateErrorMessage(message);
             }
 
             return base.OnSQLBatchRequest(session, message);
         }
 
-        private bool TryReserveError(out TDSErrorToken error)
+        private TDSMessageCollection GenerateErrorMessage(TDSMessage request)
         {
-            lock (_errorLock)
-            {
-                error = null;
-                if (!Arguments.IsEnabledTransientError || RequestCounter >= Arguments.RepeatCount)
-                {
-                    return false;
-                }
-                RequestCounter++;
-                error = new TDSErrorToken(Arguments.Number, 1, 20,
-                    Arguments.Message ?? GetErrorMessage(Arguments.Number));
-                return true;
-            }
-        }
+            uint errorNumber = Arguments.Number;
+            string errorMessage = Arguments.Message ?? GetErrorMessage(errorNumber);
 
-        private TDSMessageCollection GenerateErrorMessage(TDSMessage request, TDSErrorToken errorToken)
-        {
             // Log request to which we're about to send a failure
             TDSUtilities.Log(Arguments.Log, "Request", request);
+
+            // Prepare ERROR token with the denial details
+            TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", errorToken);
@@ -121,9 +104,15 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Serialize DONE token into the response packet
             responseMessage.Add(doneToken);
 
+            RequestCounter++;
+
             // Put a single message into the collection and return it
             return new TDSMessageCollection(responseMessage);
         }
 
+        public override void Dispose() {
+            base.Dispose();
+            RequestCounter = 0;
+        }
     }
 }

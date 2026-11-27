@@ -75,7 +75,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="connectionString"></param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        // Shared pools can gain connections from concurrent tests during cleanup.
         [Trait("category", "flaky")]
         public static void TransactionCleanupTest(string connectionString)
         {
