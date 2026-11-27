@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>SqlClient.OpenTelemetry.PrivatePoc</AssemblyName>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Exporter.Console" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient.Extensions\OpenTelemetry\src\OpenTelemetry.csproj" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+  </ItemGroup>
+</Project>

@@ -23,7 +23,9 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.LocalDb;
+using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Parser.Login;
 using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Server;
@@ -479,37 +481,46 @@ namespace Microsoft.Data.SqlClient.Parser
             _connHandler.pendingSQLDNSObject = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
-            _physicalStateObj.CreatePhysicalSNIHandle(
-                serverInfo.ExtendedServerName,
-                timeout,
-                out instanceName,
-                out var resolvedServerSpn,
-                false,
-                true,
-                fParallel,
-                transparentNetworkResolutionState,
-                totalTimeout,
-                _connHandler.ConnectionOptions.IPAddressPreference,
-                FQDNforDNSCache,
-                ref _connHandler.pendingSQLDNSObject,
-                serverInfo.ServerSPN,
-                integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-                isTlsFirst,
-                hostNameInCertificate,
-                serverCertificateFilename);
-
-            if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
+            ResolvedServerSpn resolvedServerSpn;
+            using (OperationScope transport = ConnectionOpenActivity.StartPhase("connection.transport"))
             {
-                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                try
+                {
+                    _physicalStateObj.CreatePhysicalSNIHandle(
+                        serverInfo.ExtendedServerName,
+                        timeout,
+                        out instanceName,
+                        out resolvedServerSpn,
+                        false,
+                        true,
+                        fParallel,
+                        transparentNetworkResolutionState,
+                        totalTimeout,
+                        _connHandler.ConnectionOptions.IPAddressPreference,
+                        FQDNforDNSCache,
+                        ref _connHandler.pendingSQLDNSObject,
+                        serverInfo.ServerSPN,
+                        integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                        isTlsFirst,
+                        hostNameInCertificate,
+                        serverCertificateFilename);
 
-                // Since connect failed, free the unmanaged connection memory.
-                // HOWEVER - only free this after the netlib error was processed - if you
-                // don't, the memory for the connection object might not be accurate and thus
-                // a bad error could be returned (as it was when it was freed to early for me).
-                _physicalStateObj.Dispose();
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Login failure");
-                ThrowExceptionAndWarning(_physicalStateObj);
-                Debug.Fail("SNI returned status != success, but no error thrown?");
+                    if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
+                    {
+                        _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+
+                        // Process the netlib error before freeing unmanaged connection memory.
+                        _physicalStateObj.Dispose();
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Login failure");
+                        ThrowExceptionAndWarning(_physicalStateObj);
+                        Debug.Fail("SNI returned status != success, but no error thrown?");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConnectionOpenActivity.RecordError(transport, ex);
+                    throw;
+                }
             }
 
             _server = serverInfo.ResolvedServerName;
@@ -582,30 +593,41 @@ namespace Microsoft.Data.SqlClient.Parser
                 _connHandler?.EncryptionInfoAccumulator?.Reset();
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
-                _physicalStateObj.CreatePhysicalSNIHandle(
-                    serverInfo.ExtendedServerName,
-                    timeout,
-                    out instanceName,
-                    out resolvedServerSpn,
-                    true,
-                    true,
-                    fParallel,
-                    transparentNetworkResolutionState,
-                    totalTimeout,
-                    _connHandler.ConnectionOptions.IPAddressPreference,
-                    FQDNforDNSCache,
-                    ref _connHandler.pendingSQLDNSObject,
-                    serverInfo.ServerSPN,
-                    integratedSecurity,
-                    isTlsFirst,
-                    hostNameInCertificate,
-                    serverCertificateFilename);
-
-                if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
+                using (OperationScope transport = ConnectionOpenActivity.StartPhase("connection.transport"))
                 {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Login failure");
-                    ThrowExceptionAndWarning(_physicalStateObj);
+                    try
+                    {
+                        _physicalStateObj.CreatePhysicalSNIHandle(
+                            serverInfo.ExtendedServerName,
+                            timeout,
+                            out instanceName,
+                            out resolvedServerSpn,
+                            true,
+                            true,
+                            fParallel,
+                            transparentNetworkResolutionState,
+                            totalTimeout,
+                            _connHandler.ConnectionOptions.IPAddressPreference,
+                            FQDNforDNSCache,
+                            ref _connHandler.pendingSQLDNSObject,
+                            serverInfo.ServerSPN,
+                            integratedSecurity,
+                            isTlsFirst,
+                            hostNameInCertificate,
+                            serverCertificateFilename);
+
+                        if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
+                        {
+                            _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Login failure");
+                            ThrowExceptionAndWarning(_physicalStateObj);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ConnectionOpenActivity.RecordError(transport, ex);
+                        throw;
+                    }
                 }
 
                 uint retCode = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
@@ -766,6 +788,25 @@ namespace Microsoft.Data.SqlClient.Parser
             bool integratedSecurity,
             string serverCertificateFilename)
         {
+            using OperationScope phase = ConnectionOpenActivity.StartPhase("connection.prelogin.send");
+            try
+            {
+                SendPreLoginHandshakeCore(instanceName, encrypt, integratedSecurity,
+                    serverCertificateFilename);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(phase, ex);
+                throw;
+            }
+        }
+
+        private void SendPreLoginHandshakeCore(
+            byte[] instanceName,
+            SqlConnectionEncryptOption encrypt,
+            bool integratedSecurity,
+            string serverCertificateFilename)
+        {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
@@ -899,6 +940,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         optionDataSize = GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
+                        ConnectionOpenActivity.RecordActivityId(actId);
                         SerializeGuid(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
@@ -939,6 +981,20 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
+        {
+            using OperationScope phase = ConnectionOpenActivity.StartPhase("connection.tls.setup");
+            try
+            {
+                EnableSslCore(info, encrypt, integratedSecurity, serverCertificateFilename);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(phase, ex);
+                throw;
+            }
+        }
+
+        private void EnableSslCore(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
         {
             uint error = 0;
 
@@ -1214,6 +1270,36 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(
+            SqlConnectionEncryptOption encrypt,
+            bool trustServerCert,
+            bool integratedSecurity,
+            out bool marsCapable,
+            out bool fedAuthRequired,
+            bool tlsFirst,
+            string serverCertificateFilename)
+        {
+            using OperationScope phase = ConnectionOpenActivity.StartPhase("connection.prelogin.receive");
+            try
+            {
+                PreLoginHandshakeStatus status = ConsumePreLoginHandshakeCore(
+                    encrypt, trustServerCert, integratedSecurity,
+                    out marsCapable, out fedAuthRequired, tlsFirst, serverCertificateFilename);
+                if (status == PreLoginHandshakeStatus.InstanceFailure && phase != null)
+                {
+                    ConnectionOpenActivity.RecordError(phase,
+                        ConnectionErrorEvidence.FromKind(
+                            ConnectionErrorCategory.Unknown, phase.Name));
+                }
+                return status;
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(phase, ex);
+                throw;
+            }
+        }
+
+        private PreLoginHandshakeStatus ConsumePreLoginHandshakeCore(
             SqlConnectionEncryptOption encrypt,
             bool trustServerCert,
             bool integratedSecurity,
@@ -2064,12 +2150,14 @@ namespace Microsoft.Data.SqlClient.Parser
             SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
                     details.NativeError, (int)details.LineNumber, details.Function, details.Exception, _server);
 
-            return new SqlError(infoNumber: details.NativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
+            SqlError error = new SqlError(infoNumber: details.NativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
 #if NET
                                 errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: details.NativeError, details.Exception);
 #else
                                 errorMessage, details.Function, (int)details.LineNumber, win32ErrorCode: win32ErrorCode);
 #endif
+            error.SniErrorNumber = details.SniErrorNumber;
+            return error;
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)
@@ -2102,7 +2190,7 @@ namespace Microsoft.Data.SqlClient.Parser
                             // to the server.
                             stateObj.ResetBuffer();
                             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                            stateObj.AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _server, _connHandler.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                            stateObj.AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _server, _connHandler.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT) { IsTimeout = true });
                             Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Thread is writing without taking the connection lock");
                             ThrowExceptionAndWarning(stateObj, callerHasConnectionLock: true);
                         }
@@ -3341,7 +3429,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
                         // Add attention error to collection - if not RunBehavior.Clean!
-                        stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0, exception: null, batchIndex: cmdHandler?.GetCurrentBatchIndex() ?? -1));
+                        stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0, exception: null, batchIndex: cmdHandler?.GetCurrentBatchIndex() ?? -1) { IsCancellation = true });
                     }
                 }
             }
@@ -4842,7 +4930,10 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 batchIndex = command.GetCurrentBatchIndex();
             }
-            error = new SqlError(number, state, errorClass, _server, message, procedure, line, exception: null, batchIndex: batchIndex);
+            error = new SqlError(number, state, errorClass, _server, message, procedure, line, exception: null, batchIndex: batchIndex)
+            {
+                IsServerError = token == TdsEnums.SQLERROR
+            };
             return TdsOperationStatus.Done;
         }
 

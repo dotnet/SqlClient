@@ -127,6 +127,13 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
 
     /// <summary>
+    /// The name of the app context switch that controls whether statement
+    /// activities carry lexically masked query text in db.query.text.
+    /// </summary>
+    private const string EnableOpenTelemetryQueryTextString =
+        "Switch.Microsoft.Data.SqlClient.EnableOpenTelemetryQueryText";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to use legacy
     /// async multi-packet column value fetch behavior without continue snapshot
     /// state.
@@ -272,6 +279,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the TruncateScaledDecimal switch.
     /// </summary>
     internal static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the EnableOpenTelemetryQueryText switch.
+    /// </summary>
+    internal static SwitchValue s_enableOpenTelemetryQueryText = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseCompatibilityAsyncBehaviour switch.
@@ -635,6 +647,19 @@ internal static class LocalAppContextSwitches
             TruncateScaledDecimalString,
             defaultValue: false,
             ref s_truncateScaledDecimal);
+
+    /// <summary>
+    /// When set to true, statement activities include db.query.text containing
+    /// lexically masked command text: literals and numbers become '?', comments
+    /// are removed, and EXEC text or text that cannot be masked safely is omitted.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool EnableOpenTelemetryQueryText =>
+        AcquireAndReturn(
+            EnableOpenTelemetryQueryTextString,
+            defaultValue: false,
+            ref s_enableOpenTelemetryQueryText);
 
     /// <summary>
     /// In TdsParser, the async multi-packet column value fetch behavior can use

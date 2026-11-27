@@ -58,6 +58,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _makeReadAsyncBlockingOriginal;
     private readonly bool? _suppressInsecureTlsWarningOriginal;
     private readonly bool? _truncateScaledDecimalOriginal;
+    private readonly bool? _enableOpenTelemetryQueryTextOriginal;
     private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
     private readonly bool? _useCompatibilityProcessSniOriginal;
     private readonly bool? _useConnectionPoolV2Original;
@@ -128,6 +129,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToBool(LocalAppContextSwitches.s_suppressInsecureTlsWarning);
             _truncateScaledDecimalOriginal =
                 ToBool(LocalAppContextSwitches.s_truncateScaledDecimal);
+            _enableOpenTelemetryQueryTextOriginal =
+                ToBool(LocalAppContextSwitches.s_enableOpenTelemetryQueryText);
             _useCompatibilityAsyncBehaviourOriginal =
                 ToBool(LocalAppContextSwitches.s_useCompatibilityAsyncBehaviour);
             _useCompatibilityProcessSniOriginal =
@@ -197,6 +200,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToSwitchValue(_suppressInsecureTlsWarningOriginal);
             LocalAppContextSwitches.s_truncateScaledDecimal =
                 ToSwitchValue(_truncateScaledDecimalOriginal);
+            LocalAppContextSwitches.s_enableOpenTelemetryQueryText =
+                ToSwitchValue(_enableOpenTelemetryQueryTextOriginal);
             LocalAppContextSwitches.s_useCompatibilityAsyncBehaviour =
                 ToSwitchValue(_useCompatibilityAsyncBehaviourOriginal);
             LocalAppContextSwitches.s_useCompatibilityProcessSni =
@@ -345,6 +350,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => LocalAppContextSwitches.TruncateScaledDecimal;
         set => LocalAppContextSwitches.s_truncateScaledDecimal = ToSwitchValue(value);
+    }
+
+    /// <summary>
+    /// Get or set the EnableOpenTelemetryQueryText switch value.
+    /// </summary>
+    public bool? EnableOpenTelemetryQueryText
+    {
+        get => LocalAppContextSwitches.EnableOpenTelemetryQueryText;
+        set => LocalAppContextSwitches.s_enableOpenTelemetryQueryText = ToSwitchValue(value);
     }
 
     /// <summary>

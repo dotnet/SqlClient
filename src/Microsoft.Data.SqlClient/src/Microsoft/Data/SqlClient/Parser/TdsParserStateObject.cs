@@ -3185,7 +3185,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 try
                 {
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT) { IsTimeout = true });
                     _bulkCopyWriteTimeout = true;
                     SendAttention();
                     _parser.ProcessPendingAck(this);
@@ -3791,7 +3791,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 {
                     if (!_attentionSent)
                     {
-                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT) { IsTimeout = true });
 
                         // Grab a reference to the _networkPacketTaskSource in case it becomes null while we are trying to use it
                         TaskCompletionSource<object> source = _networkPacketTaskSource;
@@ -4062,7 +4062,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 {
                     stateObj.SetTimeoutStateStopped();
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT) { IsTimeout = true });
 
                     if (!stateObj._attentionSent)
                     {

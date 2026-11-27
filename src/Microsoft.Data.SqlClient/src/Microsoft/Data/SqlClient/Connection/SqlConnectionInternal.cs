@@ -2372,45 +2372,65 @@ namespace Microsoft.Data.SqlClient.Connection
             #endif
         )
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
-            RoutingInfo = null; // forget routing information
+            using OperationScope attempt = ConnectionOpenActivity.StartPhase("connection.endpoint_attempt");
+            try
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+                RoutingInfo = null; // forget routing information
 
-            // Each physical attempt (retry, redirect, routing, failover) starts with a clean accumulator
-            // so only the terminal attempt's values are published.
-            (EncryptionInfoAccumulator ??= new()).Reset();
+                // Each physical attempt (retry, redirect, routing, failover) starts with a clean accumulator
+                // so only the terminal attempt's values are published.
+                (EncryptionInfoAccumulator ??= new()).Reset();
 
-            _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
+                _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
-            #if NETFRAMEWORK
-            _parser.Connect(
-                serverInfo,
-                this,
-                timeout,
-                ConnectionOptions,
-                withFailover,
-                isFirstTransparentAttempt,
-                disableTnir);
-            #else
-            _parser.Connect(
-                serverInfo,
-                this,
-                timeout,
-                ConnectionOptions,
-                withFailover);
-            #endif
+                #if NETFRAMEWORK
+                _parser.Connect(
+                    serverInfo,
+                    this,
+                    timeout,
+                    ConnectionOptions,
+                    withFailover,
+                    isFirstTransparentAttempt,
+                    disableTnir);
+                #else
+                _parser.Connect(
+                    serverInfo,
+                    this,
+                    timeout,
+                    ConnectionOptions,
+                    withFailover);
+                #endif
 
-            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
-            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
+                _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
+                _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
 
-            _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-            Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
+                using (OperationScope login = ConnectionOpenActivity.StartPhase("connection.login"))
+                {
+                    try
+                    {
+                        _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+                        Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
 
-            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
-            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+                        _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
+                        _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
 
-            CompleteLogin(!ConnectionOptions.Pooling);
+                        CompleteLogin(!ConnectionOptions.Pooling);
+                    }
+                    catch (Exception ex)
+                    {
+                        ConnectionOpenActivity.RecordError(login, ex);
+                        throw;
+                    }
+                }
 
-            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+                _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(attempt, ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -2458,6 +2478,22 @@ namespace Microsoft.Data.SqlClient.Connection
                 bulkCopyHandler: null,
                 _parser._physicalStateObj);
 
+            using OperationScope initialization = RoutingInfo == null
+                ? ConnectionOpenActivity.StartPhase("connection.initialization")
+                : null;
+            try
+            {
+                InitializeAfterLogin(enlistOK);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(initialization, ex);
+                throw;
+            }
+        }
+
+        private void InitializeAfterLogin(bool enlistOK)
+        {
             if (RoutingInfo == null)
             {
                 // ROR should not affect state of connection recovery
@@ -3083,6 +3119,49 @@ namespace Microsoft.Data.SqlClient.Connection
 
         #nullable enable
 
+        private Task<SqlAuthenticationToken> RequestTokenAsync(
+            SqlAuthenticationProvider? provider,
+            SqlAuthenticationParameters parameters,
+            CancellationToken cancellationToken)
+        {
+            OperationScope? previousFlow = OperationScope.CurrentFlow;
+            OperationScope? phase = ConnectionOpenActivity.StartPhase("connection.token_request");
+            if (phase == null)
+            {
+                return provider != null
+                    ? provider.AcquireTokenAsync(parameters)
+                    : _accessTokenCallback!(parameters, cancellationToken);
+            }
+            try
+            {
+                return RequestTokenWithActivityAsync(provider, parameters, cancellationToken, phase);
+            }
+            finally
+            {
+                OperationScope.RestoreFlow(previousFlow);
+            }
+        }
+
+        private async Task<SqlAuthenticationToken> RequestTokenWithActivityAsync(
+            SqlAuthenticationProvider? provider,
+            SqlAuthenticationParameters parameters,
+            CancellationToken cancellationToken,
+            OperationScope phase)
+        {
+            using OperationScope tokenRequest = phase;
+            try
+            {
+                return provider != null
+                    ? await provider.AcquireTokenAsync(parameters).ConfigureAwait(false)
+                    : await _accessTokenCallback!(parameters, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(phase, ex);
+                throw;
+            }
+        }
+
         /// <summary>
         /// Get the Federated Authentication Token.
         /// </summary>
@@ -3146,7 +3225,8 @@ namespace Microsoft.Data.SqlClient.Connection
                             {
                                 // We use Task.Run here in all places to execute task synchronously in the same context.
                                 // Fixes block-over-async deadlock possibilities https://github.com/dotnet/SqlClient/issues/1209
-                                _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
+                                _fedAuthToken = new(Task.Run(() => RequestTokenAsync(
+                                    authProvider, authParamsBuilder, CancellationToken.None)).GetAwaiter().GetResult());
 
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
@@ -3164,7 +3244,8 @@ namespace Microsoft.Data.SqlClient.Connection
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
+                                _fedAuthToken = new(Task.Run(() => RequestTokenAsync(
+                                    authProvider, authParamsBuilder, CancellationToken.None)).GetAwaiter().GetResult());
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
@@ -3182,13 +3263,15 @@ namespace Microsoft.Data.SqlClient.Connection
                                 {
                                     username = _credential.UserId;
                                     authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
+                                    _fedAuthToken = new(Task.Run(() => RequestTokenAsync(
+                                        authProvider, authParamsBuilder, CancellationToken.None)).GetAwaiter().GetResult());
                                 }
                                 else
                                 {
                                     username = ConnectionOptions.UserID;
                                     authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
+                                    _fedAuthToken = new(Task.Run(() => RequestTokenAsync(
+                                        authProvider, authParamsBuilder, CancellationToken.None)).GetAwaiter().GetResult());
                                 }
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
@@ -3222,7 +3305,8 @@ namespace Microsoft.Data.SqlClient.Connection
                                 {
                                     cts.CancelAfter((int)_timeout.MillisecondsRemaining);
                                 }
-                                _fedAuthToken = new(Task.Run(async () => await _accessTokenCallback(parameters, cts.Token)).GetAwaiter().GetResult());
+                                _fedAuthToken = new(Task.Run(() => RequestTokenAsync(
+                                    null, parameters, cts.Token)).GetAwaiter().GetResult());
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
@@ -3739,21 +3823,8 @@ namespace Microsoft.Data.SqlClient.Connection
                             throw SQL.ROR_TimeoutAfterRoutingInfo(this);
                         }
 
-                        serverInfo = new ServerInfo(
-                            ConnectionOptions,
-                            RoutingInfo,
-                            serverInfo.ResolvedServerName,
-                            serverInfo.ServerSPN);
-                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        OriginalClientConnectionId = _clientConnectionId;
-                        RoutingDestination = serverInfo.UserServerName;
-
-                        // Restore properties that could be changed by the environment tokens
-                        PacketSize = ConnectionOptions.PacketSize;
-                        _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
-                        CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
-                        ServerProvidedFailoverPartner = null;
-                        _instanceName = string.Empty;
+                        serverInfo = ApplyRouting(serverInfo, ConnectionOptions,
+                            ConnectionOptions.CurrentLanguage, ConnectionOptions.InitialCatalog);
 
                         routingAttempts++;
 
@@ -4065,21 +4136,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext,
                             $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
-                        currentServerInfo = new ServerInfo(
-                            ConnectionOptions,
-                            RoutingInfo,
-                            currentServerInfo.ResolvedServerName,
-                            currentServerInfo.ServerSPN);
-                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        OriginalClientConnectionId = _clientConnectionId;
-                        RoutingDestination = currentServerInfo.UserServerName;
-
-                        // Restore properties that could be changed by the environment tokens
-                        PacketSize = connectionOptions.PacketSize;
-                        _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
-                        CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
-                        ServerProvidedFailoverPartner = null;
-                        _instanceName = string.Empty;
+                        currentServerInfo = ApplyRouting(currentServerInfo, connectionOptions,
+                            ConnectionOptions.CurrentLanguage, connectionOptions.InitialCatalog);
 
                         AttemptOneLogin(
                             currentServerInfo,
@@ -4204,6 +4262,13 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
+        /// Returns <c>true</c> if <paramref name="number"/> is in the login transient-error list
+        /// that drives the internal open retry loop. Used only to label telemetry retry reasons.
+        /// </summary>
+        internal static bool IsTransientErrorNumber(int number) =>
+            s_transientErrors.Contains(number);
+
+        /// <summary>
         /// Returns <c>true</c> if the SQL error is transient, as per <see cref="s_transientErrors"/>.
         /// </summary>
         private bool IsTransientError(SqlException exc)
@@ -4226,6 +4291,66 @@ namespace Microsoft.Data.SqlClient.Connection
             return false;
         }
 
+        private ServerInfo ApplyRouting(
+            ServerInfo previous,
+            SqlConnectionOptions connectionOptions,
+            string currentLanguage,
+            string initialCatalog)
+        {
+            using OperationScope redirect = ConnectionOpenActivity.StartPhase("connection.redirect");
+            try
+            {
+                ServerInfo destination = new ServerInfo(
+                    ConnectionOptions, RoutingInfo, previous.ResolvedServerName, previous.ServerSPN);
+                _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
+                OriginalClientConnectionId = _clientConnectionId;
+                RoutingDestination = destination.UserServerName;
+                PacketSize = connectionOptions.PacketSize;
+                _currentLanguage = _originalLanguage = currentLanguage;
+                CurrentDatabase = _originalDatabase = initialCatalog;
+                ServerProvidedFailoverPartner = null;
+                _instanceName = string.Empty;
+                return destination;
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(redirect, ex);
+                throw;
+            }
+        }
+
+        private ServerInfo PrepareLoginConfiguration(
+            SqlConnectionOptions connectionOptions, out bool useFailoverPartner,
+            out string failoverPartner)
+        {
+            using OperationScope configuration = ConnectionOpenActivity.StartPhase("connection.configuration");
+            try
+            {
+                ServerInfo dataSource = new ServerInfo(connectionOptions);
+                if (PoolGroupProviderInfo != null)
+                {
+                    useFailoverPartner = PoolGroupProviderInfo.UseFailoverPartner;
+                    failoverPartner = PoolGroupProviderInfo.FailoverPartner;
+                }
+                else
+                {
+                    useFailoverPartner = false;
+                    failoverPartner = ConnectionOptions.FailoverPartner;
+                }
+
+                SqlConnectionInternalSourceType sourceType = useFailoverPartner
+                    ? SqlConnectionInternalSourceType.Failover
+                    : SqlConnectionInternalSourceType.Principle;
+                _timeoutErrorInternal.SetInternalSourceType(sourceType);
+                return dataSource;
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(configuration, ex);
+                throw;
+            }
+        }
+
         private void OpenLoginEnlist(
             TimeoutTimer timeout,
             SqlConnectionOptions connectionOptions,
@@ -4234,28 +4359,8 @@ namespace Microsoft.Data.SqlClient.Connection
             SecureString newSecurePassword,
             bool redirectedUserInstance)
         {
-            // Indicates whether we should use primary or secondary first
-            bool useFailoverPartner;
-            string failoverPartner;
-
-            ServerInfo dataSource = new ServerInfo(connectionOptions);
-
-            if (PoolGroupProviderInfo != null)
-            {
-                useFailoverPartner = PoolGroupProviderInfo.UseFailoverPartner;
-                failoverPartner = PoolGroupProviderInfo.FailoverPartner;
-            }
-            else
-            {
-                // Only ChangePassword or SSE User Instance comes through this code path.
-                useFailoverPartner = false;
-                failoverPartner = ConnectionOptions.FailoverPartner;
-            }
-
-            SqlConnectionInternalSourceType sourceType = useFailoverPartner
-                ? SqlConnectionInternalSourceType.Failover
-                : SqlConnectionInternalSourceType.Principle;
-            _timeoutErrorInternal.SetInternalSourceType(sourceType);
+            ServerInfo dataSource = PrepareLoginConfiguration(
+                connectionOptions, out bool useFailoverPartner, out string failoverPartner);
 
             bool hasFailoverPartner = !string.IsNullOrEmpty(failoverPartner);
 

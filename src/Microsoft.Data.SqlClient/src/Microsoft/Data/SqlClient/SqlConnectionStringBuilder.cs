@@ -66,6 +66,7 @@ namespace Microsoft.Data.SqlClient
             ConnectRetryInterval,
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
+            OtelEndpoint,
             AttestationProtocol,
             CommandTimeout,
             IPAddressPreference,
@@ -128,6 +129,7 @@ namespace Microsoft.Data.SqlClient
         private SqlAuthenticationMethod _authentication = DbConnectionStringDefaults.Authentication;
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+        private string _otelEndpoint = string.Empty;
         private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
         private SqlConnectionIPAddressPreference _ipAddressPreference = DbConnectionStringDefaults.IpAddressPreference;
         private string _serverSPN = DbConnectionStringDefaults.ServerSpn;
@@ -182,6 +184,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
+            validKeywords[(int)Keywords.OtelEndpoint] = DbConnectionStringKeywords.OtelEndpoint;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
             validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IpAddressPreference;
             validKeywords[(int)Keywords.ServerSPN] = DbConnectionStringKeywords.ServerSpn;
@@ -241,6 +244,8 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.Authentication, Keywords.Authentication },
                 { DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting },
                 { DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl },
+                { DbConnectionStringKeywords.OtelEndpoint, Keywords.OtelEndpoint },
+                { DbConnectionStringSynonyms.OtelEndpoint, Keywords.OtelEndpoint },
                 { DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol },
                 { DbConnectionStringKeywords.IpAddressPreference, Keywords.IPAddressPreference },
                 { DbConnectionStringKeywords.ServerSpn, Keywords.ServerSPN },
@@ -406,6 +411,8 @@ namespace Microsoft.Data.SqlClient
                     return ColumnEncryptionSetting;
                 case Keywords.EnclaveAttestationUrl:
                     return EnclaveAttestationUrl;
+                case Keywords.OtelEndpoint:
+                    return OtelEndpoint;
                 case Keywords.AttestationProtocol:
                     return AttestationProtocol;
                 case Keywords.IPAddressPreference:
@@ -562,6 +569,9 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.EnclaveAttestationUrl:
                     _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+                    break;
+                case Keywords.OtelEndpoint:
+                    _otelEndpoint = string.Empty;
                     break;
                 case Keywords.AttestationProtocol:
                     _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
@@ -1035,6 +1045,9 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.EnclaveAttestationUrl:
                             EnclaveAttestationUrl = ConvertToString(value);
                             break;
+                        case Keywords.OtelEndpoint:
+                            OtelEndpoint = ConvertToString(value);
+                            break;
                         case Keywords.AttestationProtocol:
                             AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
@@ -1323,6 +1336,20 @@ namespace Microsoft.Data.SqlClient
 
                 SetColumnEncryptionSettingValue(value);
                 _columnEncryptionSetting = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/OtelEndpoint/*' />
+        [DisplayName(DbConnectionStringKeywords.OtelEndpoint)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string OtelEndpoint
+        {
+            get => _otelEndpoint;
+            set
+            {
+                string endpoint = OtelEndpointUtilities.Validate(value);
+                SetValue(DbConnectionStringKeywords.OtelEndpoint, endpoint);
+                _otelEndpoint = endpoint;
             }
         }
 

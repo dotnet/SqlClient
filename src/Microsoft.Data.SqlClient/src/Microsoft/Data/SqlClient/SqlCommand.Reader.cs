@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
@@ -131,6 +132,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
+            OperationScope statementActivity = StatementActivity.Start(this, "ExecuteReader");
 
             try
             {
@@ -147,6 +149,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception ex)
             {
                 e = ex;
+                StatementActivity.RecordError(statementActivity, ex);
 
                 if (ex is SqlException sqlException)
                 {
@@ -159,6 +162,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
+                StatementActivity.Complete(statementActivity);
 
                 if (e is not null)
                 {
@@ -185,9 +189,13 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) =>
-            IsProviderRetriable
-                ? InternalExecuteReaderWithRetryAsync(behavior, cancellationToken)
-                : InternalExecuteReaderAsync(behavior, cancellationToken);
+            StatementActivity.ExecuteAsync(
+                this,
+                "ExecuteReader",
+                (behavior, cancellationToken),
+                static (command, state) => command.IsProviderRetriable
+                    ? command.InternalExecuteReaderWithRetryAsync(state.behavior, state.cancellationToken)
+                    : command.InternalExecuteReaderAsync(state.behavior, state.cancellationToken));
 
         // @TODO: This is only used for synchronous execution
         internal SqlDataReader RunExecuteReader(
@@ -1075,7 +1083,8 @@ namespace Microsoft.Data.SqlClient
         {
             return RetryLogicProvider.ExecuteAsync(
                 sender: this,
-                () => InternalExecuteReaderAsync(commandBehavior, cancellationToken),
+                () => StatementActivity.AttemptAsync(
+                    this, () => InternalExecuteReaderAsync(commandBehavior, cancellationToken)),
                 cancellationToken);
         }
 
@@ -1906,7 +1915,8 @@ namespace Microsoft.Data.SqlClient
             [CallerMemberName] string method = "") =>
             RetryLogicProvider.Execute(
                 this,
-                () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
+                () => StatementActivity.Attempt(
+                    this, () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method)));
 
         #endregion
 

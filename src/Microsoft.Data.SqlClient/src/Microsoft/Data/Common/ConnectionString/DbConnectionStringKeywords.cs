@@ -37,6 +37,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
         internal const string MultiSubnetFailover = "Multi Subnet Failover";
         internal const string NetworkLibrary = "Network Library";
+        internal const string OtelEndpoint = "OTel Endpoint";
         internal const string PacketSize = "Packet Size";
         internal const string Password = "Password";
         internal const string PersistSecurityInfo = "Persist Security Info";

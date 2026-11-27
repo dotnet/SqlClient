@@ -1694,52 +1694,89 @@ namespace Microsoft.Data.SqlClient
         public override void Open() =>
             Open(SqlConnectionOverrides.None);
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, forceNewConnection, overrides));
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry,
+            bool forceNewConnection, SqlConnectionOverrides overrides, OperationScope activity)
+            => RetryLogicProvider.Execute(this,
+                () => TryOpenAttempt(retry, forceNewConnection, overrides, activity));
+
+        private bool TryOpenAttempt(TaskCompletionSource<DbConnectionInternal> retry,
+            bool forceNewConnection, SqlConnectionOverrides overrides, OperationScope parent)
+        {
+            if (parent == null)
+            {
+                return TryOpen(retry, forceNewConnection, overrides);
+            }
+
+            using OperationScope attempt = ConnectionOpenActivity.StartAttempt(parent, this);
+            try
+            {
+                return TryOpen(retry, forceNewConnection, overrides);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(attempt, ex);
+                throw;
+            }
+            finally
+            {
+                ConnectionOpenActivity.FinishAttempt(attempt);
+            }
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
-            using (SqlClientEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
+            using IDisposable route = OpenTelemetryExtensionBinding.Begin(ConnectionOptions?.OtelEndpoint);
+            using OperationScope activity = ConnectionOpenActivity.Start(route);
+            try
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
-
-                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
-
-                PrepareStatisticsForNewConnection();
-
-                SqlStatistics statistics = null;
-                Exception e = null;
-
-                try
+                using (SqlClientEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
                 {
-                    statistics = SqlStatistics.StartTimer(Statistics);
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
 
-                    if (!(IsProviderRetriable ?
-                            TryOpenWithRetry(retry: null, forceNewConnection: false, overrides: overrides) :
-                            TryOpen(retry: null, forceNewConnection: false, overrides: overrides)))
+                    Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
+
+                    PrepareStatisticsForNewConnection();
+
+                    SqlStatistics statistics = null;
+                    Exception e = null;
+
+                    try
                     {
-                        throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
+                        statistics = SqlStatistics.StartTimer(Statistics);
+
+                        if (!(IsProviderRetriable ?
+                                TryOpenWithRetry(retry: null, forceNewConnection: false,
+                                    overrides: overrides, activity) :
+                                TryOpenAttempt(retry: null, forceNewConnection: false, overrides, activity)))
+                        {
+                            throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        e = ex;
+                        throw;
+                    }
+                    finally
+                    {
+                        SqlStatistics.StopTimer(statistics);
+
+                        if (e != null)
+                        {
+                            s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+                        }
+                        else
+                        {
+                            s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
+                        }
                     }
                 }
-                catch (Exception ex)
-                {
-                    e = ex;
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-
-                    if (e != null)
-                    {
-                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
-                    }
-                    else
-                    {
-                        s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
-                    }
-                }
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(activity, ex);
+                throw;
             }
         }
 
@@ -2017,14 +2054,94 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
         public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(overrides, forceNewConnection: false, cancellationToken) :
-                InternalOpenAsync(overrides, forceNewConnection: false, cancellationToken);
+        {
+            string endpoint = ConnectionOptions?.OtelEndpoint;
+            if (string.IsNullOrEmpty(endpoint) && !ConnectionOpenActivity.Source.HasListeners() &&
+                !OperationMetrics.Enabled)
+            {
+                return IsProviderRetriable
+                    ? InternalOpenWithRetryAsync(overrides, forceNewConnection: false, cancellationToken)
+                    : InternalOpenAsync(overrides, forceNewConnection: false, cancellationToken);
+            }
+
+            IDisposable route = OpenTelemetryExtensionBinding.Begin(endpoint);
+            Activity previousActivity = Activity.Current;
+            OperationScope previousFlow = OperationScope.CurrentFlow;
+            OperationScope activity;
+            try
+            {
+                activity = ConnectionOpenActivity.Start(route);
+            }
+            catch
+            {
+                route?.Dispose();
+                throw;
+            }
+            finally
+            {
+                Activity.Current = previousActivity;
+                OperationScope.RestoreFlow(previousFlow);
+            }
+
+            if (activity == null)
+            {
+                route?.Dispose();
+                return IsProviderRetriable
+                    ? InternalOpenWithRetryAsync(overrides, forceNewConnection: false, cancellationToken)
+                    : InternalOpenAsync(overrides, forceNewConnection: false, cancellationToken);
+            }
+
+            return OpenWithActivityAsync(overrides, cancellationToken, route, activity);
+        }
+
+        private async Task OpenWithActivityAsync(
+            SqlConnectionOverrides overrides,
+            CancellationToken cancellationToken,
+            IDisposable route,
+            OperationScope activity)
+        {
+            Activity previousActivity = Activity.Current;
+            OperationScope previousFlow = OperationScope.CurrentFlow;
+            OperationScope.MakeCurrent(activity);
+            try
+            {
+                using (route)
+                using (activity)
+                {
+                    try
+                    {
+                        if (IsProviderRetriable)
+                        {
+                            await RetryLogicProvider.ExecuteAsync(this,
+                                () => InternalOpenAsync(overrides, forceNewConnection: false,
+                                    cancellationToken, activity),
+                                cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await InternalOpenAsync(overrides, forceNewConnection: false,
+                                cancellationToken, activity).ConfigureAwait(false);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ConnectionOpenActivity.RecordError(activity, ex);
+                        throw;
+                    }
+                }
+            }
+            finally
+            {
+                Activity.Current = previousActivity;
+                OperationScope.RestoreFlow(previousFlow);
+            }
+        }
 
         private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
             => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, forceNewConnection, cancellationToken), cancellationToken);
 
-        private Task InternalOpenAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, bool forceNewConnection,
+            CancellationToken cancellationToken, OperationScope parent = null)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -2062,37 +2179,11 @@ namespace Microsoft.Data.SqlClient
                         return result.Task;
                     }
 
-                    bool completed;
-
-                    try
-                    {
-                        completed = TryOpen(completion, forceNewConnection, overrides);
-                    }
-                    catch (Exception e)
-                    {
-                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
-                        result.SetException(e);
-                        return result.Task;
-                    }
-
-                    if (completed)
-                    {
-                        result.SetResult(null);
-                    }
-                    else
-                    {
-                        CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                        if (cancellationToken.CanBeCanceled)
-                        {
-                            registration = cancellationToken.Register(s_openAsyncCancel, completion);
-                        }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration, forceNewConnection);
-                        _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
-                        completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
-                        return result.Task;
-                    }
-
-                    return result.Task;
+                    return parent == null
+                        ? BeginOpenAsyncAttempt(overrides, forceNewConnection, cancellationToken,
+                            operationId, completion, result)
+                        : OpenAsyncAttempt(overrides, forceNewConnection, cancellationToken,
+                            operationId, completion, result, parent);
                 }
                 catch (Exception ex)
                 {
@@ -2108,6 +2199,64 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryPoolerScopeLeaveEvent(scopeID);
             }
+        }
+
+        private async Task OpenAsyncAttempt(SqlConnectionOverrides overrides, bool forceNewConnection,
+            CancellationToken cancellationToken, Guid operationId,
+            TaskCompletionSource<DbConnectionInternal> completion, TaskCompletionSource<object> result,
+            OperationScope parent)
+        {
+            using OperationScope attempt = ConnectionOpenActivity.StartAttempt(parent, this);
+            try
+            {
+                await BeginOpenAsyncAttempt(overrides, forceNewConnection, cancellationToken,
+                    operationId, completion, result).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(attempt, ex);
+                throw;
+            }
+            finally
+            {
+                ConnectionOpenActivity.FinishAttempt(attempt);
+            }
+        }
+
+        private Task BeginOpenAsyncAttempt(SqlConnectionOverrides overrides, bool forceNewConnection,
+            CancellationToken cancellationToken, Guid operationId,
+            TaskCompletionSource<DbConnectionInternal> completion, TaskCompletionSource<object> result)
+        {
+            bool completed;
+            try
+            {
+                completed = TryOpen(completion, forceNewConnection, overrides);
+            }
+            catch (Exception e)
+            {
+                s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+                result.SetException(e);
+                return result.Task;
+            }
+
+            if (completed)
+            {
+                result.SetResult(null);
+            }
+            else
+            {
+                CancellationTokenRegistration registration = new CancellationTokenRegistration();
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registration = cancellationToken.Register(s_openAsyncCancel, completion);
+                }
+                OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration,
+                    forceNewConnection);
+                _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(
+                    completion, result.Task);
+                completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
+            }
+            return result.Task;
         }
 
         private static void OpenAsyncComplete(Task<object> task, object state)

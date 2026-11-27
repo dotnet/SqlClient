@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
@@ -233,6 +234,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             bool isAdminConnection = details.ResolvedProtocol == DataSource.Protocol.Admin;
             if (details.IsSsrpRequired)
             {
+                using OperationScope discovery = ConnectionOpenActivity.StartPhase("connection.instance_discovery");
                 try
                 {
                     details.ResolvedPort = port = isAdminConnection ?
@@ -241,8 +243,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (SocketException se)
                 {
+                    ConnectionOpenActivity.RecordError(discovery, se);
                     SniLoadHandle.LastError = new SniError(SniProviders.TCP_PROV, SniCommon.ErrorLocatingServerInstance, se);
                     return null;
+                }
+                catch (Exception ex)
+                {
+                    ConnectionOpenActivity.RecordError(discovery, ex);
+                    throw;
                 }
             }
             else if (details.Port != -1)

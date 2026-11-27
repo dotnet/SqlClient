@@ -967,7 +967,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_ReconnectTimeout()
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, SQLMessage.Timeout(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, SQLMessage.Timeout(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT) { IsTimeout = true });
             SqlException exc = SqlException.CreateException(errors, "");
             return exc;
         }
@@ -975,7 +975,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_ReconnectionCancelled()
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, SQLMessage.OperationCancelled(), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, SQLMessage.OperationCancelled(), "", 0) { IsCancellation = true });
             SqlException exc = SqlException.CreateException(errors, "");
             return exc;
         }

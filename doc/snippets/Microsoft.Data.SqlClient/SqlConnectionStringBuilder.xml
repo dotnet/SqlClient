@@ -628,6 +628,11 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
         To set the value to null, use <see cref="F:System.DBNull.Value" /> .
       </exception>
     </DataSource>
+    <OtelEndpoint>
+      <summary>Gets or sets the collector address for the optional OpenTelemetry extension.</summary>
+      <value>An absolute HTTP or HTTPS OTLP trace endpoint, or an empty string to disable it.</value>
+      <remarks>URLs containing user information, query parameters, or fragments are rejected.</remarks>
+    </OtelEndpoint>
     <EnclaveAttestationUrl>
       <summary>
         Gets or sets the enclave attestation URL to be used with enclave based Always Encrypted.

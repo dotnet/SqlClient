@@ -11,8 +11,10 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
@@ -27,6 +29,74 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// from "blocks until the operating system gives up on the socket".
         /// </summary>
         private static readonly TimeSpan HandshakeBudget = TimeSpan.FromSeconds(30);
+
+        /// <summary>A sequential managed TCP connection records its real socket attempt.</summary>
+        [Fact]
+        public void Constructor_SequentialSocketConnect_RecordsAttempt()
+        {
+            // Arrange
+            using ConnectionOpenTrace trace = new();
+            using SqlConnection owner = new();
+            using OperationScope? root = ConnectionOpenActivity.Start();
+            using OperationScope? attempt = ConnectionOpenActivity.StartAttempt(root, owner);
+            using OperationScope? physical = ConnectionOpenActivity.StartPhysical(owner, out IDisposable? route);
+            using TcpListener listener = new(IPAddress.Loopback, 0);
+            listener.Start();
+            SQLDNSInfo? dns = null;
+
+            // Act
+            SniTcpHandle handle = new(
+                IPAddress.Loopback.ToString(), ((IPEndPoint)listener.LocalEndpoint).Port,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)), false,
+                SqlConnectionIPAddressPreference.IPv4First, "test", ref dns, false, null, null);
+            try
+            {
+                // Assert
+                Assert.Equal(TdsEnums.SNI_SUCCESS, handle.Status);
+                Activity socket = Assert.Single(trace.AllSpans,
+                    span => span.OperationName == "connection.socket_connect");
+                Assert.Equal(physical?.Activity?.SpanId, socket.ParentSpanId);
+                Assert.Equal(ActivityStatusCode.Unset, socket.Status);
+            }
+            finally
+            {
+                // Cleanup
+                handle.Dispose();
+                route?.Dispose();
+                ConnectionOpenActivity.FinishAttempt(attempt);
+            }
+        }
+
+        /// <summary>Parallel socket attempts are timed as one batch rather than false serial spans.</summary>
+        [Fact]
+        public void ParallelConnect_LoopbackAddress_RecordsBatch()
+        {
+            // Arrange
+            using ConnectionOpenTrace trace = new();
+            using SqlConnection owner = new();
+            using OperationScope? root = ConnectionOpenActivity.Start();
+            using OperationScope? attempt = ConnectionOpenActivity.StartAttempt(root, owner);
+            using OperationScope? physical = ConnectionOpenActivity.StartPhysical(owner, out IDisposable? route);
+            using TcpListener listener = new(IPAddress.Loopback, 0);
+            listener.Start();
+            SQLDNSInfo? dns = null;
+
+            // Act
+            using Socket socket = SniTcpHandle.ParallelConnect(
+                new[] { IPAddress.Loopback }, ((IPEndPoint)listener.LocalEndpoint).Port,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)), "test", ref dns);
+
+            // Assert
+            Assert.True(socket.Connected);
+            Activity batch = Assert.Single(trace.AllSpans,
+                span => span.OperationName == "connection.socket_connect");
+            Assert.Equal(physical?.Activity?.SpanId, batch.ParentSpanId);
+            Assert.Equal(ActivityStatusCode.Unset, batch.Status);
+
+            // Cleanup
+            route?.Dispose();
+            ConnectionOpenActivity.FinishAttempt(attempt);
+        }
 
         /// <summary>
         /// When the peer accepts the TLS ClientHello and never answers, EnableSsl must stop the

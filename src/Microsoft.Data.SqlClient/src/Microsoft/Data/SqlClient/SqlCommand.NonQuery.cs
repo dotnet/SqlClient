@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
@@ -114,6 +115,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
+            OperationScope statementActivity = StatementActivity.Start(this, "ExecuteNonQuery");
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -144,6 +146,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception ex)
             {
                 diagnosticScope.SetException(ex);
+                StatementActivity.RecordError(statementActivity, ex);
 
                 if (ex is SqlException sqlException)
                 {
@@ -156,14 +159,19 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
+                StatementActivity.Complete(statementActivity);
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) =>
-            IsProviderRetriable
-                ? InternalExecuteNonQueryWithRetryAsync(cancellationToken)
-                : InternalExecuteNonQueryAsync(cancellationToken);
+            StatementActivity.ExecuteAsync(
+                this,
+                "ExecuteNonQuery",
+                cancellationToken,
+                static (command, token) => command.IsProviderRetriable
+                    ? command.InternalExecuteNonQueryWithRetryAsync(token)
+                    : command.InternalExecuteNonQueryAsync(token));
 
         #endregion
 
@@ -772,14 +780,14 @@ namespace Microsoft.Data.SqlClient
             bool innerUsedCache = false;
             Task result = RetryLogicProvider.Execute(
                 sender: this,
-                function: () => InternalExecuteNonQuery(
+                function: () => StatementActivity.Attempt(this, () => InternalExecuteNonQuery(
                     completion: null,
                     sendToPipe,
                     timeout,
                     out innerUsedCache,
                     asyncWrite,
                     isRetry,
-                    methodName));
+                    methodName)));
 
             usedCache = innerUsedCache;
             return result;
@@ -788,7 +796,8 @@ namespace Microsoft.Data.SqlClient
         private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken) =>
             RetryLogicProvider.ExecuteAsync(
                 sender: this,
-                function: () => InternalExecuteNonQueryAsync(cancellationToken),
+                function: () => StatementActivity.AttemptAsync(
+                    this, () => InternalExecuteNonQueryAsync(cancellationToken)),
                 cancellationToken);
 
         // @TODO: Sort args, drop TDS from name

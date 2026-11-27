@@ -101,6 +101,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlAuthenticationMethod _authType;
         private readonly SqlConnectionColumnEncryptionSetting _columnEncryptionSetting;
         private readonly string _enclaveAttestationUrl;
+        private readonly string _otelEndpoint;
         private readonly SqlConnectionAttestationProtocol _attestationProtocol;
         private readonly SqlConnectionIPAddressPreference _ipAddressPreference;
 
@@ -182,6 +183,8 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.NetworkAddress,
                             DbConnectionStringSynonyms.Server);
             AddKeywordToMap(DbConnectionStringKeywords.EnclaveAttestationUrl);
+            AddKeywordToMap(DbConnectionStringKeywords.OtelEndpoint,
+                            DbConnectionStringSynonyms.OtelEndpoint);
             AddKeywordToMap(DbConnectionStringKeywords.Encrypt);
             AddKeywordToMap(DbConnectionStringKeywords.Enlist);
             AddKeywordToMap(DbConnectionStringKeywords.FailoverPartner,
@@ -302,6 +305,8 @@ namespace Microsoft.Data.SqlClient
             _authType = ConvertValueToAuthenticationType();
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
             _enclaveAttestationUrl = ConvertValueToString(DbConnectionStringKeywords.EnclaveAttestationUrl, DbConnectionStringDefaults.EnclaveAttestationUrl);
+            _otelEndpoint = OtelEndpointUtilities.Validate(
+                ConvertValueToString(DbConnectionStringKeywords.OtelEndpoint, string.Empty));
             _attestationProtocol = ConvertValueToAttestationProtocol();
             _ipAddressPreference = ConvertValueToIPAddressPreference();
             _hostNameInCertificate = ConvertValueToString(DbConnectionStringKeywords.HostNameInCertificate, DbConnectionStringDefaults.HostNameInCertificate);
@@ -665,6 +670,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlAuthenticationMethod Authentication => _authType;
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
         internal string EnclaveAttestationUrl => _enclaveAttestationUrl;
+        internal string OtelEndpoint => _otelEndpoint;
         internal SqlConnectionAttestationProtocol AttestationProtocol => _attestationProtocol;
         internal SqlConnectionIPAddressPreference IPAddressPreference => _ipAddressPreference;
         internal bool PersistSecurityInfo => _persistSecurityInfo;

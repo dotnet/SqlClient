@@ -1458,6 +1458,10 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     [System.ComponentModel.DisplayNameAttribute("Enclave Attestation Url")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public string EnclaveAttestationUrl { get { throw null; } set { } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/OtelEndpoint/*'/>
+    [System.ComponentModel.DisplayNameAttribute("OTel Endpoint")]
+    [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+    public string OtelEndpoint { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*'/>
     [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

@@ -651,6 +651,32 @@ namespace Microsoft.Data.SqlClient
             DbConnection owningConnection,
             TimeoutTimer timeout)
         {
+            OperationScope physical = ConnectionOpenActivity.StartPhysical(
+                owningConnection as SqlConnection, out IDisposable route);
+            using (route)
+            using (physical)
+            {
+                try
+                {
+                    return CreateConnectionCore(options, poolKey, poolGroupProviderInfo, pool,
+                        owningConnection, timeout);
+                }
+                catch (Exception ex)
+                {
+                    ConnectionOpenActivity.RecordError(physical, ex);
+                    throw;
+                }
+            }
+        }
+
+        private DbConnectionInternal CreateConnectionCore(
+            SqlConnectionOptions options,
+            ConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection,
+            TimeoutTimer timeout)
+        {
             SqlConnectionOptions opt = options;
             ConnectionPoolKey key = poolKey;
             SessionData recoverySessionData = null;

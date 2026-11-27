@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -93,6 +94,48 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         #region Success
+
+        /// <summary>TLS setup is traced inside the real pre-login receive.</summary>
+        [Fact]
+        public void Open_TlsSetup_RecordsNestedPhase()
+        {
+            // Arrange
+            using ConnectionOpenTrace trace = new();
+            using TdsServer server = StartServer(ServerEncryption.Required);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
+
+            // Act
+            connection.Open();
+
+            // Assert
+            Activity prelogin = Assert.Single(trace.AllSpans,
+                span => span.OperationName == "connection.prelogin.receive");
+            Activity tls = Assert.Single(trace.AllSpans,
+                span => span.OperationName == "connection.tls.setup");
+            Assert.Equal(prelogin.SpanId, tls.ParentSpanId);
+            Assert.Equal(ActivityStatusCode.Unset, tls.Status);
+        }
+
+        /// <summary>A certificate rejection records an open failure without exception events.</summary>
+        [Fact]
+        public async Task OpenAsync_UntrustedCertificate_RecordsOpenFailure()
+        {
+            // Arrange
+            using ConnectionOpenTrace trace = new();
+            using TdsServer server = StartUntrustedCertificateServer(ServerEncryption.Required);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory,
+                trustServerCertificate: false));
+
+            // Act
+            await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            Activity tls = Assert.Single(trace.AllSpans,
+                span => span.OperationName == "connection.tls.setup");
+            Assert.Equal(ActivityStatusCode.Error, Assert.Single(trace.Spans).Status);
+            Assert.Empty(tls.Events);
+        }
 
         /// <summary>
         /// A successful synchronous open publishes the mode and protocol that match the server's

@@ -29,6 +29,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string Net = "net";
         internal const string Network = "network";
         internal const string NetworkAddress = "network address";
+        internal const string OtelEndpoint = "otelendpoint";
         internal const string PacketSize = "packetsize";
         internal const string PersistSecurityInfo = "persistsecurityinfo";
         internal const string PoolBlockingPeriod = "poolblockingperiod";

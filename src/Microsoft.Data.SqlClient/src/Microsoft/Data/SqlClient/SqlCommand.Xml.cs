@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
@@ -116,6 +117,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
+            OperationScope statementActivity = StatementActivity.Start(this, "ExecuteXmlReader");
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -132,6 +134,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception ex)
             {
                 diagnosticScope.SetException(ex);
+                StatementActivity.RecordError(statementActivity, ex);
 
                 if (ex is SqlException sqlException)
                 {
@@ -144,6 +147,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
+                StatementActivity.Complete(statementActivity);
             }
         }
 
@@ -153,9 +157,13 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken) =>
-            IsProviderRetriable
-                ? InternalExecuteXmlReaderWithRetryAsync(cancellationToken)
-                : InternalExecuteXmlReaderAsync(cancellationToken);
+            StatementActivity.ExecuteAsync(
+                this,
+                "ExecuteXmlReader",
+                cancellationToken,
+                static (command, token) => command.IsProviderRetriable
+                    ? command.InternalExecuteXmlReaderWithRetryAsync(token)
+                    : command.InternalExecuteXmlReaderAsync(token));
 
         #endregion
 
@@ -572,7 +580,8 @@ namespace Microsoft.Data.SqlClient
         private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
             RetryLogicProvider.ExecuteAsync(
                 sender: this,
-                () => InternalExecuteXmlReaderAsync(cancellationToken),
+                () => StatementActivity.AttemptAsync(
+                    this, () => InternalExecuteXmlReaderAsync(cancellationToken)),
                 cancellationToken);
 
         #endregion

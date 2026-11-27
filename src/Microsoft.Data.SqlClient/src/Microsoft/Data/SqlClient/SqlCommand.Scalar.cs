@@ -4,9 +4,11 @@
 
 using System;
 using System.Data;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
@@ -47,6 +49,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
+            OperationScope statementActivity = StatementActivity.Start(this, "ExecuteScalar");
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -65,6 +68,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception ex)
             {
                 diagnosticScope.SetException(ex);
+                StatementActivity.RecordError(statementActivity, ex);
 
                 if (ex is SqlException sqlException)
                 {
@@ -77,14 +81,20 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
+                StatementActivity.Complete(statementActivity);
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            // Do not use retry logic here as ExecuteReaderAsyncInternal handles retry logic
-            return ExecuteScalarAsyncInternal(cancellationToken);
+            // Do not use retry logic here as ExecuteReaderAsyncInternal handles retry logic. The
+            // statement root created here makes the nested ExecuteReaderAsync reuse it.
+            return StatementActivity.ExecuteAsync(
+                this,
+                "ExecuteScalar",
+                cancellationToken,
+                static (command, token) => command.ExecuteScalarAsyncInternal(token));
         }
 
         internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)

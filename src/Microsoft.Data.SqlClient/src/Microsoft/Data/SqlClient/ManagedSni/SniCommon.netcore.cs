@@ -12,6 +12,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
@@ -223,7 +224,21 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             using (SqlClientSNIEventScope.Create(nameof(SniCommon)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
+                return ResolveHostAddresses(serverName);
+            }
+        }
+
+        internal static IPAddress[] ResolveHostAddresses(string serverName)
+        {
+            using OperationScope phase = ConnectionOpenActivity.StartPhase("connection.name_resolution");
+            try
+            {
                 return Dns.GetHostAddresses(serverName);
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(phase, ex);
+                throw;
             }
         }
 

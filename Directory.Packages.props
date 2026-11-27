@@ -98,6 +98,7 @@
   <ItemGroup>
     <PackageVersion Include="Azure.Core" Version="1.65.0" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.92.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.21.0" />
   </ItemGroup>
 
   <!-- .NET 10 is the lowest supported runtime band, including legacy/Standard dependencies. -->

@@ -110,5 +110,26 @@ namespace Microsoft.Data.SqlClient
         internal Exception Exception => _exception;
 
         internal int BatchIndex => _batchIndex;
+
+        // Only the TDS ERROR-token parser confirms server provenance; client numbers can collide.
+        [field: System.Runtime.Serialization.OptionalField(VersionAdded = 7)]
+        internal bool IsServerError { get; set; }
+
+        [System.Runtime.Serialization.OptionalField(VersionAdded = 8)]
+        private uint _sniErrorNumber;
+
+        internal uint SniErrorNumber
+        {
+            get => _sniErrorNumber;
+            set => _sniErrorNumber = value;
+        }
+
+        // Set only where the driver creates a query/connect timeout error.
+        [field: System.Runtime.Serialization.OptionalField(VersionAdded = 9)]
+        internal bool IsTimeout { get; set; }
+
+        // Set only where the driver records a confirmed attention/cancel acknowledgement.
+        [field: System.Runtime.Serialization.OptionalField(VersionAdded = 9)]
+        internal bool IsCancellation { get; set; }
     }
 }

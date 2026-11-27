@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -16,6 +17,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
@@ -328,7 +330,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
         private static IEnumerable<IPAddress> GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
         {
-            IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
+            IPAddress[] ipAddresses = SniCommon.ResolveHostAddresses(serverName);
             AddressFamily? prioritiesFamily = ipPreference switch
             {
                 SqlConnectionIPAddressPreference.IPv4First => AddressFamily.InterNetwork,
@@ -378,6 +380,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 foreach (IPAddress ipAddress in ipAddresses)
                 {
+                    using OperationScope socketAttempt = ConnectionOpenActivity.StartPhase(
+                        "connection.socket_connect");
                     bool isSocketSelected = false;
                     Socket socket = null;
 
@@ -462,6 +466,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                                 "Socket connection failed. SocketError: {0} ({1})", socketError, socketErrorCode);
 
                                 lastSocketException = new SocketException(socketErrorCode);
+                                ConnectionOpenActivity.RecordError(socketAttempt, lastSocketException);
                             }
                         }
 
@@ -487,10 +492,16 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
                     catch (SocketException e)
                     {
+                        ConnectionOpenActivity.RecordError(socketAttempt, e);
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}",
                             nameof(SniTcpHandle), nameof(Connect), EventType.ERR, e);
                         lastSocketException = e;
+                    }
+                    catch (Exception ex)
+                    {
+                        ConnectionOpenActivity.RecordError(socketAttempt, ex);
+                        throw;
                     }
                     finally
                     {
@@ -514,6 +525,34 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
 
         internal static Socket ParallelConnect(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        {
+            if (serverAddresses == null || serverAddresses.Length == 0)
+            {
+                return ParallelConnectCore(serverAddresses, port, timeout, cachedFQDN,
+                    ref pendingDNSInfo);
+            }
+
+            using OperationScope batch = ConnectionOpenActivity.StartPhase("connection.socket_connect");
+            try
+            {
+                Socket socket = ParallelConnectCore(
+                    serverAddresses, port, timeout, cachedFQDN, ref pendingDNSInfo);
+                if (socket == null && batch != null)
+                {
+                    ConnectionOpenActivity.RecordError(batch,
+                        ConnectionErrorEvidence.FromKind(
+                            ConnectionErrorCategory.NetworkConnectivity, batch.Name));
+                }
+                return socket;
+            }
+            catch (Exception ex)
+            {
+                ConnectionOpenActivity.RecordError(batch, ex);
+                throw;
+            }
+        }
+
+        private static Socket ParallelConnectCore(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {

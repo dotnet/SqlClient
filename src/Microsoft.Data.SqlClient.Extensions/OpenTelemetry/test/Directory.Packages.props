@@ -1,0 +1,3 @@
+<Project>
+  <Import Project="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Directory.Packages.props" />
+</Project>
