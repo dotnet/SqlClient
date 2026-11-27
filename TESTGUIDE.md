@@ -78,7 +78,25 @@ Transport initialization and socket closure share a lock so shutdown cannot inva
 wait stays outside that lock, allowing a stopped worker to finish its cleanup.
 Negative TLS scenarios can set `TdsServerArguments.ExpectTlsHandshakeFailure` to explicitly expect
 authentication failure during TLS negotiation. Missing certificates/private keys and exceptions from
-protocol handlers still fail disposal; the default remains strict. Assert the expected client failure
+protocol handlers still fail disposal; the default remains strict. I/O exceptions are tolerated only
+when identified at the physical transport boundary, not merely by their exception type. Handler and
+log-writer I/O failures (including failures while logging another error) are reported during disposal.
+Connection-close logging failures are recorded even after the session leaves the active collection.
+Derived simulators can call `AbortConnection(session)` from a pre-login handler and return an empty
+response to reset only that physical socket. This does not join the worker or stop the listener;
+normal session cleanup still runs, and unexpected handler failures after the abort remain errors.
+Retry regressions intentionally abort the first pre-login session and gate the second distinct
+`SessionID` before replying; assert the phase-specific pre-login/login counts and pending open
+before releasing the gate. Use an explicit configurable network-error retry policy and assert
+its retry event; `ConnectRetryCount` does not retry a pre-login reset. Keep `Open` and
+`OpenAsync` coverage in separate theories, with each varying only `MultiSubnetFailover`.
+Pool-wait regressions
+explicitly select the legacy wait-budget policy, hold the occupied slot beyond that budget,
+and verify actual pool-wait admission before release; elapsed time or transport counts alone are
+not evidence of successful pool waiting.
+Pool-wait test teardown shuts down the pool, boundedly drains and observes both callers,
+and returns late successful checkouts before clearing the pool or disposing caller owners.
+Assert the expected client failure
 as well, and keep success controls so simulator setup errors cannot masquerade as certificate rejection.
 `ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
 on native and managed SNI, including broader simulator consumers before removing a flaky trait.

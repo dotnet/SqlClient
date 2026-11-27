@@ -31,6 +31,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// connection lifecycle, parameterized over both pool implementations via
     /// <see cref="PoolImplementation"/> wherever their behavior is expected to match.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class DbConnectionPoolInstrumentationTest
     {
         private static readonly TimeSpan CheckoutTimeout = TimeSpan.FromSeconds(30);
@@ -473,13 +474,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             PoolImplementation implementation)
         {
             // Arrange
+            using LocalAppContextSwitchesHelper switches = new()
+            {
+                UseOverallConnectTimeoutForPoolWait = false
+            };
             FakeSqlClientMetrics metrics = new();
             IDbConnectionPool pool = ConstructPool(
                 implementation, metrics, new SuccessfulSqlConnectionFactory(metrics),
                 maxPoolSize: 1);
             using SqlConnection owner = new();
             using SqlConnection waitingOwner = new();
-            using ManualResetEventSlim started = new();
+            Thread? worker = null;
             Assert.True(pool.TryGetConnection(
                 owner, null, TimeoutTimer.StartNew(CheckoutTimeout), out DbConnectionInternal? held));
             Assert.NotNull(held);
@@ -488,7 +493,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // A dedicated worker avoids starving the checkout behind unrelated thread-pool work.
             Task<DbConnectionInternal?> checkout = Task.Factory.StartNew(() =>
             {
-                started.Set();
+                Volatile.Write(ref worker, Thread.CurrentThread);
                 Assert.True(pool.TryGetConnection(
                     waitingOwner, null, TimeoutTimer.StartNew(CheckoutTimeout),
                     out DbConnectionInternal? connection));
@@ -500,8 +505,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 // Assert
                 try
                 {
-                    Assert.True(started.Wait(TimeSpan.FromSeconds(10)),
-                        "Checkout worker did not start.");
+                    Assert.True(SpinWait.SpinUntil(() => pool switch
+                    {
+                        WaitHandleDbConnectionPool legacy =>
+                            Volatile.Read(ref legacy._waitCount) > 0 &&
+                            Volatile.Read(ref worker) is Thread thread &&
+                            (thread.ThreadState & System.Threading.ThreadState.WaitSleepJoin) != 0,
+                        ChannelDbConnectionPool channel => channel.Reclaimer.ParkedWaiters > 0,
+                        _ => throw new InvalidOperationException("Unexpected pool implementation.")
+                    }, TimeSpan.FromSeconds(10)), "Checkout did not enter the pool wait.");
 
                     // Hold the slot beyond the harness's default 15-millisecond pool wait.
                     Assert.False(checkout.Wait(TimeSpan.FromMilliseconds(100)),
