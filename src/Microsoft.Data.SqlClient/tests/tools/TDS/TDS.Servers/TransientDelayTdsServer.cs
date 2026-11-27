@@ -14,7 +14,6 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class TransientDelayTdsServer : GenericTdsServer<TransientDelayTdsServerArguments>, IDisposable
     {
         private int RequestCounter = 0;
-        private readonly object _delayLock = new object();
 
         /// <summary>
         /// Cancelled on Dispose to interrupt any in-progress delay so that the
@@ -26,7 +25,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Guards against running Dispose logic more than once.
         /// </summary>
-        private int _disposed;
+        private bool _disposed;
 
         public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) 
             : base(arguments)
@@ -43,16 +42,18 @@ namespace Microsoft.SqlServer.TDS.Servers
         {
             // Guard against multiple Dispose calls: cancelling/disposing the CTS twice would
             // throw ObjectDisposedException and break test teardown paths.
-            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            if (_disposed)
             {
                 return;
             }
+            _disposed = true;
 
             try
             {
                 // Wake any in-progress delay before joining the processor task.
                 _disposeCts.Cancel();
                 base.Dispose();
+                RequestCounter = 0;
             }
             finally
             {
@@ -65,20 +66,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Waits for the configured delay, returning early if the server is being
         /// disposed.
         /// </summary>
-        private bool Delay()
+        private void Delay()
         {
-            TimeSpan duration;
-            lock (_delayLock)
-            {
-                if (!Arguments.IsEnabledPermanentDelay &&
-                    (!Arguments.IsEnabledTransientDelay || RequestCounter >= Arguments.RepeatCount))
-                {
-                    return true;
-                }
-                RequestCounter++;
-                duration = Arguments.DelayDuration;
-            }
-            return !_disposeCts.Token.WaitHandle.WaitOne(duration);
+            // WaitHandle.WaitOne returns immediately once the token is cancelled;
+            // otherwise it blocks for the full delay duration.
+            _disposeCts.Token.WaitHandle.WaitOne(Arguments.DelayDuration);
         }
 
         /// <summary>
@@ -87,9 +79,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
             // Check if we're still going to raise transient error
-            if (!Delay())
+            if (Arguments.IsEnabledPermanentDelay ||
+                (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
-                return new TDSMessageCollection();
+                Delay();
+
+                Interlocked.Increment(ref RequestCounter);
             }
 
             // Return login response from the base class
@@ -99,9 +94,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <inheritdoc/>
         public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message)
         {
-            if (!Delay())
+            if (Arguments.IsEnabledPermanentDelay ||
+                (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
-                return new TDSMessageCollection();
+                Delay();
+
+                Interlocked.Increment(ref RequestCounter);
             }
 
             return base.OnSQLBatchRequest(session, message);
@@ -109,10 +107,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public void ResetRequestCounter()
         {
-            lock (_delayLock)
-            {
-                RequestCounter = 0;
-            }
+            RequestCounter = 0;
         }
 
         public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, TimeSpan sleepDuration) 
@@ -122,12 +117,9 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public void SetTransientTimeoutBehavior(bool isEnabledTransientTimeout, bool isEnabledPermanentTimeout, TimeSpan sleepDuration)
         {
-            lock (_delayLock)
-            {
-                Arguments.IsEnabledTransientDelay = isEnabledTransientTimeout;
-                Arguments.IsEnabledPermanentDelay = isEnabledPermanentTimeout;
-                Arguments.DelayDuration = sleepDuration;
-            }
+            Arguments.IsEnabledTransientDelay = isEnabledTransientTimeout;
+            Arguments.IsEnabledPermanentDelay = isEnabledPermanentTimeout;
+            Arguments.DelayDuration = sleepDuration;
         }
     }
 }

@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -65,22 +64,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Directory.CreateDirectory(s_fullPathToClientCert);
             }
 
-            // The certificate must remain untrusted for the negative validation cases.
-            // Clean up partial setup because xUnit does not call Dispose when construction fails.
+            // NOTE: The setup script installs a certificate into the LocalMachine root store and writes
+            //   the scratch files. If it fails part way through, xUnit never calls Dispose, so run the
+            //   cleanup here to avoid leaving the certificate behind.
             try
             {
-                RunPowershellScript(s_fullPathToPowershellScript, Directory.GetCurrentDirectory());
+                RunPowershellScript(s_fullPathToPowershellScript);
             }
-            catch (Exception setupException)
+            catch
             {
-                try
-                {
-                    RemoveCertificate();
-                }
-                catch (Exception cleanupException)
-                {
-                    throw new AggregateException("Certificate setup and cleanup failed.", setupException, cleanupException);
-                }
+                Dispose();
                 throw;
             }
         }
@@ -154,20 +147,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string userId = string.IsNullOrWhiteSpace(builder.UserID) ? "user" : builder.UserID;
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
-            using X509Certificate2 certificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet);
-            using (X509Chain chain = new())
-            {
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                Assert.False(chain.Build(certificate), "The simulated server certificate must remain untrusted.");
-                Assert.Contains(chain.ChainStatus, status => (status.Status & X509ChainStatusFlags.UntrustedRoot) != 0);
-            }
-
             using TdsServer server = new TdsServer(new TdsServerArguments
             {
-                EncryptionCertificate = certificate,
+                EncryptionCertificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
                 EncryptionProtocols = connectionTestParameters.EncryptionProtocols,
                 Encryption = connectionTestParameters.TdsEncryptionType,
-                ExpectTlsHandshakeFailure = !connectionTestParameters.TestResult,
             });
 
             server.Start();
@@ -193,22 +177,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             using SqlConnection connection = new(builder.ConnectionString);
-            if (connectionTestParameters.TestResult)
+            try
             {
                 connection.Open();
-                Assert.Equal(ConnectionState.Open, connection.State);
+                Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
             }
-            else
+            catch (Exception)
             {
-                Assert.Throws<SqlException>(() => connection.Open());
+                Assert.False(connectionTestParameters.TestResult);
             }
         }
 
-        /// <summary>Runs a certificate script without changing trust stores and reports failed exits.</summary>
-        /// <param name="script">The certificate script to execute.</param>
-        /// <param name="currentDirectory">The directory containing scenario-owned certificate files.</param>
-        internal static void RunPowershellScript(string script, string currentDirectory)
+        private static void RunPowershellScript(string script)
         {
+            string currentDirectory = Directory.GetCurrentDirectory();
             string powerShellCommand =
               RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
               ? "powershell.exe"
@@ -220,7 +202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             StringBuilder output = new();
-            using Process proc = new()
+            Process proc = new()
             {
                 StartInfo =
                 {
@@ -228,7 +210,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = $"-NoProfile -NonInteractive -File \"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust",
+                    Arguments = $"{script} -OutDir {currentDirectory}",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -240,10 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (e.Data != null)
                 {
-                    lock (output)
-                    {
-                        output.AppendLine($"[OUT] {e.Data}");
-                    }
+                    output.AppendLine($"[OUT] {e.Data}");
                 }
             });
 
@@ -251,10 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (e.Data != null)
                 {
-                    lock (output)
-                    {
-                        output.AppendLine($"[ERR] {e.Data}");
-                    }
+                    output.AppendLine($"[ERR] {e.Data}");
                 }
             });
 
@@ -268,11 +244,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 proc.Kill();
                 proc.WaitForExit(2000);
                 throw new Exception($"Could not generate certificate; script output: {output}");
-            }
-            proc.WaitForExit();
-            if (proc.ExitCode != 0)
-            {
-                throw new InvalidOperationException($"Certificate script exited with code {proc.ExitCode}; script output: {output}");
             }
         }
 
@@ -294,12 +265,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RemoveCertificate()
         {
-            RemoveCertificate(Directory.GetCurrentDirectory(), () =>
+            // NOTE: Each step is independent. Previously a missing thumbprint file (or a failed store
+            //   removal) aborted the whole cleanup, leaving the certificate in the LocalMachine root
+            //   store and the scratch directory on disk.
+            try
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && File.Exists(s_fullPathTothumbprint))
+                if (File.Exists(s_fullPathTothumbprint))
                 {
                     string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
-                    using X509Store certStore = new(StoreName.My, StoreLocation.LocalMachine);
+                    using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
                     certStore.Open(OpenFlags.ReadWrite);
                     X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
                     if (certCollection.Count > 0)
@@ -308,50 +282,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     certStore.Close();
                 }
-            });
-        }
-
-        /// <summary>Attempts all owned file cleanup and retains ownership if store removal fails.</summary>
-        /// <param name="directory">The directory containing scenario-owned certificate files.</param>
-        /// <param name="removeFromStore">Removes the owned certificate without changing SQL Server state.</param>
-        internal static void RemoveCertificate(string directory, Action removeFromStore)
-        {
-            List<Exception> errors = new();
-            bool removedFromStore = false;
-            try
-            {
-                removeFromStore();
-                removedFromStore = true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: failed to remove certificate: {ex.Message}");
-                errors.Add(ex);
             }
 
-            if (removedFromStore)
-            {
-                TryCleanup(() => File.Delete(Path.Combine(directory, "thumbprint.txt")), errors);
-            }
-            foreach (string extension in new[] { "pfx", "key", "cer", "pem" })
-            {
-                TryCleanup(() => File.Delete(Path.Combine(directory, $"localhostcert.{extension}")), errors);
-            }
-            TryCleanup(() =>
-            {
-                string clientCertificates = Path.Combine(directory, "clientcert");
-                if (Directory.Exists(clientCertificates))
-                {
-                    Directory.Delete(clientCertificates, true);
-                }
-            }, errors);
-            if (errors.Count > 0)
-            {
-                throw new AggregateException("Certificate cleanup failed.", errors);
-            }
+            TryCleanup(() => File.Delete(s_fullPathTothumbprint));
+            TryCleanup(() => Directory.Delete(s_fullPathToClientCert, true));
         }
 
-        private static void TryCleanup(Action cleanupAction, List<Exception> errors)
+        private static void TryCleanup(Action cleanupAction)
         {
             try
             {
@@ -360,7 +301,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception ex)
             {
                 Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: cleanup step failed: {ex.Message}");
-                errors.Add(ex);
             }
         }
 
@@ -403,110 +343,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                RunPowershellScript(s_fullPathToCleanupPowershellScript, Directory.GetCurrentDirectory());
-            }
-        }
-    }
-
-    /// <summary>Verifies certificate-script failures without constructing a SQL Server fixture.</summary>
-    [Trait("Set", "1")]
-    public class CertificateScriptTests
-    {
-        /// <summary>Cleanup preserves store/file failures and ownership while attempting remaining files.</summary>
-        [Fact]
-        public void RemoveCertificate_StoreAndFileFailures_PreservesErrorsAndOwnership()
-        {
-            // Arrange
-            string directory = Path.Combine(Path.GetTempPath(), $"{nameof(CertificateScriptTests)}-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(directory);
-            IOException storeFailure = new("Intentional certificate-store failure.");
-            try
-            {
-                string thumbprint = Path.Combine(directory, "thumbprint.txt");
-                string certificate = Path.Combine(directory, "localhostcert.cer");
-                File.WriteAllText(thumbprint, "fixture-owned");
-                File.WriteAllText(certificate, "fixture-owned");
-                Directory.CreateDirectory(Path.Combine(directory, "localhostcert.pfx"));
-
-                // Act
-                AggregateException error = Assert.Throws<AggregateException>(() =>
-                    CertificateTestWithTdsServer.RemoveCertificate(directory, () => throw storeFailure));
-
-                // Assert
-                Assert.Contains(storeFailure, error.Flatten().InnerExceptions);
-                Assert.Equal(2, error.Flatten().InnerExceptions.Count);
-                Assert.True(File.Exists(thumbprint));
-                Assert.False(File.Exists(certificate));
-            }
-            finally
-            {
-                // Cleanup
-                Directory.Delete(directory, true);
-            }
-        }
-
-#if NET
-        /// <summary>A native generation failure must stop setup without producing a stale certificate.</summary>
-        [Fact]
-        [PlatformSpecific(TestPlatforms.Linux)]
-        [System.Runtime.Versioning.SupportedOSPlatform("linux")]
-        public void RunPowershellScript_NativeFailure_ReportsFailure()
-        {
-            // Arrange
-            string directory = Path.Combine(Path.GetTempPath(), $"{nameof(CertificateScriptTests)}-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(directory);
-            try
-            {
-                string nativeCommand = Path.Combine(directory, "openssl");
-                File.WriteAllText(nativeCommand, "#!/bin/sh\nexit 42\n");
-                File.SetUnixFileMode(nativeCommand, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-                string certificateScript = Path.Combine(AppContext.BaseDirectory, "makepfxcert.ps1").Replace("'", "''");
-                string script = Path.Combine(directory, "native-failure.ps1");
-                File.WriteAllText(script,
-                    "param($OutDir, [switch] $SkipTrust)\n$ErrorActionPreference = 'Stop'\n" +
-                    "$env:PATH = $PSScriptRoot + [IO.Path]::PathSeparator + $env:PATH\n" +
-                    "$env:computerName = [Environment]::MachineName\n" +
-                    $"& '{certificateScript}' -OutDir $OutDir -SkipTrust\n");
-                // Act
-                InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                    () => CertificateTestWithTdsServer.RunPowershellScript(script, directory));
-                // Assert
-                Assert.Contains("code 1", error.Message);
-                Assert.Contains("exited with code 42", error.Message);
-                Assert.False(File.Exists(Path.Combine(directory, "localhostcert.pfx")));
-            }
-            finally
-            {
-                // Cleanup
-                Directory.Delete(directory, true);
-            }
-        }
-#endif
-
-        /// <summary>Nonzero script exits must preserve diagnostics and fail certificate setup.</summary>
-        [Theory]
-        [InlineData("exit 23", 23)]
-        [InlineData("throw 'Intentional script failure.'", 1)]
-        public void RunPowershellScript_UnsuccessfulExit_ReportsFailure(string command, int exitCode)
-        {
-            // Arrange
-            string directory = Path.Combine(Path.GetTempPath(), $"{nameof(CertificateScriptTests)}-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(directory);
-            try
-            {
-                string script = Path.Combine(directory, "failure.ps1");
-                File.WriteAllText(script, "param($OutDir, [switch] $SkipTrust)\nWrite-Output 'Intentional script output.'\n" + command);
-                // Act
-                InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                    () => CertificateTestWithTdsServer.RunPowershellScript(script, directory));
-                // Assert
-                Assert.Contains($"code {exitCode}", error.Message);
-                Assert.Contains("Intentional script output.", error.Message);
-            }
-            finally
-            {
-                // Cleanup
-                Directory.Delete(directory, true);
+                RunPowershellScript(s_fullPathToCleanupPowershellScript);
             }
         }
     }

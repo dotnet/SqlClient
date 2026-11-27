@@ -101,7 +101,6 @@ namespace Microsoft.SqlServer.TDS.Servers
         protected int _login7Count = 0;
 
         private TDSServerEndPoint _endpoint;
-        private int _disposing;
 
         /// <summary>
         /// Initialization constructor
@@ -177,8 +176,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
                 EndpointName = methodName,
-                EventLog = Arguments.Log,
-                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
+                EventLog = Arguments.Log
             };
             _endpoint.Start();
         }
@@ -1090,36 +1088,10 @@ namespace Microsoft.SqlServer.TDS.Servers
             return left.SequenceEqual<byte>(right);
         }
 
-        /// <summary>
-        /// Deliberately reset one active session's transport without stopping the listener or joining its worker.
-        /// A protocol handler should return an empty response after requesting the abort.
-        /// </summary>
-        protected void AbortConnection(ITDSServerSession session)
-        {
-            TDSServerEndPoint endpoint = Volatile.Read(ref _endpoint);
-            if (endpoint == null)
-            {
-                throw new InvalidOperationException("Server is not started.");
-            }
-            endpoint.AbortConnection(session);
-        }
-
         public virtual void Dispose()
         {
-            if (Interlocked.CompareExchange(ref _disposing, 1, 0) != 0)
-            {
-                return;
-            }
-            try
-            {
-                // In-flight handlers still need the endpoint while its workers are draining.
-                Volatile.Read(ref _endpoint)?.Dispose();
-            }
-            finally
-            {
-                Volatile.Write(ref _endpoint, null);
-                Volatile.Write(ref _disposing, 0);
-            }
+            _endpoint?.Dispose();
+            _endpoint = null;
         }
     }
 }

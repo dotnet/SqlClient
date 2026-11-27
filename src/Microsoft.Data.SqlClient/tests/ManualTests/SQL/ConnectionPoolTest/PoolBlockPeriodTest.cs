@@ -26,8 +26,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This uses deliberately nonexistent Azure hostnames to test client-side pool blocking; it
         // never connects to the configured Managed Instance.
-        // Build 184441 failed its timing assertion, then passed the same case/job on rerun.
-        [Trait("category", "flaky")]
         [OuterLoop()]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.windows.net)", new object[] { AzureEndpointSample })]
@@ -40,6 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Azure with Auto Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.Auto })]
         [InlineData("Azure with Always Policy must Enable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.AlwaysBlock })]
         [InlineData("Azure with Never Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.NeverBlock })]
+        [Trait("category", "flaky")]
         public void TestAzureBlockingPeriod(string description, object[] Params)
         {
             string _ = description; // Using C# Discards as workaround to the XUnit warning.

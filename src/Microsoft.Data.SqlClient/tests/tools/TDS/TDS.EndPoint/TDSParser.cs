@@ -20,8 +20,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         private Stream _originalTransport;
 
-        internal bool ExpectTlsHandshakeFailure { get; set; }
-
         /// <summary>
         /// Writer to log events to
         /// </summary>
@@ -101,8 +99,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             }
 
             // The SSL certificate is required for the server to handle transport encryption
-            if (certificate == null ||
-                (certificate is X509Certificate2 serverCertificate && !serverCertificate.HasPrivateKey))
+            if (certificate == null)
             {
                 throw new AuthenticationException("Server is unable to authenticate transport encryption without a valid SSL certificate.");
             }
@@ -122,15 +119,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             SslStream ssl = new SslStream(multiplexer, true);
 
             // Secure the channel
-            try
-            {
-                ssl.AuthenticateAsServer(certificate, false, encryptionProtocols, false);
-            }
-            catch (AuthenticationException ex) when (ExpectTlsHandshakeFailure)
-            {
-                ssl.Dispose();
-                throw new ExpectedTlsHandshakeFailureException(ex);
-            }
+            ssl.AuthenticateAsServer(certificate, false, encryptionProtocols, false);
 
             // Replace TDS stream with raw transport stream in multiplexer
             multiplexer.InnerStream = Transport.InnerStream;
@@ -181,17 +170,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             {
                 EventLog.WriteLine("[TDSParser]: " + text, args);
             }
-        }
-    }
-
-    /// <summary>
-    /// Marks only an explicitly expected authentication rejection from the TLS handshake itself.
-    /// </summary>
-    internal sealed class ExpectedTlsHandshakeFailureException : Exception
-    {
-        internal ExpectedTlsHandshakeFailureException(AuthenticationException innerException)
-            : base("The expected TLS handshake failed.", innerException)
-        {
         }
     }
 }

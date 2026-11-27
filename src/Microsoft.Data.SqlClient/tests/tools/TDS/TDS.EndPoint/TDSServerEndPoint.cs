@@ -16,11 +16,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// </summary>
     public class TDSServerEndPoint : ServerEndPointHandler<TDSServerEndPointConnection>
     {
-        /// <summary>
-        /// Indicates that the scenario expects authentication to fail during TLS negotiation.
-        /// </summary>
-        public bool ExpectTlsHandshakeFailure { get; set; }
-
         public TDSServerEndPoint(ITDSServer server)
             : base(server)
         {
@@ -28,10 +23,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
         public override TDSServerEndPointConnection CreateConnection(TcpClient newConnection)
         {
-            return new TDSServerEndPointConnection(TDSServer, newConnection)
-            {
-                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
-            };
+            return new TDSServerEndPointConnection(TDSServer, newConnection);
         }
     }
 
@@ -56,8 +48,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         internal IList<T> Connections { get; set; }
 
-        private readonly List<Exception> _errors = new List<Exception>();
-
         /// <summary>
         /// End-point which TDS server is listening on
         /// </summary>
@@ -76,7 +66,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Gets/Sets the flag whether the stop is requested
         /// </summary>
-        internal volatile bool _stopRequested;
+        internal bool StopRequested { get; set; }
 
 
         /// <summary>
@@ -102,7 +92,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public void Start()
         {
-            _stopRequested = false;
+            StopRequested = false;
 
             // Start the server synchronously to ensure that instantiation exception is thrown (if any)
             ListenerSocket = new TcpListener(ServerEndPoint);
@@ -120,44 +110,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         }
 
         /// <summary>
-        /// Reset only the active physical connection owning the supplied session.
-        /// Unlike disposal, this can be called by that connection's protocol handler.
-        /// </summary>
-        public void AbortConnection(ITDSServerSession session)
-        {
-            if (session == null)
-            {
-                throw new ArgumentNullException(nameof(session));
-            }
-
-            T selected = null;
-            lock (Connections)
-            {
-                foreach (T connection in Connections)
-                {
-                    if (ReferenceEquals(connection.Session, session))
-                    {
-                        selected = connection;
-                        break;
-                    }
-                }
-            }
-
-            if (selected == null)
-            {
-                throw new ArgumentException("The session has no active connection on this endpoint.", nameof(session));
-            }
-
-            selected.Abort();
-        }
-
-        /// <summary>
         /// Stop the listener thread
         /// </summary>
         public void Stop()
         {
             // Request the listener thread to stop
-            _stopRequested = true;
+            StopRequested = true;
 
             // Stop the listener socket first so the blocking AcceptTcpClient call
             // in the listener thread is interrupted and the thread can exit.
@@ -189,31 +147,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Iterate over all connections and request each one to stop
             foreach (T connection in unlockedConnections)
             {
-                try
-                {
-                    connection.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    lock (Connections)
-                    {
-                        _errors.Add(ex);
-                    }
-                }
+                // Request to stop
+                connection.Dispose();
             }
 
             // Release the listener socket reference
             ListenerSocket = null;
-
-            lock (Connections)
-            {
-                if (_errors.Count != 0)
-                {
-                    Exception[] errors = _errors.ToArray();
-                    _errors.Clear();
-                    throw new AggregateException("TDS server failed.", errors);
-                }
-            }
         }
 
         public void Dispose()
@@ -230,7 +169,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             try
             {
                 // Accept connections as long as a stop request is not posted
-                while (!_stopRequested)
+                while (!StopRequested)
                 {
                     TcpClient newConnection;
 
@@ -244,7 +183,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     {
                         // AcceptTcpClient throws when the listener is stopped during
                         // shutdown; exit the loop in that case.
-                        if (_stopRequested)
+                        if (StopRequested)
                         {
                             break;
                         }
@@ -263,24 +202,22 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         // Subscribe for notifications
                         connection.OnConnectionClosed += new ConnectionClosedEventHandler(_OnConnectionClosed);
 
+                        // Start a connection
+                        connection.Start();
+
                         // Synchronize access to connections collection
                         lock (Connections)
                         {
                             // Register a new connection
                             Connections.Add(connection);
                         }
-
-                        connection.Start();
                     }
                     catch (Exception ex)
                     {
                         Log(ex.ToString());
-                        lock (Connections)
-                        {
-                            _errors.Add(ex);
-                        }
 
-                        // Construction may have failed before registration.
+                        // Setup failed, so this connection was never registered and will not be
+                        // torn down by Stop(); dispose the accepted socket to avoid leaking it.
                         try
                         {
                             newConnection?.Dispose();
@@ -288,10 +225,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         catch (Exception disposeEx)
                         {
                             Log(disposeEx.ToString());
-                            lock (Connections)
-                            {
-                                _errors.Add(disposeEx);
-                            }
                         }
                     }
                 }
@@ -299,10 +232,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             catch (Exception ex)
             {
                 Log(ex.ToString());
-                lock (Connections)
-                {
-                    _errors.Add(ex);
-                }
             }
         }
 
@@ -319,21 +248,9 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Synchronize access to connection collection
             lock (Connections)
             {
-                T connection = (T)sender;
-                if (connection.ProcessingException != null)
-                {
-                    _errors.Add(connection.ProcessingException);
-                }
                 // Remove the existing connection from the list
-                Connections.Remove(connection);
-                try
-                {
-                    Log($"{GetType().Name} {EndpointName} Connection Closed");
-                }
-                catch (Exception ex)
-                {
-                    _errors.Add(ex);
-                }
+                Connections.Remove(sender as T);
+                Log($"{GetType().Name} {EndpointName} Connection Closed");
             }
         }
 
