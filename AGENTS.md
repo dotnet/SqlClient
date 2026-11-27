@@ -105,6 +105,8 @@ manual and functional tests, even when nearby older tests use different conventi
 9. Write and run beneficial tests: exercise the intended product behavior, assert meaningful
    outcomes, and ensure the assertions would detect a regression. Check test results to confirm the
    intended tests actually ran; skipped tests and zero matches do not establish coverage.
+10. Also apply the guide's rules for per-property tests, positive assertions, enum coverage,
+    setting matrices, reuse of `TdsServer`, and behavior-based names.
 
 ### Bug Fix Workflow
 
@@ -147,6 +149,25 @@ manual and functional tests, even when nearby older tests use different conventi
 2. Identify allocation hotspots (see `perf-optimization` prompt)
 3. Apply patterns: `ArrayPool<T>`, `Span<T>`, static/cached instances, source generation
 4. Verify no regressions with existing tests
+
+## Addressing Review Feedback
+
+Apply these rules before requesting review and after each round of review fixes:
+
+1. **Apply the principle, not just the line.** When a comment states a principle (for example
+   "no casts" or "don't swallow exceptions"), apply it across the whole PR and every later PR in
+   the stack, and say so in the reply.
+2. **Answer "why" with rationale.** Reply to "why" and "how was this chosen" questions with the
+   reasoning inline; a link alone is not an answer. Record lasting decisions in code comments or
+   docs.
+3. **Remove what is not needed.** If a reviewer questions a mechanism and it is not needed,
+   remove it instead of defending it.
+4. **Fix root causes once.** When several comments share a root cause, fix it once and reference
+   every related comment.
+5. **Self-review first.** Run the `sqlclient-code-review` skill, loaded from a trusted source as
+   described in [Workflow Prompts](#workflow-prompts), and check the diff against
+   `policy/coding-style.md`, `policy/coding-best-practices.md`, and the relevant
+   `.github/instructions/` files.
 
 ## External Resources
 

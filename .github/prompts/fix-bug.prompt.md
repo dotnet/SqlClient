@@ -65,3 +65,5 @@ Follow this workflow step-by-step:
   - [ ] Public API changes documented (if applicable)
   - [ ] Verified against customer repro (if applicable)
   - [ ] No breaking changes introduced
+- Before requesting review and after each fix round, follow
+  [Addressing Review Feedback](../../AGENTS.md#addressing-review-feedback).

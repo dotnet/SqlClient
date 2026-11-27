@@ -140,6 +140,16 @@ public override void Open()
 | `<remarks>` | Additional details |
 | `<seealso>` | Related members |
 
+### Implementation and Internal Members
+- Give every new member an XML doc block, including `internal` and `private` members.
+- Use `<inheritdoc/>` on overrides and interface implementations instead of copying text.
+- Add `<param>` docs whenever a value's meaning is not obvious, especially when an earlier step
+  has changed it (for example a setting after server negotiation).
+- State limits with value and unit (for example "64 KiB (65,536 bytes)"), why the limit exists,
+  and how the value was chosen.
+- When code or a test block is limited to one framework or OS, add a comment saying why (for
+  example "BinaryFormatter exists only on .NET Framework").
+
 ### Cross-References (`cref`)
 
 Our XML documentation is ingested into [dotnet/sqlclient-api-docs](https://github.com/dotnet/sqlclient-api-docs), where Open Publishing resolves every `cref` against the Learn xref map. A malformed documentation ID cannot resolve and produces an `xref-not-found` warning on the API Docs pull request, long after the change left this repository.

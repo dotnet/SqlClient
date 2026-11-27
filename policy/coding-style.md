@@ -69,3 +69,27 @@ The general rule we follow is "_use Visual Studio defaults_".
      compound statement uses braces or if a single statement body spans multiple lines.
    - Braces may be omitted only if the body of *every* block associated with an `if`/`else
      if`/.../`else` compound statement is placed on a single line.
+1. Prefer simple, obvious code over clever code. Use a plain `if` instead of a compound pattern
+   match, nested ternary, or chain of `??`/`?.` operators, especially when combined with range
+   patterns or `foreach (... ?? [])`.
+1. Do not add a helper that is called once and contains only one or two statements, or a wrapper
+   that only forwards to an assignment. Inline it at the call site.
+1. When a call's arguments do not fit on one line, put each argument on its own line.
+1. Use target-typed `new()` when the type is obvious from the declaration.
+1. Prefer a `using` declaration (`using var x = ...;`) over a `using` block when nothing in the
+   enclosing scope runs after the block.
+1. Use auto-properties instead of a backing field when the accessors contain no logic.
+1. Order members within a type as: fields, constructors, properties, then methods. Static members
+   precede instance members in each group. Sort properties and methods alphabetically within their
+   group. Constructor parameters may keep a logical order.
+1. Put each top-level type in its own file, named for the type. Do not add unrelated nested types
+   to a helper class to avoid creating a file.
+1. New implementation files use `#nullable enable`. Annotate members that may be null with `?` and
+   do not use `!` to silence warnings. (Reference assemblies under `ref/` do not use nullable
+   annotations; see `.github/instructions/api-design.instructions.md`.)
+1. Use the narrowest visibility possible. Members of `internal` or `private` types are not
+   `public` unless they implement an interface or override a public virtual member.
+1. Name types and members for what they are now, not how a value was obtained or how the code
+   evolved (for example `chain`, not `callbackChain`). Rename a type when its contents no longer
+   match its name, and name related pairs consistently (for example a mutable `FooAccumulator`
+   builds an immutable `Foo`). Names, comments, and test names must not record PR history.
