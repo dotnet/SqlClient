@@ -100,6 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
 
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
+        [Trait("category", "flaky")]
         public void OpeningConnectionWithGoodCertificateTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -128,6 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
+        [Trait("category", "flaky")]
         public void OpeningConnectionWithNicTest()
         {
             // Mandatory

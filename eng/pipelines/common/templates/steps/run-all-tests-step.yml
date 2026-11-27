@@ -110,7 +110,7 @@ steps:
             -t:RunUnitTests
             -p:TF=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
-            -p:Filter="category=flaky"
+            -p:Filter="category=flaky&category!=failing"
             -p:CollectCodeCoverage=false
         ${{ else }}: # x86
           msbuildArguments: >-
@@ -118,7 +118,7 @@ steps:
             -p:TF=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-            -p:Filter="category=flaky"
+            -p:Filter="category=flaky&category!=failing"
             -p:CollectCodeCoverage=false
       continueOnError: true
 
@@ -167,7 +167,7 @@ steps:
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:Filter="category=flaky"
+          -p:Filter="category=flaky&category!=failing"
           -p:CollectCodeCoverage=false
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -179,7 +179,7 @@ steps:
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:Filter="category=flaky"
+          -p:Filter="category=flaky&category!=failing"
           -p:CollectCodeCoverage=false
     continueOnError: true
 
@@ -229,7 +229,7 @@ steps:
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:Filter="category=flaky"
+          -p:Filter="category=flaky&category!=failing"
           -p:CollectCodeCoverage=false
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -241,7 +241,7 @@ steps:
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:Filter="category=flaky"
+          -p:Filter="category=flaky&category!=failing"
           -p:CollectCodeCoverage=false
     continueOnError: true
 
@@ -284,7 +284,7 @@ steps:
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:Filter="category=flaky"
+          -p:Filter="category=flaky&category!=failing"
           -p:CollectCodeCoverage=false
         verbosityRestore: Detailed
         verbosityPack: Detailed
@@ -327,7 +327,7 @@ steps:
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:Filter="category=flaky"
+        -p:Filter="category=flaky&category!=failing"
         -p:CollectCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
@@ -371,7 +371,7 @@ steps:
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:Filter="category=flaky"
+        -p:Filter="category=flaky&category!=failing"
         -p:CollectCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
