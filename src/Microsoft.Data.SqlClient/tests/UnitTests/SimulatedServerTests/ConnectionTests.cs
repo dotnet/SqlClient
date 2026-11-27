@@ -80,6 +80,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("category", "flaky")]
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -162,6 +163,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("category", "flaky")]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(

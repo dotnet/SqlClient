@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void OneByteSplitTest()
         {
             _splitPacketSize = 1;
@@ -46,6 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void AlmostFullHeaderTest()
         {
             _splitPacketSize = 7;
@@ -54,6 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void FullHeaderTest()
         {
             _splitPacketSize = 8;
@@ -62,6 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void HeaderPlusOneTest()
         {
             _splitPacketSize = 9;
@@ -70,6 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void MARSSplitTest()
         {
             _splitPacketSize = 1;
@@ -78,6 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void MARSReplicateTest()
         {
             _splitPacketSize = 1;

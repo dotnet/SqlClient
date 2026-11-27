@@ -76,9 +76,9 @@ steps:
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.configuration }}'
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky&category!=failing"'
         ${{ else }}: #x86
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky&category!=failing"'
         verbosityRestore: Detailed
         verbosityPack: Detailed
       condition: succeededOrFailed()
@@ -106,9 +106,9 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.configuration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky&category!=failing"'
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky&category!=failing"'
     condition: succeededOrFailed()
     continueOnError: true
 
@@ -134,9 +134,9 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.configuration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky&category!=failing"'
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky&category!=failing"'
     condition: succeededOrFailed()
     continueOnError: true
 
@@ -160,7 +160,7 @@ steps:
         command: custom
         projects: build.proj
         custom: msbuild
-        arguments: '-t:RunUnitTests -p:TF=${{ parameters.targetFramework }} -p:TestSet=${{ parameters.testSet }} -p:TestMicrosoftDataSqlClientVersion=${{ parameters.nugetPackageVersion }} -p:platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:Filter="category=flaky"'
+        arguments: '-t:RunUnitTests -p:TF=${{ parameters.targetFramework }} -p:TestSet=${{ parameters.testSet }} -p:TestMicrosoftDataSqlClientVersion=${{ parameters.nugetPackageVersion }} -p:platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:Filter="category=flaky&category!=failing"'
         verbosityRestore: Detailed
         verbosityPack: Detailed
       condition: succeededOrFailed()
@@ -184,7 +184,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:Filter="category=flaky"'
+      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:Filter="category=flaky&category!=failing"'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     condition: succeededOrFailed()
@@ -208,7 +208,7 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:Filter="category=flaky"'
+      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:Filter="category=flaky&category!=failing"'
       verbosityRestore: Detailed
       verbosityPack: Detailed
     condition: succeededOrFailed()

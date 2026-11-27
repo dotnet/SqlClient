@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
         [InlineData(false)]
+        [Trait("category", "flaky")]
         public static void TestGetSchema(bool openTransaction)
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))

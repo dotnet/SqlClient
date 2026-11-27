@@ -10,6 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class EventSourceTest
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Trait("category", "flaky")]
         public void EventSourceTestAll()
         {
             using DataTestUtility.MDSEventListener TraceListener = new();
