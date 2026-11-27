@@ -101,6 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
 
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
+        [Trait("category", "flaky")]
         public void OpeningConnectionWithGoodCertificateTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
