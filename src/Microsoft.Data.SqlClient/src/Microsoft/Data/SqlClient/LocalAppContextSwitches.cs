@@ -548,12 +548,13 @@ internal static class LocalAppContextSwitches
     /// alternate to the failover partner on login-phase SQL errors where the
     /// parser state is not Closed.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true. Set it to false to reject
+    /// login-phase SQL errors without alternating to the failover partner.
     /// </summary>
     public static bool UseLegacyFailoverAlternationOnLoginSqlErrors =>
         AcquireAndReturn(
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
 
     /// <summary>
