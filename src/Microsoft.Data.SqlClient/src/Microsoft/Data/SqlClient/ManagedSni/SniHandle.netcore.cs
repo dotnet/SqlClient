@@ -36,6 +36,22 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             };
             // Strict opens synchronously wait for this task, even on single-worker schedulers.
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token).ConfigureAwait(false);
+            ValidateNegotiatedApplicationProtocol(sslStream.NegotiatedApplicationProtocol);
+        }
+
+        /// <summary>
+        /// Ensures the server selected the TDS 8.0 ALPN protocol. Accepting a handshake that
+        /// dropped or changed ALPN would defeat the cross-protocol binding TDS 8.0 relies on.
+        /// </summary>
+        internal static void ValidateNegotiatedApplicationProtocol(SslApplicationProtocol negotiated)
+        {
+            if (negotiated != s_tdsProtocols[0])
+            {
+                throw new AuthenticationException(StringsHelper.Format(
+                    Strings.SNI_TDS8_ApplicationProtocolNotNegotiated,
+                    Convert.ToHexString(s_tdsProtocols[0].Protocol.Span),
+                    Convert.ToHexString(negotiated.Protocol.Span)));
+            }
         }
 
         /// <summary>

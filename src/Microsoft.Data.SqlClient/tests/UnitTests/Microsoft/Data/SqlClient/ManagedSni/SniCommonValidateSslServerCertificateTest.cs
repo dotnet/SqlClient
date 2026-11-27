@@ -15,6 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
@@ -481,38 +482,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             return request.CreateSelfSigned(notBefore, notAfter);
         }
 
-        /// <summary>
-        /// Writes a certificate to a temporary file for use as a <c>ServerCertificate</c> pin and
-        /// deletes it on disposal.
-        /// </summary>
-        private sealed class TempCertFile : IDisposable
-        {
-            public string Path { get; }
-
-            public TempCertFile(X509Certificate2 cert)
-            {
-                Path = System.IO.Path.Combine(
-                    System.IO.Path.GetTempPath(),
-                    "SqlClient_Pin_" + Guid.NewGuid().ToString("N") + ".cer");
-                File.WriteAllBytes(Path, cert.Export(X509ContentType.Cert));
-            }
-
-            public void Dispose()
-            {
-                try
-                {
-                    File.Delete(Path);
-                }
-                catch (IOException)
-                {
-                    // Best effort: a cleanup failure must not mask the assertion failure that
-                    // caused the test to unwind through this Dispose.
-                }
-                catch (UnauthorizedAccessException)
-                {
-                }
-            }
-        }
     }
 }
 
