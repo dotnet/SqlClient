@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
@@ -307,7 +308,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("smalldatetime", SqlDbType.SmallDateTime, 16L, "smalldatetime", null, "System.DateTime", false, true, false, true, false, false, true, true, true, null, null, null, false, null, "{ts '", "'}")]
         [InlineData("sql_variant", SqlDbType.Variant, null, "sql_variant", null, "System.Object", false, true, false, false, false, false, true, true, false, null, null, null, false, false, null, null)]
         [InlineData("xml", SqlDbType.Xml, 2147483647L, "xml", null, "System.String", false, false, false, false, false, true, true, false, false, null, null, null, false, false, null, null)]
-        [InlineData("json", (SqlDbType)35, 2147483647L, "json", null, "System.String", false, false, false, false, false, true, true, false, false, null, null, null, false, null, "'", "'")]
+        [InlineData("json", SqlDbTypeExtensions.Json, 2147483647L, "json", null, "System.String", false, false, false, false, false, true, true, false, false, null, null, null, false, null, "'", "'")]
         [InlineData("varchar", SqlDbType.VarChar, 2147483647L, "varchar({0})", "max length", "System.String", false, true, false, false, false, false, true, true, true, null, null, null, false, null, "'", "'")]
         [InlineData("char", SqlDbType.Char, 2147483647L, "char({0})", "length", "System.String", false, true, false, true, false, false, true, true, true, null, null, null, false, null, "'", "'")]
         [InlineData("nchar", SqlDbType.NChar, 1073741823L, "nchar({0})", "length", "System.String", false, true, false, true, false, false, true, true, true, null, null, null, false, null, "N'", "'")]
@@ -318,6 +319,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("time", SqlDbType.Time, 5L, "time({0})", "scale", "System.TimeSpan", false, false, false, false, false, false, true, true, true, null, (short)7, (short)0, false, null, "{ts '", "'}")]
         [InlineData("datetime2", SqlDbType.DateTime2, 8L, "datetime2({0})", "scale", "System.DateTime", false, true, false, false, false, false, true, true, true, null, (short)7, (short)0, false, null, "{ts '", "'}")]
         [InlineData("datetimeoffset", SqlDbType.DateTimeOffset, 10L, "datetimeoffset({0})", "scale", "System.DateTimeOffset", false, true, false, false, false, false, true, true, true, null, (short)7, (short)0, false, null, "{ts '", "'}")]
+        [InlineData("vector", SqlDbTypeExtensions.Vector, 8000L, "vector({0}, {1})", "dimensions,base_type", "System.Byte[]", false, false, false, false, false, false, true, false, false, null, null, null, false ,null, "'", "'")]
         [InlineData("Microsoft.SqlServer.Types.SqlHierarchyId, Microsoft.SqlServer.Types", SqlDbType.Udt, 892L, null, null, null, null, null, null, false, null, null, true, true, null, null, null, null, null, false, null, null, Skip = "UDT types are not accessible in UnitTests")]
         [InlineData("Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types", SqlDbType.Udt, -1L, null, null, null, null, null, null, false, null, null, true, true, null, null, null, null, null, false, null, null, Skip = "UDT types are not accessible in UnitTests")]
         [InlineData("Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types", SqlDbType.Udt, -1L, null, null, null, null, null, null, false, null, null, true, true, null, null, null, null, null, false, null, null, Skip = "UDT types are not accessible in UnitTests")]
@@ -329,10 +331,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = new(_connectionString);
             connection.Open();
 
+            connection.InnerConnection.Capabilities.JsonType = true;
+            connection.InnerConnection.Capabilities.VectorVersion = TdsEnums.VECTOR_VERSION_FLOAT16;
+
             DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.DataTypes);
             DataRow[] dataTypeRows = dataTypes.Select($"(ProviderDbType = {SqlDbType.Udt:d} AND TypeName Like '{typeName}%') OR (TypeName = '{typeName}')");
 
-            if ((typeName is "json" && !connection.InnerConnection.Capabilities.JsonType))
+            if ((typeName is "json" && !connection.InnerConnection.Capabilities.JsonType) ||
+                (typeName is "vector" && connection.InnerConnection.Capabilities.VectorVersion == TdsEnums.VECTOR_VERSION_NOT_SUPPORTED))
             {
                 Assert.Empty(dataTypeRows);
                 return;
