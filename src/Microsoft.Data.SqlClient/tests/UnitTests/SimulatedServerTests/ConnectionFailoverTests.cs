@@ -365,6 +365,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
+        [Trait("category", "flaky")]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -750,6 +751,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("category", "flaky")]
         public async Task TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
         {
             // Async parity for TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary.

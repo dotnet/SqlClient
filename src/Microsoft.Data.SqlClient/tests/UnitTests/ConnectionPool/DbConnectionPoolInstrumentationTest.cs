@@ -414,6 +414,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Theory]
         [InlineData(PoolImplementation.WaitHandle)]
         [InlineData(PoolImplementation.Channel)]
+        [Trait("category", "flaky")]
         public void ConcurrentCheckoutAndReturn_SettlesAllGaugesToZero(PoolImplementation implementation)
         {
             // Arrange

@@ -35,6 +35,7 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
+| `Pipeline-Quarantine.Tests.ps1` | Quarantine filters exclude failing tests, including tests marked both flaky and failing. |
 | `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell module restore, failure propagation, PR path filters, and pipeline prerequisite ordering. |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |

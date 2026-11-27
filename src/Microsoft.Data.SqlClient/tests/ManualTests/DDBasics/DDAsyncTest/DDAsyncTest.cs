@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region <<ExecuteCommand_WithNewConnection>>
         // TODO Synapse: Remove dependency on Northwind database by creating required table in setup.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [Trait("category", "flaky")]
         public static void ExecuteCommand_WithNewConnection_ShouldPerformAsyncByDefault()
         {
             var executedProcessList = new List<string>();

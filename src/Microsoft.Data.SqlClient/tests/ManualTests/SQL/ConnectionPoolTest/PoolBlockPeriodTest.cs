@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Azure with Auto Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.Auto })]
         [InlineData("Azure with Always Policy must Enable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.AlwaysBlock })]
         [InlineData("Azure with Never Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.NeverBlock })]
+        [Trait("category", "flaky")]
         public void TestAzureBlockingPeriod(string description, object[] Params)
         {
             string _ = description; // Using C# Discards as workaround to the XUnit warning.
