@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 6.1.9]
+
+This servicing release includes the following changes since 6.1.8.
+See the [release notes](release-notes/6.1/6.1.9.md) for current dependencies and platform support.
+
+### Fixed
+
+- Fixed unobserved receive-continuation exceptions when a managed SNI connection is closed
+  while Multiple Active Result Sets (MARS) is still receiving. Pending reads are notified
+  through the existing network-error path, and receive packets are released correctly.
+  (net8.0/net9.0 only, managed SNI)
+  ([#4679](https://github.com/dotnet/SqlClient/issues/4679),
+  [#4680](https://github.com/dotnet/SqlClient/pull/4680),
+  [#4949](https://github.com/dotnet/SqlClient/pull/4949))
+
+- Fixed corrupted `nvarchar` text from `SqlDataReader.GetTextReader` with
+  `CommandBehavior.SequentialAccess` on big-endian platforms. Decoding now preserves the source
+  buffer, raw UTF-16 code units, offsets, and partial reads. Little-endian behavior is unchanged.
+  (big-endian only)
+  ([#4945](https://github.com/dotnet/SqlClient/pull/4945),
+  [#4963](https://github.com/dotnet/SqlClient/pull/4963))
+
+- Fixed malformed row, alternate-result, and authentication responses being processed without
+  required metadata or authentication state. These responses now produce the existing
+  corrupted-stream parsing error (`InvalidOperationException`) and invalidate the physical
+  connection so it cannot return to the pool. Valid SQL Server result processing is unchanged.
+  ([#4941](https://github.com/dotnet/SqlClient/pull/4941),
+  [#4981](https://github.com/dotnet/SqlClient/pull/4981))
+
 ## [Stable Release 7.1.2] - 2026-11-12
 
 This servicing release includes the following changes since 7.1.1.

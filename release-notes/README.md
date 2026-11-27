@@ -4,6 +4,7 @@ The latest stable release is [Microsoft.Data.SqlClient 7.1](7.1).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient 6.1.9](6.1/6.1.9.md)
 - [Microsoft.Data.SqlClient 7.1.2](7.1/7.1.2.md)
 - [Microsoft.Data.SqlClient 7.0.4](7.0/7.0.4.md)
 - [Microsoft.Data.SqlClient 8.0 (preview)](8.0)
