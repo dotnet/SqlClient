@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.IO;
-
 namespace Microsoft.SqlServer.TDS.EndPoint
 {
     /// <summary>
@@ -22,11 +20,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         /// <param name="session">An instance of the TDS server session to close</param>
         void CloseSession(ITDSServerSession session);
-
-        /// <summary>
-        /// Called before the server starts the TLS handshake on a connection.
-        /// </summary>
-        void OnTlsHandshakeStarting(ITDSServerSession session, Stream transport);
 
         /// <summary>
         /// It is called when pre-login request arrives

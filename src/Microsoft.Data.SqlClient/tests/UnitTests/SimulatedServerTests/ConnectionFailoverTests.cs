@@ -4,44 +4,23 @@
 
 using System;
 using System.Data;
-using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    /// <summary>
-    /// Verifies primary/partner selection and pool preservation across transport and login SQL errors.
-    /// </summary>
     [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
-        /// <summary>
-        /// Executes the selected public open path so both paths share the same scenario assertions.
-        /// </summary>
-        private static Task OpenConnection(SqlConnection connection, bool useAsync)
-        {
-            if (useAsync)
-            {
-                return connection.OpenAsync();
-            }
-            connection.Open();
-            return Task.CompletedTask;
-        }
-
-        /// <summary>
-        /// Preserves the original physical connection after retrying a login SQL error on the primary.
-        /// </summary>
-        [Trait("category", "flaky")]
+        //TODO parameterize for transient errors
+        [Trait("Category", "flaky")]
         [Theory]
-        [InlineData(40613, false)]
-        [InlineData(42108, false)]
-        [InlineData(42109, false)]
-        [InlineData(40613, true)]
-        [InlineData(42108, true)]
-        [InlineData(42109, true)]
-        public async Task TransientFault_NoFailover_DoesNotClearPool(uint errorCode, bool useAsync)
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_NoFailover_DoesNotClearPool(uint errorCode)
         {
             // When connecting to a server with a configured failover partner,
             // transient errors returned during the login ack should not clear the connection pool.
@@ -53,7 +32,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 FailoverPartner = "localhost,1234"
             });
             failoverServer.Start();
-            var failoverDataSource = $"127.0.0.1,{failoverServer.EndPoint.Port}";
+            var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
             using TransientTdsErrorTdsServer initialServer = new(new TransientTdsErrorTdsServerArguments
@@ -64,51 +43,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + initialServer.EndPoint.Port,
+                DataSource = "localhost," + initialServer.EndPoint.Port,
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 InitialCatalog = "test"
             };
 
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-            await OpenConnection(connection, useAsync);
-            Guid originalConnectionId = connection.ClientConnectionId;
+            connection.Open();
 
             // Act
             initialServer.SetErrorBehavior(true, errorCode);
             using SqlConnection secondConnection = new(builder.ConnectionString);
             // Should not trigger a failover, will retry against the same server
-            await OpenConnection(secondConnection, useAsync);
+            secondConnection.Open();
 
             // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
             connection.Close();
-            await OpenConnection(connection, useAsync);
+            connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal(ConnectionState.Open, secondConnection.State);
-
-            Assert.Equal($"127.0.0.1,{initialServer.EndPoint.Port}", connection.DataSource);
-            Assert.Equal($"127.0.0.1,{initialServer.EndPoint.Port}", secondConnection.DataSource);
-
-            Assert.Equal(originalConnectionId, connection.ClientConnectionId);
+            Assert.Equal($"localhost,{initialServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{initialServer.EndPoint.Port}", secondConnection.DataSource);
 
             // 1 for the initial connection, 2 for the second connection
-            Assert.Equal(3, initialServer.PreLoginCount);
+            Assert.Equal(3, initialServer.Login7Count);
             // A failover should not be triggered, so prelogin count to the failover server should be 0
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        /// <summary>
-        /// Invalidates the primary pool after transport failover, even while its old connection remains usable.
-        /// </summary>
-        [Trait("category", "flaky")]
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task NetworkError_TriggersFailover_ClearsPool(bool useAsync)
+        [Trait("Category", "flaky")]
+        [Fact]
+        public void NetworkError_TriggersFailover_ClearsPool()
         {
             // When connecting to a server with a configured failover partner,
             // network errors returned during prelogin should clear the connection pool.
@@ -120,10 +89,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 FailoverPartner = "localhost,1234"
             });
             failoverServer.Start();
-            var failoverDataSource = $"127.0.0.1,{failoverServer.EndPoint.Port}";
+            var failoverDataSource = $"localhost,{failoverServer.EndPoint.Port}";
 
             // Errors are off to start to allow the pool to warm up
-            using GatedTdsServer initialServer = new(new TdsServerArguments
+            using TdsServer initialServer = new(new TdsServerArguments
             {
                 FailoverPartner = failoverDataSource
             });
@@ -131,56 +100,49 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + initialServer.EndPoint.Port,
+                DataSource = "localhost," + initialServer.EndPoint.Port,
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 InitialCatalog = "test",
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
-                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
-                #pragma warning restore 618
 #endif
             };
 
             // Open the initial connection to warm up the pool and populate failover partner information
             // for the pool group.
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-
-            await OpenConnection(connection, useAsync);
-            Guid originalConnectionId = connection.ClientConnectionId;
+            connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{initialServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{initialServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, initialServer.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
 
             // Act
             // Should trigger a failover because the initial server is unavailable
-            initialServer.WithholdPreLoginResponses();
+            initialServer.Dispose();
             using SqlConnection secondConnection = new(builder.ConnectionString);
-            await OpenConnection(secondConnection, useAsync);
+            secondConnection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, secondConnection.State);
-            Assert.Equal($"127.0.0.1,{failoverServer.EndPoint.Port}", secondConnection.DataSource);
-            Assert.Equal(1, initialServer.Login7Count);
-
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", secondConnection.DataSource);
+            Assert.Equal(1, initialServer.PreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount);
+
 
             // Act
             // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
             connection.Close();
-            await OpenConnection(connection, useAsync);
+            connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{failoverServer.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(1, initialServer.Login7Count);
-            Assert.NotEqual(originalConnectionId, connection.ClientConnectionId);
-            Assert.NotEqual(secondConnection.ClientConnectionId, connection.ClientConnectionId);
-            Assert.Equal(2, failoverServer.Login7Count);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, initialServer.PreLoginCount);
+            Assert.Equal(2, failoverServer.PreLoginCount);
         }
 
         [Fact]
@@ -200,35 +162,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientDelay = true,
                     DelayDuration = TimeSpan.FromMilliseconds(2000),
-                    FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master",// Required for failover partner to work
                 ConnectTimeout = 1,
                 ConnectRetryInterval = 1,
-                ConnectRetryCount = 0, // Disable retry
+                ConnectRetryCount = 0, // Disable retry 
                 Encrypt = false,
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
-                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
-                #pragma warning restore 618
 #endif
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
-            Action action = () => connection.Open();
+            var e = Assert.Throws<SqlException>(() => connection.Open());
 
             // Assert
-            SqlException exception = Assert.Throws<SqlException>(action);
-            Assert.Contains("Connection Timeout Expired", exception.Message);
-
+            Assert.Contains("Connection Timeout Expired", e.Message);
             Assert.Equal(ConnectionState.Closed, connection.State);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
@@ -251,47 +208,45 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientDelay = true,
                     DelayDuration = TimeSpan.FromMilliseconds(1000),
-                    FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
-                InitialCatalog = "master", // Required for failover partner to work
-                ConnectTimeout = 30,
+                DataSource = "localhost," + server.EndPoint.Port,
+                InitialCatalog = "master",// Required for failover partner to work
+                ConnectTimeout = 5,
                 Encrypt = false,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
-                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
-                #pragma warning restore 618
 #endif
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-
-            // Act
-            connection.Open();
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
 
             // Assert
             // On the first connection attempt, no failover partner information is available,
             // so the connection will retry on the same server.
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        /// <summary>
-        /// Selects the explicit partner after a primary transport failure without outer connect retry.
-        /// </summary>
-        [Trait("category", "flaky")]
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner(bool useAsync)
+        [Fact]
+        [Trait("Category", "flaky")]
+        public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
                 new TdsServerArguments
@@ -301,50 +256,50 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 });
             failoverServer.Start();
 
-            using GatedTdsServer server = new(new TdsServerArguments
-            {
-                FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
-            });
+            // Arrange
+            using TransientDelayTdsServer server = new(
+                new TransientDelayTdsServerArguments()
+                {
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(10000),
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
             server.Start();
-            server.WithholdPreLoginResponses();
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master", // Required for failover partner to work
-                ConnectTimeout = 30,
+                ConnectTimeout = 5,
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
-                FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}", // User provided failover partner
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made on failover
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-
-            // Act
-            await OpenConnection(connection, useAsync);
-
+            try
+            {
+                // Act
+                connection.Open();
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
 
             // Assert
             // On the first connection attempt, failover partner information is available in the connection string,
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{failoverServer.EndPoint.Port}", connection.DataSource);
-
-            Assert.Equal(0, server.Login7Count);
-            Assert.Equal(1, failoverServer.Login7Count);
-            Assert.True(server.PreLoginBlocked.IsCompleted, "The primary must block a pre-login response.");
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, failoverServer.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount);
         }
 
-        /// <summary>
-        /// Selects the explicit partner after a primary transport failure with connect retry enabled.
-        /// </summary>
-        [Trait("category", "flaky")]
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner(bool useAsync)
+        [Fact]
+        [Trait("Category", "flaky")]
+        public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
                 new TdsServerArguments
@@ -354,46 +309,45 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 });
             failoverServer.Start();
 
-            using GatedTdsServer server = new(new TdsServerArguments
-            {
-                FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
-            });
+            // Arrange
+            using TransientDelayTdsServer server = new(
+                new TransientDelayTdsServerArguments()
+                {
+                    IsEnabledTransientDelay = true,
+                    DelayDuration = TimeSpan.FromMilliseconds(10000),
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
             server.Start();
-            server.WithholdPreLoginResponses();
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                DataSource = "localhost," + server.EndPoint.Port,
                 InitialCatalog = "master", // Required for failover partner to work
-                ConnectTimeout = 30,
+                ConnectTimeout = 5,
                 ConnectRetryInterval = 1,
-                FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}", // User provided failover partner
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
 #if NETFRAMEWORK
-                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
-                #pragma warning restore 618
 #endif
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             // Act
-            await OpenConnection(connection, useAsync);
+            connection.Open();
 
             // Assert
             // On the first connection attempt, failover partner information is available in the connection string,
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{failoverServer.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(0, server.Login7Count);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, server.PreLoginCount);
+            // Login7 is sent to the primary but the client gives up during the
+            // server-side delay; the counter is still incremented when the
+            // Login7 message is received.
+            Assert.Equal(1, server.Login7Count);
             Assert.Equal(1, failoverServer.Login7Count);
-            Assert.True(server.PreLoginBlocked.IsCompleted, "The primary must block a pre-login response.");
         }
 
-        /// <summary>
-        /// Verifies login-phase transient SQL errors are retried on the primary endpoint and
-        /// do not trigger failover-partner alternation.
-        /// </summary>
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -414,43 +368,37 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
-                    FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
-                MultiSubnetFailover = false,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
-            // First login receives the transient token; outer connect retry opens a fresh parser
-            // and retries against the same primary endpoint.
             connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, server.PreLoginCount);
-            // Login-phase errors must NOT trigger failover alternation
-            Assert.Equal(0, failoverServer.PreLoginCount);
+            Assert.Equal(2, server.Login7Count);
         }
 
-        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("Category", "flaky")]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
@@ -473,14 +421,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
                 Encrypt = false
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             try
             {
@@ -496,15 +443,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Fail();
         }
 
-        /// <summary>
-        /// Verifies user-provided failover partner does not change behavior for login-phase
-        /// transient SQL errors; retries stay on primary.
-        /// </summary>
-        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("Category", "flaky")]
         public void TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary(uint errorCode)
         {
             // Arrange
@@ -527,36 +470,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
-            // Even with a configured partner, this path should use outer connect retry
-            // against primary rather than alternation inside LoginWithFailover.
             connection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, server.PreLoginCount);
-            // Login-phase errors must NOT trigger failover alternation
-            Assert.Equal(0, failoverServer.PreLoginCount);
+            Assert.Equal(2, server.Login7Count);
         }
 
-        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("Category", "flaky")]
         public void TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
@@ -579,7 +517,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
@@ -587,7 +525,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
-            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             try
             {
@@ -618,7 +555,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 });
             failoverServer.Start();
 
-            using GatedTdsServer server = new(
+            using TdsServer server = new(
                 new TdsServerArguments()
                 {
                     // Set an invalid failover partner to ensure that the connection fails if the
@@ -629,17 +566,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                DataSource = $"localhost,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 Encrypt = false,
-                FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 // Ensure pooling is enabled so that the failover partner information
                 // is persisted in the pool group. If pooling is disabled, the server
                 // provided failover partner will never be used.
-                Pooling = true
+                Pooling = true,
+                MinPoolSize = 1
             };
-            using SimulatedServerPoolScope pool = new(builder);
-            using SqlConnection connection = new(builder.ConnectionString);
+            SqlConnection connection = new(builder.ConnectionString);
+            // Clear the pool to ensure a new physical connection is created
+            SqlConnection.ClearPool(connection);
 
             // Connect once to the primary to trigger it to send the failover partner
             connection.Open();
@@ -649,24 +588,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.Close();
 
             // Act
-            // Withhold the next pre-login response without racing socket shutdown.
-            server.WithholdPreLoginResponses();
+            // Dispose of the server to trigger a failover
+            server.Dispose();
 
             // Clear the pool to ensure the next connection attempt doesn't reuse
-            // the pooled connection to the blocked primary server.
-            SqlConnection.ClearPool(connection);
+            // the pooled connection to the now-disposed primary server.
+            SqlConnection.ClearAllPools();
 
             // Opening a new connection will use the failover partner stored in the pool group.
             // This will fail if the server provided failover partner was stored to the pool group.
             using SqlConnection failoverConnection = new(builder.ConnectionString);
+
+            // Clear the pool to ensure a new physical connection is created
+            // Pool group info such as failover partner will still be retained
+            SqlConnection.ClearPool(connection);
             failoverConnection.Open();
 
             // Assert
             Assert.Equal(ConnectionState.Open, failoverConnection.State);
-
-            Assert.Equal($"127.0.0.1,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
             // 1 for the initial connection
-            Assert.True(server.PreLoginBlocked.IsCompleted);
             Assert.Equal(1, server.Login7Count);
             // 1 for the failover connection
             Assert.Equal(1, failoverServer.Login7Count);

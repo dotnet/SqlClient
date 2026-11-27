@@ -53,15 +53,7 @@ public abstract class CertificateFixtureBase : IDisposable
 
     private readonly List<CertificateStoreContext> _certificateStoreModifications = new List<CertificateStoreContext>();
 
-    /// <summary>Creates a certificate with selectable import lifetime for socket-only fixtures.</summary>
-    /// <param name="subjectName">The certificate subject.</param>
-    /// <param name="dnsNames">DNS subject alternative names.</param>
-    /// <param name="ipAddresses">IP subject alternative names.</param>
-    /// <param name="forceCsp">Whether to require the Windows CSP provider.</param>
-    /// <param name="keyStorageFlags">Import flags; existing store fixtures retain persistent keys by default.</param>
-    /// <returns>The certificate owned by the caller.</returns>
-    protected X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses, bool forceCsp = false,
-        X509KeyStorageFlags keyStorageFlags = X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable)
+    protected X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses, bool forceCsp = false)
     {
         // This will always generate a certificate with:
         // * Start date: 24hrs ago
@@ -117,7 +109,7 @@ public abstract class CertificateFixtureBase : IDisposable
                 return X509CertificateLoader.LoadPkcs12(
                     ephemeral.Export(X509ContentType.Pkcs12, password),
                     password,
-                    keyStorageFlags,
+                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
                     new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults) 
                     {
                         PreserveStorageProvider = true,
@@ -127,7 +119,7 @@ public abstract class CertificateFixtureBase : IDisposable
             return new X509Certificate2(
                 ephemeral.Export(X509ContentType.Pkcs12, password),
                 password,
-                keyStorageFlags);
+                X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
 #endif
         }
 #else

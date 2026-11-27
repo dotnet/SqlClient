@@ -38,7 +38,6 @@
     <Compile Include="TDSParser.cs" />
     <Compile Include="TDSServerEndPoint.cs" />
     <Compile Include="TDSServerEndPointConnection.cs" />
-    <Compile Include="TransportStream.cs" />
     <Compile Include="TDSServerParser.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">

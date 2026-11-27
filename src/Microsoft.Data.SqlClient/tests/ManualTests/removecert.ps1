@@ -7,16 +7,15 @@
 # Comments: This script deletes the SSL Self-Signed Certificate from Linux certificate store.
 # This script is not intended to be used in any production environments.
 
-param ($OutDir, [switch] $SkipTrust)
+param ($OutDir)
 
 # Delete all certificates
-rm $OutDir/clientcert/*.cer
+rm $OutDir/clientcer/*.cer
 rm $OutDir/localhostcert.pem
-if (-not $SkipTrust) {
-    rm $OutDir/mismatchedcert.pem
-    rm /usr/local/share/ca-certificates/localhostcert.crt
-    rm /usr/local/share/ca-certificates/mismatchedcert.crt
+rm $OutDir/mismatchedcert.pem
+rm /usr/local/share/ca-certificates/localhostcert.crt
+rm /usr/local/share/ca-certificates/mismatchedcert.crt
 
-    Write-Output "Updating the certificates store..."
-    update-ca-certificates -v
-}
+# Update the certificates store
+Write-Output "Updating the certificates store..."
+update-ca-certificates -v

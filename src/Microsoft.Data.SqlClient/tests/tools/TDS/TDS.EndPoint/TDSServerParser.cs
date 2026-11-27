@@ -146,7 +146,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     if (Session.Encryption == TDSEncryptionType.LoginOnly || Session.Encryption == TDSEncryptionType.Full)
                     {
                         // Enable server side encryption
-                        Server.OnTlsHandshakeStarting(Session, Transport.InnerStream);
                         EnableServerTransportEncryption(Session.EncryptionCertificate, Session.EncryptionProtocols);
                     }
                 }

@@ -7,17 +7,7 @@
 # Comments: This scripts creates SSL Self-Signed Certificate for TestTdsServer in pfx format.
 # This script is not intended to be used in any production environments.
 
-param ($OutDir, [switch] $SkipTrust)
-
-$ErrorActionPreference = "Stop"
-
-function Invoke-CertificateNativeCommand {
-  param([string] $FilePath, [string[]] $ArgumentList)
-  & $FilePath @ArgumentList
-  if ($LASTEXITCODE -ne 0) {
-    throw "Certificate command '$FilePath' exited with code $LASTEXITCODE."
-  }
-}
+param ($OutDir)
 
 function Invoke-SqlServerCertificateCommand {
   [CmdletBinding()]
@@ -49,51 +39,57 @@ function Invoke-SqlServerCertificateCommand {
 
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
-        Invoke-CertificateNativeCommand chmod @("777", $OutDir)
+        chmod 777 $OutDir
         # Show version of OpenSSL just to make sure it is installed
-        Invoke-CertificateNativeCommand openssl @("version")
+        openssl version
 
         # Create self signed certificate using openssl
         Write-Output "Creating certificate for linux..."
         if ($fqdn.length -gt 64) {
             $machineId = $fqdn.Substring(0,15)
-            Invoke-CertificateNativeCommand openssl @("req", "-x509", "-newkey", "rsa:4096", "-sha256", "-days", "1095", "-nodes", "-keyout", "$OutDir/localhostcert.key", "-out", "$OutDir/localhostcert.cer", "-subj", "/CN=$machineId", "-addext", "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1")
+            openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$machineId" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         }
         else {
-            Invoke-CertificateNativeCommand openssl @("req", "-x509", "-newkey", "rsa:4096", "-sha256", "-days", "1095", "-nodes", "-keyout", "$OutDir/localhostcert.key", "-out", "$OutDir/localhostcert.cer", "-subj", "/CN=$fqdn", "-addext", "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1")
+            openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         }
-        Invoke-CertificateNativeCommand chmod @("777", "$OutDir/localhostcert.key", "$OutDir/localhostcert.cer")
+        chmod 777 $OutDir/localhostcert.key $OutDir/localhostcert.cer
         # Copy the certificate to the clientcert folder
-        Invoke-CertificateNativeCommand cp @("$OutDir/localhostcert.cer", "$OutDir/clientcert/")
-        Invoke-CertificateNativeCommand cp @("$OutDir/mismatchedcert.cer", "$OutDir/clientcert/")
+        cp $OutDir/localhostcert.cer $OutDir/clientcert/
         # Export the certificate to pfx
         Write-Output "Exporting certificate to pfx..."
-        Invoke-CertificateNativeCommand openssl @("pkcs12", "-export", "-in", "$OutDir/localhostcert.cer", "-inkey", "$OutDir/localhostcert.key", "-out", "$OutDir/localhostcert.pfx", "-password", "pass:nopassword")
-        Invoke-CertificateNativeCommand chmod @("777", "$OutDir/localhostcert.pfx")
+        openssl pkcs12 -export -in $OutDir/localhostcert.cer -inkey $OutDir/localhostcert.key -out $OutDir/localhostcert.pfx -password pass:nopassword
+        chmod 777 $OutDir/localhostcert.pfx
 
         Write-Output "Converting certificate to pem..."
         # Create pem from cer
-        Invoke-CertificateNativeCommand cp @("$OutDir/localhostcert.cer", "$OutDir/localhostcert.pem")
-        Invoke-CertificateNativeCommand chmod @("777", "$OutDir/localhostcert.pem")
+        cp $OutDir/localhostcert.cer $OutDir/localhostcert.pem
+        chmod 777 $OutDir/localhostcert.pem
 
-        if (-not $SkipTrust) {
-            # Add trust to the pem certificate
-            Write-Output "Adding trust to pem certificate..."
-            Invoke-CertificateNativeCommand openssl @("x509", "-trustout", "-addtrust", "serverAuth", "-in", "$OutDir/localhostcert.pem")
+        # Add trust to the pem certificate
+        Write-Output "Adding trust to pem certificate..."
+        openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/localhostcert.pem
 
-            # Only certificates with extension "crt" are added to the Root store.
-            Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
-            Invoke-CertificateNativeCommand cp @("$OutDir/localhostcert.pem", "/usr/local/share/ca-certificates/localhostcert.crt")
+        # Import the certificate to the Root store ------------------------------------------------------------------------------
+        # NOTE:  The process must have root privileges to add the certificate to the Root store. If not, then use  
+        #        "chmod 777 /usr/local/share/ca-certificates" to give read, write and execute privileges to anyone on that folder 
+        # Copy the certificate to /usr/local/share/ca-certificates folder while changing the extension to "crt". 
+        # Only certificates with extension "crt" gets added for some reason.
+        Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
+        cp $OutDir/localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
 
-            # Add trust to the mismatched certificate as well
-            Invoke-CertificateNativeCommand openssl @("x509", "-in", "$OutDir/mismatchedcert.cer", "-inform", "der", "-out", "$OutDir/mismatchedcert.pem")
-            Invoke-CertificateNativeCommand openssl @("x509", "-trustout", "-addtrust", "serverAuth", "-in", "$OutDir/mismatchedcert.pem")
-            Invoke-CertificateNativeCommand cp @("$OutDir/mismatchedcert.pem", "/usr/local/share/ca-certificates/mismatchedcert.crt")
+        # Add trust to the mismatched certificate as well
+        $ openssl x509 -in $OutDir/mismatchedcert.cer -inform der -out $OutDir/mismatchedcert.pem
+        # Copy the mismatched certificate to the clientcert folder
+        cp $OutDir/mismatchedcert.cer $OutDir/clientcert/
+        openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/mismatchedcert.pem
+        cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
 
-            Invoke-CertificateNativeCommand dpkg-reconfigure @("ca-certificates", "-f", "noninteractive", "-p", "critical")
-            Write-Output "Updating the certificates store..."
-            Invoke-CertificateNativeCommand update-ca-certificates @("-v")
-        }
+        # enable certificate as CA certificate
+        dpkg-reconfigure ca-certificates -f noninteractive -p critical
+
+        # Update the certificates store
+        Write-Output "Updating the certificates store..."
+        update-ca-certificates -v
     } else {
         Write-Output "Creating a self-signed certificate..."
         $params = @{
@@ -111,8 +107,6 @@ function Invoke-SqlServerCertificateCommand {
         }
 
         $certificate = New-SelfSignedCertificate @params
-        # Record ownership before export can fail so partial setup can remove the certificate.
-        $certificate.Thumbprint | Out-File -FilePath "$OutDir\thumbprint.txt" -Encoding ascii
         Write-Output "Certificate created successfully"
         Write-Output "Certificate Thumbprint: $($certificate.Thumbprint)"
 
@@ -124,14 +118,13 @@ function Invoke-SqlServerCertificateCommand {
         copy $OutDir/$certificateName $OutDir/clientcert/
         copy $OutDir/mismatchedcert.cer $OutDir/clientcert/
 
-        if (-not $SkipTrust) {
-            Write-Output "Importing the certificate to the Root store..."
-            $params = @{
-              FilePath          = "$OutDir/$certificateName"
-              CertStoreLocation = $rootCertStoreLocation
-            }
-            Import-Certificate @params
+        # Import the certificate to the Root store
+        Write-Output "Importing the certificate to the Root store..."
+        $params = @{
+          FilePath          = "$OutDir/$certificateName"
+          CertStoreLocation = $rootCertStoreLocation
         }
+        Import-Certificate @params
 
         Write-Output "Converting certificate to pfx..."
         Write-Output "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
@@ -140,6 +133,8 @@ function Invoke-SqlServerCertificateCommand {
         # Export the certificate to a pfx format
         Export-PfxCertificate -Password $pwd -FilePath "$OutDir\localhostcert.pfx" -Cert "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
 
+        # Write the certificate thumbprint to a file
+        echo $certificate.Thumbprint | Out-File -FilePath "$OutDir\thumbprint.txt" -Encoding ascii
     } 
 
     Write-Output "Done creating pfx certificate..."
@@ -153,7 +148,6 @@ function Invoke-SqlServerCertificateCommand {
     }
 
     Write-Output "Certificate generation was not successful. $msg"
-    throw
   }
 
   Write-Output "Certificate generation task completed."

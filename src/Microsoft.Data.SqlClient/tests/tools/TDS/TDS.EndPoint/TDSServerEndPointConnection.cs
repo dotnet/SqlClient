@@ -24,8 +24,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     {
         private TDSServerParser _parser;
 
-        internal bool ExpectTlsHandshakeFailure { get; set; }
-
         public TDSServerEndPointConnection(ITDSServer server, TcpClient connection)
             : base(server, connection)
         {
@@ -35,10 +33,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             // Create a server TDS parser
             Debug.Assert(_parser == null, "PrepareForProcessingData should not be called twice");
-            _parser = new TDSServerParser(Server, Session, rawStream)
-            {
-                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
-            };
+            _parser = new TDSServerParser(Server, Session, rawStream);
         }
 
         public override void ProcessData(Stream rawStream)
@@ -52,19 +47,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// </summary>
     public abstract class ServerEndPointConnection : IDisposable
     {
-        private readonly object _connectionLock = new object();
-
         /// <summary>
         /// Worker thread
         /// </summary>
         protected Task ProcessorTask { get; set; }
-
-        /// <summary>
-        /// Signals the processor loop to stop.
-        /// </summary>
-        private volatile bool _stopRequested;
-
-        internal Exception ProcessingException { get; private set; }
 
         /// <summary>
         /// Gets/Sets the event log for the proxy server
@@ -102,10 +88,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Save TCP connection
             Connection = connection;
 
-            // Note: no artificial socket receive timeout is configured.  A blocked
-            // read is unblocked deterministically when the socket is closed during
-            // Dispose().  A short receive timeout here previously aborted parsing
-            // mid-message under CI CPU load, which was a source of test flakiness.
+            // Configure timeouts
+            Connection.ReceiveTimeout = 1000;
 
             // Create a new TDS server session
             Session = server.OpenSession();
@@ -136,10 +120,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         internal void Start()
         {
-            // Socket reads and simulated delays block. They must not starve the client
-            // opens and continuations sharing the process-wide thread pool.
-            ProcessorTask = Task.Factory.StartNew(RunConnectionHandler,
-                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            // Prepare and start a thread
+            ProcessorTask = RunConnectionHandler();
         }
 
         /// <summary>
@@ -152,143 +134,78 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public abstract void ProcessData(Stream rawStream);
 
-        /// <summary>
-        /// Intentionally reset this physical connection without waiting on its worker.
-        /// Safe to call from a protocol handler; normal worker cleanup still closes the session.
-        /// </summary>
-        internal void Abort()
-        {
-            lock (_connectionLock)
-            {
-                if (_stopRequested)
-                {
-                    return;
-                }
-
-                _stopRequested = true;
-                Connection.Client.LingerState = new LingerOption(true, 0);
-                Connection.Client.Dispose();
-            }
-        }
-
         public void Dispose()
         {
-            // Signal the processor loop to stop.
-            _stopRequested = true;
-
-            // Close the socket first.  This unblocks any synchronous read or poll
-            // the processor task may be waiting on, causing it to exit its loop.
-            lock (_connectionLock)
+            if (Connection != null)
             {
-                Connection?.Close();
+                Connection.Close();
+                Connection.Dispose();
+                Connection = null;
             }
 
-            // Deterministically wait for the processor task to finish so that no
-            // background work (socket I/O, counter mutation) outlives Dispose().
-            // A bounded wait guards against an unexpected hang.
-            if (ProcessorTask != null && !ProcessorTask.Wait(TimeSpan.FromSeconds(30)))
+            // TODO: there's a deadlock condition when awaiting the processor task
+            // only dispose of it if it's already completed
+            if (ProcessorTask.Status == TaskStatus.RanToCompletion)
             {
-                throw new TimeoutException("TDS connection processor did not stop during Dispose.");
-            }
-            if (ProcessingException != null)
-            {
-                throw new InvalidOperationException("TDS connection processor failed.", ProcessingException);
+                ProcessorTask.Dispose();
             }
         }
 
         /// <summary>
-        /// Worker thread that processes the TDS packet stream for this connection.
+        /// Worker thread
         /// </summary>
-        private void RunConnectionHandler()
+        private async Task RunConnectionHandler()
         {
-            TcpClient connection = Connection;
-
             try
             {
-                Socket socket;
-                NetworkStream rawStream;
-                Stream transport;
-                // TcpClient.GetStream and Close are not safe to run concurrently, including
-                // on Framework where Close can clear the socket during stream construction.
-                lock (_connectionLock)
-                {
-                    if (_stopRequested)
-                    {
-                        return;
-                    }
+                // Get network stream
+                NetworkStream rawStream = Connection.GetStream();
+                PrepareForProcessingData(rawStream);
 
-                    socket = connection.Client;
-                    rawStream = TransportStream.Execute(() => connection.GetStream());
-                    transport = new TransportStream(rawStream);
-                    PrepareForProcessingData(transport);
-                }
-
-                // Process the packet sequence until the peer disconnects or the
-                // server requests a stop.
-                while (!_stopRequested && connection.Connected)
+                // Process the packet sequence
+                while (Connection.Connected)
                 {
                     // Check incoming buffer
-                    if (TransportStream.Execute(() => rawStream.DataAvailable))
+                    if (rawStream.DataAvailable)
                     {
-                        ProcessData(transport);
+                        ProcessData(rawStream);
                     }
-                    else if (TransportStream.Execute(() => socket.Poll(100_000 /* 100 ms */, SelectMode.SelectRead))
-                        && !TransportStream.Execute(() => rawStream.DataAvailable))
+                    else
                     {
-                        // Poll reports readable with no data available when the
-                        // peer has closed the connection.
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex) when (TransportFailureException.IsExpected(ex, _stopRequested) ||
-                ex is ExpectedTlsHandshakeFailureException)
-            {
-                // A socket close during Dispose is an expected part of teardown, so only log
-                // when a stop was not requested. This keeps real failures visible in CI logs
-                // without the teardown noise.
-                if (!_stopRequested)
-                {
-                    try
-                    {
-                        Log(ex.ToString());
-                    }
-                    catch (Exception logException)
-                    {
-                        ProcessingException = logException;
+                        // Poll the socket for data
+                        if (Connection.Client.Poll(100, SelectMode.SelectRead) && !rawStream.DataAvailable)
+                        {
+                            break;
+                        }
+
+                        // Sleep a bit to reduce load on CPU
+                        await Task.Delay(10);
                     }
                 }
             }
             catch (Exception ex)
             {
-                ProcessingException = ex;
-                try
-                {
-                    Log(ex.ToString());
-                }
-                catch (Exception logException)
-                {
-                    ProcessingException = new AggregateException(ex, logException);
-                }
+                // Log exception
+                Log(ex.ToString());
             }
-            finally
+
+            try
             {
-                lock (_connectionLock)
-                {
-                    connection.Close();
-                }
-                try
-                {
-                    Server.CloseSession(Session);
-                }
-                catch (Exception ex)
-                {
-                    ProcessingException = ProcessingException == null
-                        ? ex
-                        : new AggregateException(ProcessingException, ex);
-                }
-                OnConnectionClosed?.Invoke(this, EventArgs.Empty);
+                // Disconnect the client
+                Connection.Close();
             }
+            catch (Exception)
+            {
+                // Do nothing there
+            }
+
+            // Notify subscribers that this connection is closed
+            if (OnConnectionClosed != null)
+            {
+                OnConnectionClosed(this, null);
+            }
+
+            return;
         }
 
         /// <summary>
