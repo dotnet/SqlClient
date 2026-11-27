@@ -24,16 +24,28 @@
     // warmup runs, and row count for each benchmark.
     //
     // Two optional per-benchmark settings are available for slow benchmarks:
-    //   "TimeoutMinutes" - overrides BenchmarkDotNet's 5 minute in-process execution timeout.
+    //   "TimeoutMinutes" - overrides the runner's 5 minute per-case execution timeout.
     //                      Omit (or set 0) to keep the default. Benchmarks that exceed it fail
-    //                      with "takes too long to run. Prefer to use out-of-process
-    //                      toolchains for long-running benchmarks." Note that switching to an
+    //                      and stop the process's benchmark sequence. Switching to an
     //                      out-of-process toolchain is NOT viable for this suite, because the
     //                      AppContext switches above only apply to the process running Main.
     //   "RunStrategy"    - "Throughput" (default) or "Monitoring". Use "Monitoring" when a
     //                      single operation takes seconds, to skip the harness-overhead
     //                      measurement that "Throughput" performs.
+    // Every runner supports ProcessIsolation ("PerRunner" default, or "PerCase").
+    // Runners can request Linux SQL-only shaping via AdditionalRttMilliseconds (default 0).
     "Benchmarks": {
+        "OpenAsyncBurstRunnerConfig": {
+            "Enabled": true,
+            "ProcessIsolation": "PerCase",
+            "AdditionalRttMilliseconds": 100,
+            "RunStrategy": "Monitoring",
+            "LaunchCount": 1,
+            "IterationCount": 3,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "TimeoutMinutes": 10
+        },
         "SqlConnectionRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,

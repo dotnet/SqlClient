@@ -1,4 +1,51 @@
-# Command and reader performance tests
+# SqlClient performance tests
+
+## Async-health diagnoser
+
+The `[AsyncHealthDiagnoser]` suite attribute attaches the diagnoser. It observes startup/warmup
+and the extra diagnostic iteration, not normal timing. Startup includes fixture setup; the extra
+iteration excludes it.
+Raw scheduling and operation evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
+short, censored or failed windows are not sufficient evidence of health.
+Schema-3 summaries contain the four report metrics and completeness fields; additional latency
+statistics can be derived from retained raw observations. Schema-2 reports remain readable.
+
+The compact report preserves baseline/current deltas, phase coverage and raw provenance.
+Its current dispatch-p99 indicator is green below 1ms, yellow from 1-10ms inclusive, and red
+above 10ms; missing values are unknown. This does not replace sampling qualifications or
+ordinary performance regression policy.
+
+Use separate process configurations to compare pool versions; the switch is cached.
+For native/interactive profiling, select a suite without `[AsyncHealthDiagnoser]`.
+The [pipeline protocol](../../../../eng/pipelines/perf/async-health.md) documents lifecycle
+boundaries, BDN preview/JIT preparation, network ownership/cleanup, reporting and limitations.
+
+## OpenAsyncBurst workload
+
+`OpenAsyncBurst` runs 64 open/query/close workers across `Empty`, `Warm`, `Oversubscribed` (16 slots)
+and `NonPooled`. The default runner config enables it. Existing configs that omit or disable
+`OpenAsyncBurstRunnerConfig` do not run it. Open/close-only bursts are excluded: tight synchronous
+checkout loops can saturate the ThreadPool on their own.
+
+The standard runner config must specify `"RunStrategy": "Monitoring"`, one launch, one warmup,
+one invocation per iteration, and a positive timing iteration count. The template uses `PerCase`,
+three timing iterations, a ten-minute case timeout, and `AdditionalRttMilliseconds: 100`.
+The harness applies the configured delay on Linux only; set it to `0` or omit it to disable
+shaping. Each case sets the worker minimum to 16 and restores it afterward.
+Warm setup holds 64 connections (16 for Oversubscribed) before returning them; Empty clears
+only its own pool.
+
+`Empty` runs a single cold wave of 64 workers, each doing one operation. The other cases use
+16 waves of 64 workers, with 20/5/1 operations per worker for Warm/Oversubscribed/NonPooled.
+Each workload declares its own `[Benchmark(OperationsPerInvoke = ...)]` count for normalization.
+Remove `SamplingProfile` from existing configs and increase `TimeoutMinutes` to `10` if needed.
+
+For a focused Linux run, disable unrelated runners and select `useConnectionPoolV2=true` at queue
+time. On a 16-CPU Linux host at 100 ms RTT, the steady diagnostic windows took roughly 33 seconds for
+Warm and Oversubscribed and 53 seconds for NonPooled with both drivers. This is not a guarantee
+for other hosts; check sampling evidence. Sustained non-pooled work can exhaust TCP source ports.
+
+## Command and reader benchmarks
 
 The command/parser coverage lives in the existing benchmark units. Select a unit with
 `PERF_BENCHMARK`; the performance pipeline continues to discover enabled units through
@@ -59,9 +106,8 @@ Commands/buffers formerly allocated in benchmark bodies now live in setup; DataT
 materialization alongside its drain baseline; SqlCommand now uses focused one-row workloads.
 Compare baseline and candidate drivers using the same updated benchmark sources. Historical
 results from the old implementations are not directly comparable. No parser or driver API code
-is changed by this suite consolidation. A source baseline must already contain the suite update
-before it is compared with subsequent parser/API changes; the source-baseline pipeline otherwise
-builds that older ref's own benchmark sources.
+is changed by this suite consolidation. The source-baseline pipeline builds each ref's own harness,
+so changes to a workload can affect timing comparisons as well as changes to the driver.
 
 ## Running and configuration
 

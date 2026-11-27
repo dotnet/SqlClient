@@ -6,6 +6,30 @@ dedicated performance test lab (Azure Dedicated Hosts), compare the branch under
 released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
 database.
 
+BDN attaches [AsyncHealthDiagnoser](async-health.md) only to annotated suites.
+Unannotated suites retain their ordinary measurements without async-health instrumentation.
+Startup/warmup and the extra diagnostic iteration are observed separately; normal timing
+iterations are not observed. Raw queue/open/outcome/probe/resource evidence is retained alongside
+each side/repetition and summarized in `benchmark-async-health-report-github.md`. There is no sweep
+or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
+
+The compact async-health report pairs baseline/current worst-observed metrics across
+phases and repetitions. Its leading indicator is **healthy (green)** below **1ms**,
+**warning (yellow)** from **1ms through 10ms inclusive**, and **unhealthy (red)** above **10ms**,
+using the current maximum dispatch p99. Missing current values are unknown.
+Relative deltas and their ordering are unchanged; ordinary performance
+statuses still use `regressionThreshold`. Coverage qualifications and raw provenance remain separate.
+
+All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and optional
+`AdditionalRttMilliseconds`. These are independent of diagnoser annotations. The dispatcher
+verifies Linux SQL-only shaping and retains per-process artifacts for both direct CLI and pipeline
+runs. See the [execution protocol](async-health.md#execution-settings).
+
+Use the standard `runnerconfig.jsonc`, created from `runnerconfig.default.jsonc` on a clean
+checkout. See the [runner settings](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/README.md)
+for workload-specific policies. `confirmationRuns=1` runs one matched pass without changing BDN
+iterations.
+
 ## Contents
 
 | Path | Purpose |
@@ -17,6 +41,7 @@ database.
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
+| `scripts/benchmark_health_report.py` | Pairs worst-observed async-health metrics and reports dispatch health bands and coverage. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 
@@ -60,7 +85,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
-| `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
+| `testTimeoutMinutes` | `180` (`210` for PR) | Performance test task timeout. |
 | `baselineVersion` | `latest` | Highest stable MDS version in the governed feed, resolved at run time. Pin an explicit version to override. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
@@ -112,7 +137,7 @@ An explicit version can still be supplied at queue time; an empty value runs cur
 ## PR pipeline (`sqlclient-perf-pr-pipeline.yml`)
 
 `sqlclient-perf-pr-pipeline.yml` answers the question a PR author actually has — *does my branch
-regress the branch I am merging into?* — by running the **same** benchmarks, on the **same** extends
+regress the branch I am merging into?* — by comparing shared benchmarks on the **same** extends
 template, through the **same** on-VM scripts, with the **same** configuration options as the main
 pipeline. It differs in exactly two ways:
 
@@ -160,10 +185,10 @@ mutually exclusive and the script fails fast if both are supplied). On the VM th
    the ADO build list. (The pipeline cannot produce this tag on its own — at compile time it only
    knows the ref name, which would tag every run identically.)
 
-Because each side builds its own harness, a benchmark added by the PR simply shows up as `new` in
-the comparison (and one removed by the PR as `removed`) instead of failing the run. Both passes
-share the single generated runner config (`RUNNER_CONFIG` / `DATATYPES_CONFIG` env vars), so
-connection string and behaviour flags are identical on both sides.
+Each side builds its own harness. In interleaved mode, candidate units without an enabled baseline
+counterpart run on the candidate only and appear as `new`. The async-health report shows their
+current metrics without a baseline delta. Both passes share the generated runner config
+(`RUNNER_CONFIG` / `DATATYPES_CONFIG`), so the connection string and behaviour flags match.
 
 ## Experiment pipeline (`sqlclient-perf-experiment.yml`)
 
@@ -195,7 +220,7 @@ Switch-pipeline parameters that differ from the tables above:
 | --------- | ------- | ----------- |
 | `switchUnderTest` | `UseConnectionPoolV2` | The single switch to A/B. Baseline forces it `false`, current forces it `true`. |
 | `failIfSwitchSlower` | `false` | Maps onto the scripts' `--fail-on-regression` gate, but means something different here: "switch on is slower" is usually the *result* you queued the run to measure, not a defect. Enable it only when asserting the switch must not be a slowdown (e.g. before flipping its default). |
-| `testTimeoutMinutes` | `180` | Same as the main pipeline, not the PR pipeline's `210`: both sides are the same source, so only **one** driver build is needed. |
+| `testTimeoutMinutes` | `180` | Same as the main pipeline, not the PR pipeline's `210`: both sides are the same source. |
 
 The pipeline deliberately does **not** expose `baselineVersion` / `baselineSourceRef` (the run
 scripts reject combining those with `--switch-under-test`, since a simultaneous source change would
@@ -289,9 +314,8 @@ The `PerformanceTests` project references Microsoft.Data.SqlClient two ways, sel
 - **Baseline (package)**: `ReferenceType=Package` turns the reference into a `PackageReference`. Because the
   repo uses **Central Package Management (CPM)**, the version is pinned with `VersionOverride` via
   `-p:MdsPackageVersion=<version>` (a plain `Version` is ignored under CPM).
-- **Baseline (source)**: no reference switching at all — the baseline ref's own copy of the perf
-  project is built from `../sqlclient-perf-baseline-src`, keeping its default `ProjectReference` to
-  that ref's driver source. Used by the PR pipeline.
+- **Baseline (source)**: build the baseline ref's own perf project and its default project
+  references from `../sqlclient-perf-baseline-src`. Used by perf-pr.
 - **Baseline (switch experiment)**: no second build at all — `--switch-under-test` measures one
   source tree twice, so the scripts build the `current` variant once and point both passes at it,
   differing only in the runner config each pass is handed. Used by the experiment pipeline.
@@ -371,12 +395,15 @@ physical connections.
 `benchmarkRunMode` selects how the two variants are measured:
 
 - **`interleaved`** (default) — `interleave_perf.py` orchestrates the run. Both variants are built
-  **once** into separate output dirs (`perf-build-baseline`, `perf-build-current`), then for each
-  benchmark unit the baseline and candidate builds run **back-to-back** before moving to the next
-  unit. Because the same benchmark is measured on both sides within seconds, slow host drift affects
+  **once** into separate output dirs (`perf-build-baseline`, `perf-build-current`), then each
+  candidate unit also enabled on the baseline runs **back-to-back** on the two builds. Because
+  the same benchmark is measured on both sides within seconds, slow host drift affects
   both roughly equally and cancels out of the delta. This relies on the `PerformanceTests` runner
   supporting `PERF_LIST_BENCHMARKS` (enumerate enabled units) and `PERF_BENCHMARK=<unit>` (run a
   single unit) — see `Program.cs`.
+
+  Each unit's `BenchmarkDotNet.Artifacts` tree is copied intact under its name in the baseline or
+  current results directory. Use a fresh results directory for each run.
 
   After the first interleaved pass, only the units containing a flagged regression are re-run
   `confirmationRuns` times (best-of-N). A regression is **confirmed** only when a strict majority of

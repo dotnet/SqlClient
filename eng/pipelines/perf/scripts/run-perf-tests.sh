@@ -905,6 +905,8 @@ else
     run_pass "current" "${PERF_PROJECT}"
 fi
 
+python3 "${SCRIPT_DIR}/benchmark_health_report.py" --results-dir "${RESULTS_DIR}"
+
 echo "Collected results:"
 find "${RESULTS_DIR}" -type f | sort
 

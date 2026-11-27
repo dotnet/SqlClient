@@ -31,6 +31,8 @@
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="runnerconfig.jsonc" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(RepoRoot)eng\pipelines\perf\scripts\netem.py" Link="netem.py"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- References ====================================================== -->

@@ -1,0 +1,77 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using BenchmarkDotNet.Running;
+
+namespace Microsoft.Data.SqlClient.PerformanceTests;
+
+/// <summary>The parent passes this selection to a child that discovers the same runner's cases.</summary>
+internal sealed record BenchmarkProcessSelection(string Unit, int[] Indexes, string Fingerprint);
+
+/// <summary>
+/// Groups selected benchmark cases into one child process per runner or one per case,
+/// according to the runner's <c>ProcessIsolation</c> setting.
+/// </summary>
+internal static class BenchmarkExecutionPlan
+{
+    internal static BenchmarkProcessSelection[] Create(
+        string unit, BenchmarkCase[] cases, int[] selected, RunnerJob job)
+    {
+        job.ValidateExecution();
+        ValidateIndexes(cases, selected);
+        return job.ProcessIsolation == "PerCase"
+            ? selected.Select(index => Selection(unit, cases, [index])).ToArray()
+            : [Selection(unit, cases, selected)];
+    }
+
+    private static BenchmarkProcessSelection Selection(
+        string unit, BenchmarkCase[] cases, int[] indexes) =>
+        new(unit, indexes, Fingerprint(cases, indexes));
+
+    internal static BenchmarkCase[] Select(
+        BenchmarkProcessSelection selection, string unit, BenchmarkCase[] cases, RunnerJob job)
+    {
+        job.ValidateExecution();
+        ValidateIndexes(cases, selection.Indexes);
+
+        // Indexes alone could select a different workload if the child discovers cases in
+        // a different order. Check that they still point to the workloads the parent chose.
+        if (selection.Unit != unit ||
+            (job.ProcessIsolation == "PerCase" && selection.Indexes.Length != 1) ||
+            selection.Fingerprint != Fingerprint(cases, selection.Indexes))
+        {
+            throw new InvalidOperationException("Benchmark child selection changed during discovery.");
+        }
+        return selection.Indexes.Select(index => cases[index]).ToArray();
+    }
+
+    internal static void ValidateIndexes(BenchmarkCase[] cases, int[] indexes)
+    {
+        ArgumentNullException.ThrowIfNull(indexes);
+        if (indexes.Length == 0 || indexes.Distinct().Count() != indexes.Length ||
+            indexes.Any(index => index < 0 || index >= cases.Length))
+        {
+            throw new ArgumentException("Invalid benchmark case selection.", nameof(indexes));
+        }
+    }
+
+    private static string Fingerprint(BenchmarkCase[] cases, IEnumerable<int> indexes)
+    {
+        string identity = JsonSerializer.Serialize(indexes.Select(index => new
+        {
+            Index = index,
+            Type = cases[index].Descriptor.Type.FullName,
+            Method = cases[index].Descriptor.WorkloadMethod.Name,
+            Parameters = cases[index].Parameters.DisplayInfo,
+            cases[index].Descriptor.OperationsPerInvoke
+        }));
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
+    }
+}

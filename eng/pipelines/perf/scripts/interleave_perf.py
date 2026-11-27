@@ -138,16 +138,20 @@ def _report_files(root):
 
 
 def collect_results(cwd, dest):
-    """Copy the BenchmarkDotNet reports produced under *cwd* into *dest*.
+    """Copy a unit's artifact tree and return the benchmark types it contains.
 
     Returns the set of benchmark ``Type`` names found (used to map a unit to the
     report rows it produced, so best-of-N can re-run the right unit for a flagged key).
     """
-    os.makedirs(dest, exist_ok=True)
-    types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
-    for path in _report_files(artifacts):
-        shutil.copy2(path, os.path.join(dest, os.path.basename(path)))
+    if not os.path.isdir(artifacts):
+        return set()
+
+    # Separate cases can emit reports with the same filename. Keep their directories intact.
+    shutil.copytree(artifacts, dest)
+
+    types = set()
+    for path in _report_files(dest):
         try:
             with open(path, "r", encoding="utf-8-sig") as fh:
                 for bench in json.load(fh).get("Benchmarks", []):
@@ -155,9 +159,6 @@ def collect_results(cwd, dest):
                         types.add(bench["Type"])
         except (OSError, ValueError):
             pass
-    # Also keep the human-readable GitHub markdown reports alongside, best effort.
-    for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
-        shutil.copy2(md, os.path.join(dest, os.path.basename(md)))
     return types
 
 
@@ -180,11 +181,14 @@ class Runner:
         self.baseline_runner_config = baseline_runner_config
         self.current_runner_config = current_runner_config
 
-    def list_units(self):
-        cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
+    def list_units(self, exe_dir, runner_config):
+        cmd = ["dotnet", os.path.join(exe_dir, self.assembly)]
         env = dict(os.environ)
         env["PERF_LIST_BENCHMARKS"] = "1"
         env.pop("PERF_BENCHMARK", None)
+        if runner_config:
+            env["RUNNER_CONFIG"] = runner_config
+
         out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True)
         return [line.strip() for line in out.splitlines() if line.strip()]
 
@@ -202,7 +206,7 @@ class Runner:
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
-        types = collect_results(cwd, agg_dir)
+        types = collect_results(cwd, os.path.join(agg_dir, unit, "BenchmarkDotNet.Artifacts"))
         if not types:
             _tail(log_path)
             raise RuntimeError(
@@ -210,16 +214,19 @@ class Runner:
                 f"(a broken benchmark must not be reported as a pass).")
         return types
 
-    def interleave(self, units, rep, baseline_agg, current_agg):
-        """Run each unit baseline-then-candidate; aggregate reports per variant.
+    def interleave(self, units, baseline_units, rep, baseline_agg, current_agg):
+        """Run each candidate unit, preceded by the baseline if it also enables that unit.
 
         Returns a dict mapping unit name -> set of report Type names it produced.
         """
         unit_types = {}
         for unit in units:
-            print(f"[rep {rep}] {unit}: baseline -> candidate", flush=True)
-            # Interleaved: measure baseline and candidate for this unit back-to-back.
-            self._run_one("baseline", self.baseline_dir, unit, rep, baseline_agg)
+            if unit in baseline_units:
+                print(f"[rep {rep}] {unit}: baseline -> candidate", flush=True)
+                self._run_one("baseline", self.baseline_dir, unit, rep, baseline_agg)
+            else:
+                print(f"[rep {rep}] {unit}: candidate only (not enabled on baseline)", flush=True)
+
             types = self._run_one("current", self.current_dir, unit, rep, current_agg)
             unit_types[unit] = types
         return unit_types
@@ -242,14 +249,14 @@ def _regression_keys(baseline_dir, current_dir, threshold):
     return entries, {e["key"] for e in entries if e["status"] == "regression"}
 
 
-def orchestrate(runner, units, results_dir, threshold, reps):
+def orchestrate(runner, units, baseline_units, results_dir, threshold, reps):
     baseline_agg = os.path.join(results_dir, "baseline")
     current_agg = os.path.join(results_dir, "current")
     comparison_dir = os.path.join(results_dir, "comparison")
     os.makedirs(comparison_dir, exist_ok=True)
 
     # --- Pass 1: interleave every enabled unit -----------------------------------------------------
-    unit_types = runner.interleave(units, 1, baseline_agg, current_agg)
+    unit_types = runner.interleave(units, baseline_units, 1, baseline_agg, current_agg)
     type_to_unit = {}
     for unit, types in unit_types.items():
         for t in types:
@@ -275,7 +282,7 @@ def orchestrate(runner, units, results_dir, threshold, reps):
         for rep in range(2, reps + 1):
             b_dir = os.path.join(results_dir, "reps", f"rep{rep}", "baseline")
             c_dir = os.path.join(results_dir, "reps", f"rep{rep}", "current")
-            runner.interleave(candidate_units, rep, b_dir, c_dir)
+            runner.interleave(candidate_units, baseline_units, rep, b_dir, c_dir)
             _, reg_keys_r = _regression_keys(b_dir, c_dir, threshold)
             for k in reg_keys_1:
                 if k in reg_keys_r:
@@ -411,14 +418,15 @@ def main(argv=None):
                     baseline_runner_config=args.baseline_runner_config,
                     current_runner_config=args.current_runner_config)
 
-    units = runner.list_units()
+    units = runner.list_units(runner.current_dir, runner.current_runner_config)
     if not units:
         print("ERROR: no enabled benchmark units were reported by the current build.", file=sys.stderr)
         return 1
     print(f"Enabled units ({len(units)}): {', '.join(units)}")
 
+    baseline_units = set(runner.list_units(runner.baseline_dir, runner.baseline_runner_config))
     entries, confirmed, unconfirmed = orchestrate(
-        runner, units, results_dir, args.threshold, args.reps)
+        runner, units, baseline_units, results_dir, args.threshold, args.reps)
 
     # Outputs.
     comparison_dir = os.path.join(results_dir, "comparison")

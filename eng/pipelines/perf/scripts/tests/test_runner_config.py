@@ -34,6 +34,7 @@ class RunnerConfigTests(unittest.TestCase):
             source = root / "runnerconfig.jsonc"
             # Include a local tuning value to prove we use the live config, not the default.
             config = {"ConnectionString": "local", "Iterations": 17,
+                      "Benchmarks": {"ExistingRunnerConfig": {"Enabled": True}},
                       **dict.fromkeys(SWITCHES, False)}
             (root / "template.jsonc").write_text(
                 "// local settings\n" + json.dumps(config), encoding="utf-8")
