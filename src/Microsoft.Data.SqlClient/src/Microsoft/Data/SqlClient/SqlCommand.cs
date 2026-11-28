@@ -221,7 +221,9 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to match naming conventions _enclaveAttestationParameters
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
-        // Provider awaits can precede both parser-state acquisition and a cached async result.
+        // The encryption coordinator holds this across async preparation and TDS
+        // write/setup, before a cached async result can guard the command. The retry completion
+        // handler also holds it while invalidating a failed enclave session.
         private bool _enclaveAttestationInProgress;
 
         // Covers asynchronous setup/write completion before the read stage publishes its result.
@@ -748,6 +750,13 @@ namespace Microsoft.Data.SqlClient
                 // If the transaction object has been zombied, just return null
                 if (_transaction is not null && _transaction.Connection is null)
                 {
+                    // Keep the binding while preparation is pending, so execution still sees
+                    // that its transaction completed and fails instead of running outside it.
+                    if (_enclaveAttestationInProgress)
+                    {
+                        return null;
+                    }
+
                     _transaction = null;
                 }
 
@@ -2479,11 +2488,24 @@ namespace Microsoft.Data.SqlClient
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
                         // Kick off the retry
-                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        SqlConnectionInternal retryConnection =
+                            _activeConnection.InnerConnection as SqlConnectionInternal;
                         Task<object> retryTask = null;
                         try
                         {
-                            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+                            // Deferred package failures have no pending async result. Keep the
+                            // command guarded until retry setup can acquire its own protection.
+                            _enclaveAttestationInProgress = true;
+                            try
+                            {
+                                await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                // Internal retry validation must run without this guard.
+                                _enclaveAttestationInProgress = false;
+                            }
+
                             _internalEndExecuteInitiated = false;
                             _enclaveRetryConnection = retryConnection;
                             try

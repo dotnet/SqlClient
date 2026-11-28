@@ -9,6 +9,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
@@ -45,10 +46,19 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Retrieves the query metadata for a specific query from the cache.</para>
+        /// Performs the purely in-memory portion of a query metadata cache lookup.
         /// </summary>
-        internal bool GetQueryMetadataIfExists(SqlCommand sqlCommand)
+        /// <remarks>
+        /// On success every parameter has been assigned a private copy of its cached cipher metadata and
+        /// <paramref name="metadata"/> describes the column encryption keys that still have to be loaded.
+        /// The caller must then call <see cref="CompleteCachedQueryMetadata"/> to load those keys and
+        /// finish the lookup. Splitting the lookup this way lets asynchronous execution paths await
+        /// key store I/O instead of blocking on it.
+        /// </remarks>
+        internal bool TryGetCachedQueryMetadata(SqlCommand sqlCommand, out CachedQueryMetadata metadata)
         {
+            metadata = default;
+
             // Return immediately if caching is disabled.
             if (!SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled)
             {
@@ -98,6 +108,9 @@ namespace Microsoft.Data.SqlClient
 
             // Create a copy of the cipherMD in order to load the key.
             // The key shouldn't be loaded in the cached version for security reasons.
+            // Allocated lazily: a cached query whose parameters are all plaintext needs no list at all,
+            // and this runs on every metadata cache hit.
+            List<SqlCipherMetadata> keysToLoad = null;
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
                 SqlCipherMetadata cipherMdCopy = null;
@@ -117,45 +130,139 @@ namespace Microsoft.Data.SqlClient
 
                 if (cipherMdCopy is not null)
                 {
-                    // Try to get the encryption key. If the key information is stale, this might fail.
-                    // In this case, just fail the cache lookup.
-                    try
-                    {
-                        SqlSecurityUtility.DecryptSymmetricKey(
-                            cipherMdCopy, sqlCommand.Connection, sqlCommand,
-                            isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
-                    }
-                    catch (Exception ex) when (ex is SqlException or ArgumentException)
-                    {
-                        // Invalidate the cache entry.
-                        InvalidateCacheEntry(sqlCommand);
-
-                        foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
-                        {
-                            paramToCleanup.CipherMetadata = null;
-                        }
-
-                        IncrementCacheMisses();
-                        return false;
-                    }
-                    catch (Exception)
-                    {
-                        // Invalidate the cache entry.
-                        InvalidateCacheEntry(sqlCommand);
-                        throw;
-                    }
+                    (keysToLoad ??= new List<SqlCipherMetadata>()).Add(cipherMdCopy);
                 }
             }
 
+            metadata = new CachedQueryMetadata(cacheLookupKey, enclaveLookupKey, keysToLoad);
+            return true;
+        }
+
+        /// <summary>
+        /// Loads the outstanding column encryption keys for a cache lookup and then finishes the
+        /// lookup. Keys are loaded through the asynchronous key store provider APIs when
+        /// <paramref name="isAsync"/> is <see langword="true"/>, and the synchronous ones otherwise.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if the lookup completed as a cache hit; <see langword="false"/> if the
+        /// cached key information was stale, in which case the entry has been invalidated and the caller
+        /// must fall back to a full describe parameter encryption round trip.
+        /// </returns>
+        internal async ValueTask<bool> CompleteCachedQueryMetadata(
+            SqlCommand sqlCommand,
+            CachedQueryMetadata metadata,
+            bool isAsync,
+            CancellationToken cancellationToken)
+        {
+            IReadOnlyList<SqlCipherMetadata> keysToLoad = metadata.KeysToLoad;
+            for (int i = 0; i < keysToLoad.Count; i++)
+            {
+                try
+                {
+                    await SqlSecurityUtility.DecryptSymmetricKey(
+                        keysToLoad[i],
+                        sqlCommand.Connection,
+                        sqlCommand,
+                        isAsync,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is SqlException or ArgumentException)
+                {
+                    // The key information is stale, so fail the cache lookup.
+                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: true);
+                    return false;
+                }
+                catch (OperationCanceledException) when (isAsync)
+                {
+                    // Cancellation says nothing about whether the cached metadata is still valid, so
+                    // leave the entry in place for the next caller instead of forcing it to pay for
+                    // another describe parameter encryption round trip.
+                    throw;
+                }
+                catch (Exception)
+                {
+                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: false);
+                    throw;
+                }
+            }
+
+            PublishCachedQueryMetadata(sqlCommand, metadata);
+            return true;
+        }
+
+        /// <summary>
+        /// Finishes a successful cache lookup by publishing the enclave keys and recording the hit.
+        /// </summary>
+        private void PublishCachedQueryMetadata(
+            SqlCommand sqlCommand,
+            CachedQueryMetadata metadata)
+        {
             ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys =
-                _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey);
+                _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(metadata.EnclaveLookupKey);
             if (enclaveKeys is not null)
             {
                 sqlCommand.keysToBeSentToEnclave = CreateCopyOfEnclaveKeys(enclaveKeys);
             }
 
             IncrementCacheHits();
-            return true;
+        }
+
+        /// <summary>
+        /// Rolls back a cache lookup whose column encryption key load failed.
+        /// </summary>
+        private void OnKeyLoadFailed(
+            SqlCommand sqlCommand,
+            CachedQueryMetadata metadata,
+            bool clearParameterMetadata)
+        {
+            // Invalidate the probed entry. The connection's database may have changed while the
+            // keys were loading, so don't recompute the keys from the command.
+            _cache.Remove(metadata.CacheLookupKey);
+            _cache.Remove(metadata.EnclaveLookupKey);
+
+            if (!clearParameterMetadata)
+            {
+                return;
+            }
+
+            foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
+            {
+                paramToCleanup.CipherMetadata = null;
+            }
+
+            IncrementCacheMisses();
+        }
+
+        /// <summary>
+        /// The in-memory result of a query metadata cache probe, before its column encryption keys
+        /// have been loaded.
+        /// </summary>
+        internal readonly struct CachedQueryMetadata
+        {
+            internal CachedQueryMetadata(
+                string cacheLookupKey,
+                string enclaveLookupKey,
+                List<SqlCipherMetadata> keysToLoad)
+            {
+                CacheLookupKey = cacheLookupKey;
+                EnclaveLookupKey = enclaveLookupKey;
+                KeysToLoad = (IReadOnlyList<SqlCipherMetadata>)keysToLoad ?? Array.Empty<SqlCipherMetadata>();
+            }
+
+            /// <summary>
+            /// The cache key under which this query's parameter metadata is stored.
+            /// </summary>
+            internal string CacheLookupKey { get; }
+
+            /// <summary>
+            /// The cache key under which this query's enclave keys are stored.
+            /// </summary>
+            internal string EnclaveLookupKey { get; }
+
+            /// <summary>
+            /// The parameter cipher metadata whose column encryption keys still have to be decrypted.
+            /// </summary>
+            internal IReadOnlyList<SqlCipherMetadata> KeysToLoad { get; }
         }
 
         /// <summary>
